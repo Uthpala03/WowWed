@@ -58,7 +58,11 @@ function CreateAccountPage() {
   return (
     <OnboardingLayout step={2}>
       <h1 className="onboarding__title">Create your account</h1>
-      <p className="onboarding__subtitle">One last step before your planning dashboard.</p>
+      <p className="onboarding__subtitle">
+        {onboarding.role === 'vendor'
+          ? 'One last step before your vendor dashboard.'
+          : 'One last step before your planning dashboard.'}
+      </p>
 
       <form className="onboarding__form" onSubmit={handleSubmit}>
         <label className="onboarding__field">

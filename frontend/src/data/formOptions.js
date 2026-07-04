@@ -26,6 +26,13 @@ export const weddingRoles = [
   { id: 'vendor', label: "I'm a vendor", icon: '🏪' },
 ];
 
+export const vendorStages = [
+  { id: 'new-business', label: 'Just starting my wedding business', icon: '🌱' },
+  { id: 'new-to-wowwed', label: 'I have a business but I\'m new to WowWed', icon: '🆕' },
+  { id: 'expanding', label: 'Listed elsewhere and want to reach more couples', icon: '📣' },
+  { id: 'ready', label: 'Established and ready to receive bookings', icon: '✅' },
+];
+
 export const districts = [
   'Colombo',
   'Gampaha',

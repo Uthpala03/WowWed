@@ -1,86 +1,152 @@
 import { useMemo, useState } from 'react';
-import { tableShapes } from '../../data/dashboardData';
+import TableVisual from '../../components/seating/TableVisual';
+import { guestGroups, tableShapes } from '../../data/dashboardData';
+import { SeatingChart, Table, tableSuites } from '../../models/Seating';
 import { getGuests, getSeating, saveSeating } from '../../utils/storage';
-import { generateSmartSeating } from '../../utils/smartSeating';
 
-const emptyTableForm = { name: '', seats: 6, shape: 'round' };
+const emptyTableForm = {
+  name: '',
+  seats: 6,
+  shape: 'round',
+  suite: 'general',
+  priority: 5,
+  guestGroup: '',
+};
 
 function SeatingChartPage() {
   const guests = getGuests();
-  const [seating, setSeating] = useState(() => getSeating());
+  const [chart, setChart] = useState(() => new SeatingChart(getSeating(), guests));
   const [selectedGuest, setSelectedGuest] = useState(null);
   const [search, setSearch] = useState('');
+  const [groupFilter, setGroupFilter] = useState('All');
   const [showTableModal, setShowTableModal] = useState(false);
+  const [editingTableId, setEditingTableId] = useState(null);
   const [tableForm, setTableForm] = useState(emptyTableForm);
-  const [zoom, setZoom] = useState(1);
+  const [toast, setToast] = useState('');
 
-  const persist = (next) => {
-    setSeating(next);
-    saveSeating(next);
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 3500);
   };
 
+  const persist = (nextChart) => {
+    setChart(nextChart);
+    saveSeating(nextChart.toJSON());
+  };
+
+  const stats = useMemo(() => chart.stats, [chart]);
+  const suiteGroups = useMemo(() => chart.tablesBySuite, [chart]);
+  const groupCounts = useMemo(() => chart.getGroupCounts(), [chart]);
+  const seatGroups = guestGroups.filter((g) => g !== 'No Group');
+
+  const filteredUnassigned = chart.unassignedGuests.filter((g) => {
+    const q = search.toLowerCase();
+    const matchSearch = !q || g.name.toLowerCase().includes(q);
+    const matchGroup = groupFilter === 'All' || g.group === groupFilter;
+    return matchSearch && matchGroup;
+  });
+
+  const previewTable = useMemo(
+    () => new Table({
+      id: 'preview',
+      name: 'Preview',
+      seats: tableForm.seats,
+      shape: tableForm.shape,
+      suite: tableForm.suite,
+      priority: tableForm.priority,
+      guestGroups: tableForm.guestGroup ? [tableForm.guestGroup] : [],
+    }),
+    [tableForm],
+  );
+
   const openAddTable = () => {
-    const num = seating.tables.length + 1;
-    setTableForm({ name: String(num), seats: 6, shape: 'round' });
+    setEditingTableId(null);
+    setTableForm({ ...emptyTableForm, name: String(chart.tables.length + 1) });
     setShowTableModal(true);
+  };
+
+  const openEditTable = (table) => {
+    setEditingTableId(table.id);
+    setTableForm({
+      name: table.name.replace(/^Table\s/, ''),
+      seats: table.seats,
+      shape: table.shape,
+      suite: table.suite,
+      priority: table.priority,
+      guestGroup: table.guestGroups?.[0] || '',
+    });
+    setShowTableModal(true);
+  };
+
+  const closeTableModal = () => {
+    setShowTableModal(false);
+    setEditingTableId(null);
+    setTableForm(emptyTableForm);
   };
 
   const submitTable = (e) => {
     e.preventDefault();
-    const num = seating.tables.length + 1;
-    persist({
-      ...seating,
-      tables: [...seating.tables, {
-        id: `table-${num}`,
-        name: `Table ${tableForm.name || num}`,
-        seats: tableForm.seats,
-        shape: tableForm.shape,
-      }],
-    });
-    setShowTableModal(false);
-    setTableForm(emptyTableForm);
+    const next = new SeatingChart(chart.toJSON(), guests);
+    const tableName = tableForm.name.startsWith('Table') ? tableForm.name : `Table ${tableForm.name}`;
+    const data = {
+      name: tableName,
+      seats: tableForm.seats,
+      shape: tableForm.shape,
+      suite: tableForm.suite,
+      priority: tableForm.priority,
+      guestGroups: tableForm.guestGroup ? [tableForm.guestGroup] : [],
+    };
+
+    if (editingTableId) {
+      next.updateTable(editingTableId, data);
+    } else {
+      next.addTable(new Table({ id: `table-${Date.now()}`, ...data }));
+    }
+    persist(next);
+    closeTableModal();
   };
 
-  const assignGuest = (tableId, seatIndex) => {
-    if (!selectedGuest) return;
-    persist({
-      ...seating,
-      assignments: { ...seating.assignments, [`${tableId}-${seatIndex}`]: selectedGuest },
-    });
-    setSelectedGuest(null);
+  const handleSeatClick = (tableId, seatIndex, currentGuestId) => {
+    const next = new SeatingChart(chart.toJSON(), guests);
+    if (currentGuestId) {
+      next.unassignSeat(tableId, seatIndex);
+      persist(next);
+      return;
+    }
+    if (selectedGuest) {
+      next.assignGuest(tableId, seatIndex, selectedGuest);
+      persist(next);
+      setSelectedGuest(null);
+    }
   };
 
-  const removeAssignment = (guestId) => {
-    const assignments = { ...seating.assignments };
-    Object.keys(assignments).forEach((key) => {
-      if (assignments[key] === guestId) delete assignments[key];
-    });
-    persist({ ...seating, assignments });
+  const seatTableWithGroup = (tableId, group) => {
+    if (!group) return;
+    const next = new SeatingChart(chart.toJSON(), guests);
+    const result = next.replaceTableWithGroup(tableId, group);
+    persist(next);
+    showToast(result.message);
   };
 
-  const unassigned = guests.filter((g) => !Object.values(seating.assignments).includes(g.id));
-  const assigned = guests.filter((g) => Object.values(seating.assignments).includes(g.id));
-  const filteredUnassigned = unassigned.filter((g) => g.name.toLowerCase().includes(search.toLowerCase()));
-
-  const getGuestName = (id) => guests.find((g) => g.id === id)?.name || '';
-  const getTableForGuest = (guestId) => {
-    const entry = Object.entries(seating.assignments).find(([, id]) => id === guestId);
-    if (!entry) return '';
-    const tableId = entry[0].split('-')[0];
-    return seating.tables.find((t) => t.id === tableId)?.name || '';
+  const clearTable = (tableId) => {
+    const next = new SeatingChart(chart.toJSON(), guests);
+    next.clearTable(tableId);
+    const table = next.tables.find((t) => t.id === tableId);
+    if (table) table.guestGroups = [];
+    persist(next);
   };
 
-  const stats = useMemo(() => ({
-    tables: seating.tables.length,
-    guests: guests.length,
-    assigned: assigned.length,
-  }), [seating, guests, assigned]);
+  const runAutoSeat = () => {
+    const next = new SeatingChart(chart.toJSON(), guests);
+    const { filled, conflicts } = next.autoSeatAll();
+    persist(next);
+    showToast(conflicts.length ? conflicts[0] : `${filled} guests seated automatically`);
+  };
 
-  const runSmartSeating = () => {
-    const accepted = guests.filter((g) => g.rsvp !== 'Rejected' && g.rsvp !== 'Declined');
-    const { assignments, conflicts } = generateSmartSeating(accepted, seating.tables);
-    persist({ ...seating, assignments });
-    if (conflicts.length) window.alert(conflicts.join('\n'));
+  const removeTable = (tableId) => {
+    const next = new SeatingChart(chart.toJSON(), guests);
+    next.removeTable(tableId);
+    persist(next);
   };
 
   return (
@@ -88,116 +154,206 @@ function SeatingChartPage() {
       <header className="dash-page__header">
         <div>
           <h1>Seating Chart</h1>
-          <p>Plan your wedding reception layout</p>
+          <p>Arrange tables by area — seat guests in one click</p>
         </div>
         <div className="dash-page__actions">
-          <button type="button" className="dash-btn dash-btn--outline" onClick={runSmartSeating}>Generate smart seating</button>
-          <button type="button" className="dash-btn dash-btn--primary">Share Chart</button>
+          <button type="button" className="dash-btn dash-btn--outline" onClick={runAutoSeat}>Auto-seat all</button>
+          <button type="button" className="dash-btn dash-btn--primary" onClick={openAddTable}>+ Add table</button>
         </div>
       </header>
 
+      {toast && <div className="guest-import-toast">{toast}</div>}
+
+      <section className="seating-help-banner seating-help-banner--simple">
+        <span>💡</span>
+        <p>Pick a group from each table&apos;s dropdown to seat guests. Use <strong>Auto-seat all</strong> for everything at once.</p>
+      </section>
+
+      <div className="seating-stats">
+        <div className="seating-stat"><strong>{stats.tables}</strong><span>Tables</span></div>
+        <div className="seating-stat"><strong>{stats.totalSeats}</strong><span>Seats</span></div>
+        <div className="seating-stat seating-stat--green"><strong>{stats.assigned}</strong><span>Seated</span></div>
+        <div className="seating-stat seating-stat--gold"><strong>{stats.unassigned}</strong><span>Waiting</span></div>
+      </div>
+
       <div className="seating-layout">
         <div className="seating-canvas-wrap dash-card">
-          <div className="seating-toolbar">
-            <label className="dash-toggle"><input type="checkbox" /> Show Groups</label>
-            <button type="button" className="dash-btn dash-btn--primary" onClick={openAddTable}>Add Table</button>
-          </div>
-          <div className="seating-canvas" style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}>
-            {seating.tables.length === 0 ? (
-              <div className="dash-empty"><p>Add your first table to start seating</p></div>
-            ) : seating.tables.map((table) => (
-              <div key={table.id} className="seating-table">
-                <div className="seating-table__label">{table.name}</div>
-                <div className="seating-table__seats">
-                  {Array.from({ length: table.seats }).map((_, i) => {
-                    const key = `${table.id}-${i}`;
-                    const guestId = seating.assignments[key];
-                    const isTarget = selectedGuest && !guestId;
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        className={`seat${guestId ? ' is-filled' : ''}${isTarget ? ' is-target' : ''}`}
-                        onClick={() => assignGuest(table.id, i)}
-                        title={guestId ? getGuestName(guestId) : 'Empty seat'}
-                      >
-                        {guestId ? getGuestName(guestId).slice(0, 1) : ''}
-                      </button>
-                    );
-                  })}
-                </div>
+          <div className="seating-canvas">
+            {chart.tables.length === 0 ? (
+              <div className="seating-empty">
+                <span>🪑</span>
+                <h3>No tables yet</h3>
+                <p>Add tables, then choose Family, Friends, or another group for each</p>
+                <button type="button" className="dash-btn dash-btn--primary" onClick={openAddTable}>+ Add table</button>
               </div>
-            ))}
+            ) : (
+              suiteGroups.map(({ suite, tables }) => (
+                <section key={suite.id} className={`seating-suite-zone seating-suite-zone--${suite.id}`}>
+                  <header className="seating-suite-zone__head">
+                    {suite.icon} {suite.label}
+                  </header>
+                  <div className="seating-suite-zone__tables">
+                    {tables.map((table) => {
+                      const fill = chart.getTableFill(table.id);
+                      const currentGroup = table.guestGroups?.[0] || '';
+                      return (
+                        <div key={table.id} className="seating-table-card seating-table-card--simple">
+                          <div className="seating-table-card__head">
+                            <div>
+                              <strong>{table.name}</strong>
+                              <small className="seating-table-card__sub">
+                                {fill.filled}/{fill.total} seated · Priority {table.priority}
+                              </small>
+                            </div>
+                            <div className="seating-table-card__actions">
+                              <button type="button" className="guest-action-btn" onClick={() => openEditTable(table)} title="Edit">✏️</button>
+                              <button type="button" className="seating-table-card__remove" onClick={() => removeTable(table.id)} title="Delete">🗑️</button>
+                            </div>
+                          </div>
+
+                          <TableVisual
+                            table={table}
+                            assignments={chart.assignments}
+                            getGuestName={(id) => chart.getGuestName(id)}
+                            selectedGuest={selectedGuest}
+                            onSeatClick={handleSeatClick}
+                          />
+
+                          <label className="seating-simple-select">
+                            <span>Seat with group:</span>
+                            <select
+                              value={currentGroup}
+                              onChange={(e) => seatTableWithGroup(table.id, e.target.value)}
+                            >
+                              <option value="">Choose…</option>
+                              {seatGroups.map((g) => (
+                                <option key={g} value={g}>{g} ({groupCounts[g] || 0} waiting)</option>
+                              ))}
+                            </select>
+                          </label>
+
+                          {fill.filled > 0 && (
+                            <button type="button" className="seating-clear-link" onClick={() => clearTable(table.id)}>
+                              Clear this table
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              ))
+            )}
           </div>
-          <div className="seating-zoom">
-            <button type="button" onClick={() => setZoom((z) => Math.min(z + 0.1, 1.5))}>+</button>
-            <button type="button" onClick={() => setZoom((z) => Math.max(z - 0.1, 0.6))}>−</button>
-            <button type="button" onClick={() => setZoom(1)}>⊕</button>
-          </div>
-          <p className="seating-hint">
-            {selectedGuest
-              ? `Selected: ${getGuestName(selectedGuest)} — Click a chair to assign`
-              : 'Select a guest from the right panel'}
-          </p>
         </div>
 
         <aside className="seating-sidebar dash-card">
-          <input placeholder="Search guests..." value={search} onChange={(e) => setSearch(e.target.value)} />
-          <button type="button" className="dash-btn dash-btn--white" style={{ width: '100%', marginBottom: '0.75rem' }}>Show Filters</button>
-          <h3>Unassigned ({filteredUnassigned.length})</h3>
-          <ul className="seating-guest-list">
-            {filteredUnassigned.map((g) => (
-              <li key={g.id} className={selectedGuest === g.id ? 'is-selected' : ''}>
-                <button type="button" onClick={() => setSelectedGuest(g.id)} style={{ background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', flex: 1 }}>
-                  <strong>{g.name}</strong>
-                  <small>{g.group || 'Uncategorized'}</small>
-                </button>
-                <div className="seating-guest-actions">
-                  <button type="button" title="Select">✓</button>
-                  <button type="button" title="Remove">🗑️</button>
-                </div>
-              </li>
+          <h3>Guests</h3>
+          <input placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <select value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)}>
+            <option>All</option>
+            {seatGroups.map((g) => (
+              <option key={g}>{g} ({groupCounts[g] || 0})</option>
             ))}
-          </ul>
-          <h3>Assigned ({assigned.length})</h3>
-          <ul className="seating-guest-list">
-            {assigned.length === 0 ? (
-              <li style={{ background: 'transparent', border: 'none' }}><small>No assigned guests found.</small></li>
-            ) : assigned.map((g) => (
-              <li key={g.id}>
-                <div>
-                  <strong>{g.name}</strong>
-                  <small>{getTableForGuest(g.id)}</small>
-                </div>
-                <div className="seating-guest-actions">
-                  <button type="button" onClick={() => removeAssignment(g.id)} title="Unassign">🗑️</button>
-                </div>
-              </li>
-            ))}
-          </ul>
-          <footer>Tables: {stats.tables} | Guests: {stats.guests} | Assigned: {stats.assigned}</footer>
+          </select>
+          <p className="seating-sidebar__tip">Or tap a guest, then tap an empty chair</p>
+
+          <div className="seating-sidebar__section">
+            <h4>Waiting ({filteredUnassigned.length})</h4>
+            <ul className="seating-guest-list">
+              {filteredUnassigned.length === 0 ? (
+                <li className="seating-guest-list__empty"><small>All seated 🎉</small></li>
+              ) : filteredUnassigned.map((g) => (
+                <li key={g.id}>
+                  <button
+                    type="button"
+                    className={selectedGuest === g.id ? 'is-selected' : ''}
+                    onClick={() => setSelectedGuest(selectedGuest === g.id ? null : g.id)}
+                  >
+                    <strong>{g.name}</strong>
+                    <small>{g.group}</small>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="seating-sidebar__section">
+            <h4>Seated ({chart.assignedGuests.length})</h4>
+            <ul className="seating-guest-list">
+              {chart.assignedGuests.length === 0 ? (
+                <li className="seating-guest-list__empty"><small>None yet</small></li>
+              ) : chart.assignedGuests.map((g) => {
+                const table = chart.getTableForGuest(g.id);
+                return (
+                  <li key={g.id} className="seating-guest-list__assigned">
+                    <div>
+                      <strong>{g.name}</strong>
+                      <small>{table?.name}</small>
+                    </div>
+                    <button type="button" onClick={() => {
+                      const next = new SeatingChart(chart.toJSON(), guests);
+                      next.unassignGuest(g.id);
+                      persist(next);
+                    }}>✕</button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </aside>
       </div>
 
       {showTableModal && (
-        <div className="dash-overlay" onClick={() => setShowTableModal(false)}>
-          <form className="dash-panel dash-panel--center" onSubmit={submitTable} onClick={(e) => e.stopPropagation()}>
-            <h2>Add New Table</h2>
-            <p className="dash-panel__title">Table {tableForm.name || seating.tables.length + 1}</p>
-            <div className="table-modal-preview" />
+        <div className="dash-overlay" onClick={closeTableModal}>
+          <form className="dash-panel dash-panel--center seating-table-modal" onSubmit={submitTable} onClick={(e) => e.stopPropagation()}>
+            <h2>{editingTableId ? 'Edit table' : 'Add table'}</h2>
+
+            <div className="seating-modal-preview">
+              <TableVisual table={previewTable} compact />
+            </div>
+
             <label className="dash-field">
-              <span>Table Number/ID</span>
-              <input value={tableForm.name} onChange={(e) => setTableForm({ ...tableForm, name: e.target.value })} />
+              <span>Table number</span>
+              <input value={tableForm.name} onChange={(e) => setTableForm({ ...tableForm, name: e.target.value })} placeholder="1" />
             </label>
+
             <label className="dash-field">
-              <span>Number of Seats</span>
+              <span>Area (suite)</span>
+              <select value={tableForm.suite} onChange={(e) => setTableForm({ ...tableForm, suite: e.target.value })}>
+                {tableSuites.map((s) => (
+                  <option key={s.id} value={s.id}>{s.icon} {s.label}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="dash-field">
+              <span>Priority (1 = best seats)</span>
+              <select value={tableForm.priority} onChange={(e) => setTableForm({ ...tableForm, priority: Number(e.target.value) })}>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                  <option key={n} value={n}>{n}{n === 1 ? ' — highest' : n === 10 ? ' — lowest' : ''}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="dash-field">
+              <span>Chairs</span>
               <div className="seat-counter">
-                <button type="button" onClick={() => setTableForm({ ...tableForm, seats: Math.max(2, tableForm.seats - 1) })}>−</button>
+                <button type="button" onClick={() => setTableForm({ ...tableForm, seats: Math.max(1, tableForm.seats - 1) })}>−</button>
                 <strong>{tableForm.seats}</strong>
                 <button type="button" onClick={() => setTableForm({ ...tableForm, seats: Math.min(20, tableForm.seats + 1) })}>+</button>
               </div>
             </label>
-            <span className="dash-field"><span>Table Shape</span></span>
+
+            <label className="dash-field">
+              <span>Default group (optional)</span>
+              <select value={tableForm.guestGroup} onChange={(e) => setTableForm({ ...tableForm, guestGroup: e.target.value })}>
+                <option value="">None</option>
+                {seatGroups.map((g) => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </label>
+
+            <span className="dash-field"><span>Shape</span></span>
             <div className="table-shape-grid">
               {tableShapes.map((s) => (
                 <button
@@ -210,9 +366,10 @@ function SeatingChartPage() {
                 </button>
               ))}
             </div>
+
             <div className="dash-panel__actions">
-              <button type="button" className="dash-btn dash-btn--outline" onClick={() => setShowTableModal(false)}>Cancel</button>
-              <button type="submit" className="dash-btn dash-btn--primary">Add Table</button>
+              <button type="button" className="dash-btn dash-btn--outline" onClick={closeTableModal}>Cancel</button>
+              <button type="submit" className="dash-btn dash-btn--primary">{editingTableId ? 'Save' : 'Add table'}</button>
             </div>
           </form>
         </div>

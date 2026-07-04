@@ -2,15 +2,20 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { districts } from '../../data/formOptions';
 import { vendorCategories } from '../../data/dashboardData';
-import { getUser, getVendorProfile, saveVendorProfile } from '../../utils/storage';
+import { getOnboarding, getUser, getVendorProfile, saveVendorProfile } from '../../utils/storage';
 
 function VendorSetupPage() {
   const navigate = useNavigate();
   const user = getUser();
+  const onboarding = getOnboarding();
   const existing = getVendorProfile();
   const [form, setForm] = useState(existing || {
-    businessName: '', category: vendorCategories[1] || 'Catering', district: 'Colombo',
-    priceRange: '100000-500000', description: '', ownerEmail: user?.email,
+    businessName: '',
+    category: onboarding?.vendorCategory || vendorCategories[1] || 'Catering',
+    district: onboarding?.vendorDistrict || 'Colombo',
+    priceRange: '100000-500000',
+    description: '',
+    ownerEmail: user?.email,
   });
 
   const submit = (e) => {
