@@ -1,27 +1,48 @@
 export const navLinks = [
-  { id: 'features', label: 'Features' },
+  { id: 'about', label: 'About WowWed' },
+  { id: 'features', label: 'Our Features' },
+  { id: 'whats-next', label: "What's Next" },
+  { id: 'vendors', label: 'Become A Vendor' },
+];
+
+export const featureStrip = [
+  { icon: '📋', label: 'Wedding Checklist', id: 'features' },
+  { icon: '🎟️', label: 'Guest-list', id: 'features' },
+  { icon: '🪑', label: 'Seating Chart', id: 'features' },
+  { icon: '💌', label: 'Invitations', id: 'features' },
+  { icon: '💰', label: 'Budget Management', id: 'features' },
+  { icon: '🏪', label: 'Find Vendors', id: 'features' },
 ];
 
 export const features = [
   {
     icon: '📋',
-    title: 'All-in-one planning',
-    description: 'Guests, budget, vendors, and seating in one place.',
+    title: 'Wedding Checklist',
+    description: 'Track tasks by month with filters, categories, and due dates.',
   },
   {
-    icon: '🤖',
-    title: 'Smart decisions',
-    description: 'AI cost prediction and seating for Sri Lankan weddings.',
+    icon: '🎟️',
+    title: 'Guest List',
+    description: 'Manage guests, groups, and RSVP status in one place.',
   },
   {
-    icon: '💐',
-    title: 'Local ceremonies',
-    description: 'Poruwa, Christian, Muslim, and Civil — with LKR budgeting.',
+    icon: '🪑',
+    title: 'Seating Chart',
+    description: 'Drag-and-drop seating with smart guest assignment.',
   },
-];
-
-export const roles = [
-  { id: 'couple', title: 'Couple', icon: '💑' },
-  { id: 'vendor', title: 'Vendor', icon: '🏛️' },
-  { id: 'admin', title: 'Admin', icon: '⚙️' },
+  {
+    icon: '💰',
+    title: 'Budget Management',
+    description: 'Track spending in LKR with categories and expense overview.',
+  },
+  {
+    icon: '🏪',
+    title: 'Find Vendors',
+    description: 'Discover Sri Lanka\'s best wedding professionals.',
+  },
+  {
+    icon: '👥',
+    title: 'Wedding Crew',
+    description: 'Organize your bridal party and wedding helpers.',
+  },
 ];

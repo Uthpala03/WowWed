@@ -11,6 +11,14 @@
   --color-border: #ede4dc;
   --color-success: #6b9e78;
   --color-danger: #c96a5a;
+  --color-warning: #d4a84b;
+  --color-sidebar-border: #ddb89e;
+  --color-surface-warm: #fff5ef;
+  --color-surface-toolbar: #fff0e8;
+  --color-grid-line: #e0e0e0;
+  --color-grid-bg: #f3f3f3;
+  --color-seat-empty: #ccc;
+  --color-seat-border: #999;
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-sans: 'Lato', system-ui, sans-serif;
   --radius-md: 14px;

@@ -2,21 +2,32 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FormLayout from '../components/layout/FormLayout';
 import Button from '../components/ui/Button';
-import { ceremonyTypes, districts, weddingScales } from '../data/formOptions';
-import { getUser, getWeddingProfile, saveWeddingProfile } from '../utils/storage';
+import { ceremonyTypes, districts, onboardingCeremonyTypes, weddingScales } from '../data/formOptions';
+import { getOnboarding, getUser, getWeddingProfile, saveWeddingProfile } from '../utils/storage';
 
-function emptyProfileFromSaved(saved) {
+function ceremonyLabelFromOnboarding(id) {
+  const match = onboardingCeremonyTypes.find((c) => c.id === id);
+  if (!match) return 'Poruwa';
+  if (match.id === 'church') return 'Christian';
+  if (match.id === 'both') return 'Poruwa';
+  if (match.id === 'reception') return 'Civil';
+  return 'Poruwa';
+}
+
+function emptyProfileFromSaved(saved, onboarding) {
   if (!saved) {
     return {
       partnerOne: '',
       partnerTwo: '',
-      weddingDate: '',
+      weddingDate: onboarding?.weddingDate || '',
       venue: '',
-      district: 'Colombo',
-      ceremonyType: 'Poruwa',
+      district: onboarding?.location || 'Colombo',
+      ceremonyType: ceremonyLabelFromOnboarding(onboarding?.ceremonyType),
       guestCount: '150',
       budget: '',
       scale: 'standard',
+      venueType: onboarding?.venueType || '',
+      planningStage: onboarding?.planningStage || '',
     };
   }
 
@@ -36,7 +47,7 @@ function emptyProfileFromSaved(saved) {
 function WeddingProfilePage() {
   const navigate = useNavigate();
   const user = getUser();
-  const [form, setForm] = useState(() => emptyProfileFromSaved(getWeddingProfile()));
+  const [form, setForm] = useState(() => emptyProfileFromSaved(getWeddingProfile(), getOnboarding()));
   const [error, setError] = useState('');
 
   const update = (field) => (event) => {
@@ -132,7 +143,7 @@ function WeddingProfilePage() {
         <div className="form__row">
           <label className="form__field">
             <span>Total budget (LKR)</span>
-            <input type="number" min="1" step="1000" value={form.budget} onChange={update('budget')} placeholder="2500000" />
+            <input type="number" min="1" step="1" value={form.budget} onChange={update('budget')} placeholder="2500000" />
           </label>
           <label className="form__field">
             <span>Wedding scale</span>

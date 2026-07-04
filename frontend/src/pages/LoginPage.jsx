@@ -37,8 +37,13 @@ function LoginPage() {
       return;
     }
 
+    if (form.password !== saved.password) {
+      setError('Incorrect password. Try again or create a new account.');
+      return;
+    }
+
     saveUser({ ...saved, lastLogin: new Date().toISOString() });
-    navigate(saved.role === 'couple' ? '/dashboard' : '/dashboard');
+    navigate(saved.role === 'vendor' ? '/vendor' : '/dashboard');
   };
 
   return (
@@ -62,7 +67,7 @@ function LoginPage() {
       </form>
 
       <p className="form-page__footer">
-        New to WowWed? <Link to="/get-started">Get started</Link>
+        <Link to="/password-reset">Forgot password?</Link> · New to WowWed? <Link to="/get-started">Get started</Link>
       </p>
     </FormLayout>
   );

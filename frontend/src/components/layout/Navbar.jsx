@@ -32,7 +32,7 @@ function Navbar() {
 
         <div className="navbar__actions">
           <Button variant="ghost" to="/login">Log in</Button>
-          <Button variant="primary" to="/get-started">Get started</Button>
+          <Button variant="primary" to="/get-started">Start planning</Button>
         </div>
       </div>
     </header>
