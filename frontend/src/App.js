@@ -1,20 +1,42 @@
 import { useEffect, useState } from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import Navbar from './components/layout/Navbar';
+import Footer from './components/layout/Footer';
+import HomePage from './pages/HomePage';
+import GetStartedPage from './pages/GetStartedPage';
+import LoginPage from './pages/LoginPage';
+import WeddingProfilePage from './pages/WeddingProfilePage';
+import ChatbotPage from './pages/ChatbotPage';
+import DashboardPage from './pages/DashboardPage';
+import { fetchApi } from './services/api';
+import './App.css';
 
 function App() {
-  const [message, setMessage] = useState('Loading...');
+  const [apiMessage, setApiMessage] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost:5000/')
-      .then((res) => res.json())
-      .then((data) => setMessage(data.message))
-      .catch(() => setMessage('Could not reach WowWed API. Is the backend running?'));
+    fetchApi('/')
+      .then((data) => setApiMessage(data.message))
+      .catch(() => setApiMessage('Backend offline'));
   }, []);
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'system-ui, sans-serif' }}>
-      <h1>{message}</h1>
-      <p>WowWed frontend is connected.</p>
-    </div>
+    <BrowserRouter>
+      <div className="app">
+        <Navbar />
+        <main>
+          <Routes>
+            <Route path="/" element={<HomePage apiMessage={apiMessage} />} />
+            <Route path="/get-started" element={<GetStartedPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/wedding-profile" element={<WeddingProfilePage />} />
+            <Route path="/chatbot" element={<ChatbotPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </BrowserRouter>
   );
 }
 

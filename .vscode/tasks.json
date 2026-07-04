@@ -1,0 +1,83 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "install-all",
+      "dependsOn": ["install-backend", "install-frontend"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    },
+    {
+      "label": "install-backend",
+      "type": "shell",
+      "command": "npm install",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "problemMatcher": []
+    },
+    {
+      "label": "install-frontend",
+      "type": "shell",
+      "command": "npm install",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "problemMatcher": []
+    },
+    {
+      "label": "backend",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/backend",
+        "env": { "PORT": "5002" }
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "wowwed",
+        "pattern": { "regexp": "." },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "WowWed server running|running on port"
+        }
+      },
+      "presentation": {
+        "group": "wowwed",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "frontend",
+      "type": "shell",
+      "command": "npm start",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend",
+        "env": {
+          "PORT": "3001",
+          "BROWSER": "none",
+          "REACT_APP_API_URL": "http://localhost:5002"
+        }
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "wowwed",
+        "pattern": { "regexp": "." },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Compiled successfully|webpack compiled"
+        }
+      },
+      "presentation": {
+        "group": "wowwed",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "WowWed: Run",
+      "dependsOn": ["backend", "frontend"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    }
+  ]
+}

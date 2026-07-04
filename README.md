@@ -1,52 +1,29 @@
 # WowWed
 
-Wedding planning platform with a React frontend, Node.js API, and Python AI engine.
+Wedding planning app — React + Node.js.
 
-## Project structure
+## Run (VS Code)
 
-```
-Wowwed/
-├── frontend/     ← React app (what users see)
-├── backend/      ← Node.js + Express (server & API)
-├── ai-engine/    ← Python (ML models & AI logic)
-└── docs/         ← project documents
-```
-
-## Quick start
-
-### Backend
-
-```bash
-cd backend
+```powershell
 npm install
-node server.js
+npm run install:all
+npm run dev
 ```
 
-API: http://localhost:5000
+Open http://localhost:3001
 
-### Frontend
+Or press **F5** → **Run WowWed**
 
-```bash
-cd frontend
-npm install
-npm start
-```
+Or double-click `Launch WowWed.bat`
 
-App: http://localhost:3000
+## Ports
 
-### AI engine
+- Website: http://localhost:3001
+- API: http://localhost:5002
 
-```bash
-cd ai-engine
-venv\Scripts\activate
-pip install -r requirements.txt
-python app.py
-```
+## Folders
 
-## Database
-
-See `docs/database-setup.sql` for creating `WowWedDB` in SQL Server.
-
-## Environment
-
-Copy `backend/.env.example` to `backend/.env` and fill in your values.
+- `frontend/` — React UI
+- `backend/` — Express API
+- `ai-engine/` — Python AI (optional)
+- `docs/database-setup.sql` — SQL Server schema
