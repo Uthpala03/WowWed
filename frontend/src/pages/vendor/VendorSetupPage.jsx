@@ -1,33 +1,47 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { districts } from '../../data/formOptions';
+import { vendorCatalog } from '../../models/VendorCategory';
 import { vendorCategories } from '../../data/dashboardData';
-import { getOnboarding, getUser, getVendorProfile, saveVendorProfile } from '../../utils/storage';
+import { useAuth } from '../../context/AuthContext';
+import { getOnboarding, getVendorProfile, saveVendorProfile } from '../../utils/storage';
+import PageHeader from '../../components/ui/PageHeader';
 
 function VendorSetupPage() {
   const navigate = useNavigate();
-  const user = getUser();
+  const { user } = useAuth();
   const onboarding = getOnboarding();
   const existing = getVendorProfile();
   const [form, setForm] = useState(existing || {
     businessName: '',
-    category: onboarding?.vendorCategory || vendorCategories[1] || 'Catering',
+    category: onboarding?.vendorCategory || vendorCatalog.getDefault().label,
     district: onboarding?.vendorDistrict || 'Colombo',
     priceRange: '100000-500000',
     description: '',
     ownerEmail: user?.email,
   });
+  const [submitting, setSubmitting] = useState(false);
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     if (!form.businessName.trim()) return;
-    saveVendorProfile({ ...form, id: existing?.id || `vp-${Date.now()}`, rating: 4.5, ownerEmail: user.email });
-    navigate('/vendor');
+    setSubmitting(true);
+    try {
+      await saveVendorProfile({
+        ...form,
+        id: existing?.id || `vp-${user?.id || Date.now()}`,
+        rating: 4.5,
+        ownerEmail: user.email,
+      });
+      navigate('/vendor');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className="dash-page">
-      <header className="dash-page__header"><div><h1>Vendor listing</h1><p>Your profile goes live immediately — no approval wait (M07)</p></div></header>
+      <PageHeader moduleId="vendor-profile" title="Vendor listing" />
       <form className="dash-card form" onSubmit={submit} style={{ maxWidth: 560 }}>
         <label className="dash-field"><span>Business name *</span><input required value={form.businessName} onChange={(e) => setForm({ ...form, businessName: e.target.value })} /></label>
         <label className="dash-field"><span>Category</span>
@@ -42,7 +56,9 @@ function VendorSetupPage() {
         </label>
         <label className="dash-field"><span>Price range (LKR)</span><input value={form.priceRange} onChange={(e) => setForm({ ...form, priceRange: e.target.value })} placeholder="e.g. 150000-800000" /></label>
         <label className="dash-field"><span>Description</span><textarea rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
-        <button type="submit" className="dash-btn dash-btn--primary">Publish listing</button>
+        <button type="submit" className="dash-btn dash-btn--primary" disabled={submitting}>
+          {submitting ? 'Saving…' : 'Publish listing'}
+        </button>
       </form>
     </div>
   );

@@ -73,6 +73,7 @@ button {
 
 .section {
   padding: 4rem 0;
+  scroll-margin-top: calc(var(--nav-height) + 0.5rem);
 }
 
 .section__header {

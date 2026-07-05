@@ -1,10 +1,13 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import DashboardLayout from './components/dashboard/DashboardLayout';
 import VendorLayout from './components/vendor/VendorLayout';
 import HomePage from './pages/HomePage';
 import GetStartedPage from './pages/GetStartedPage';
+import CoupleGetStartedPage from './pages/CoupleGetStartedPage';
+import VendorGetStartedPage from './pages/VendorGetStartedPage';
 import CreateAccountPage from './pages/CreateAccountPage';
 import LoginPage from './pages/LoginPage';
 import PasswordResetPage from './pages/PasswordResetPage';
@@ -30,7 +33,7 @@ import './App.css';
 function AppShell() {
   const location = useLocation();
   const isDashboard = location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/vendor');
-  const isOnboarding = ['/get-started', '/create-account'].includes(location.pathname);
+  const isOnboarding = location.pathname.startsWith('/get-started') || location.pathname === '/create-account';
 
   return (
     <div className="app">
@@ -39,6 +42,8 @@ function AppShell() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/get-started" element={<GetStartedPage />} />
+          <Route path="/get-started/couple" element={<CoupleGetStartedPage />} />
+          <Route path="/get-started/vendor" element={<VendorGetStartedPage />} />
           <Route path="/create-account" element={<CreateAccountPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/password-reset" element={<PasswordResetPage />} />
@@ -74,7 +79,9 @@ function AppShell() {
 function App() {
   return (
     <BrowserRouter>
-      <AppShell />
+      <AuthProvider>
+        <AppShell />
+      </AuthProvider>
     </BrowserRouter>
   );
 }

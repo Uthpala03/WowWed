@@ -2,48 +2,40 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import FormLayout from '../components/layout/FormLayout';
 import Button from '../components/ui/Button';
-import { getUser, saveUser } from '../utils/storage';
+import { useAuth } from '../context/AuthContext';
+import { loginUser } from '../utils/storage';
+import { coupleOnboarding } from '../models/OnboardingPath';
 
 function LoginPage() {
   const navigate = useNavigate();
-  const existingUser = getUser();
-  const [form, setForm] = useState({
-    email: existingUser?.email || '',
-    password: '',
-  });
+  const { refresh } = useAuth();
+  const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const update = (field) => (event) => {
     setForm((current) => ({ ...current, [field]: event.target.value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
 
-    const saved = getUser();
-    if (!saved) {
-      setError('No account found. Please get started first.');
+    if (!form.email.trim() || !form.password) {
+      setError('Please enter your email and password.');
       return;
     }
 
-    if (form.email.trim().toLowerCase() !== saved.email) {
-      setError('Email not found. Check your details or create an account.');
-      return;
+    setSubmitting(true);
+    try {
+      const user = await loginUser(form.email.trim().toLowerCase(), form.password);
+      refresh();
+      navigate(user.role === 'vendor' ? '/vendor' : '/dashboard');
+    } catch (err) {
+      setError(err.message || 'Login failed. Check your details and try again.');
+    } finally {
+      setSubmitting(false);
     }
-
-    if (!form.password) {
-      setError('Please enter your password.');
-      return;
-    }
-
-    if (form.password !== saved.password) {
-      setError('Incorrect password. Try again or create a new account.');
-      return;
-    }
-
-    saveUser({ ...saved, lastLogin: new Date().toISOString() });
-    navigate(saved.role === 'vendor' ? '/vendor' : '/dashboard');
   };
 
   return (
@@ -61,13 +53,13 @@ function LoginPage() {
 
         {error && <p className="form__error">{error}</p>}
 
-        <Button type="submit" variant="primary" className="form__submit">
-          Log in
+        <Button type="submit" variant="primary" className="form__submit" disabled={submitting}>
+          {submitting ? 'Logging in…' : 'Log in'}
         </Button>
       </form>
 
       <p className="form-page__footer">
-        <Link to="/password-reset">Forgot password?</Link> · New to WowWed? <Link to="/get-started">Get started</Link>
+        <Link to="/password-reset">Forgot password?</Link> · New to WowWed? <Link to={coupleOnboarding.route}>Get started</Link>
       </p>
     </FormLayout>
   );

@@ -631,6 +631,28 @@
   flex-wrap: wrap;
 }
 
+.dash-page__intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.dash-page__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.dash-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .dash-page__eyebrow {
   display: none;
 }
@@ -3103,6 +3125,12 @@
   align-items: center;
 }
 
+.vendors-hero .dash-page__intro {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
 .vendors-hero h1 {
   font-size: 2rem;
 }
@@ -3118,6 +3146,10 @@
   max-width: 720px;
   width: 100%;
   margin-top: 1rem;
+}
+
+.vendor-search-bar--standalone {
+  margin: -0.5rem auto 1.25rem;
 }
 
 .vendor-search-bar select,

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { getBookings, getVendorProfile } from '../../utils/storage';
+import PageHeader from '../../components/ui/PageHeader';
 
 function VendorDashboard() {
   const profile = getVendorProfile();
@@ -10,13 +11,13 @@ function VendorDashboard() {
 
   return (
     <div className="dash-page">
-      <header className="dash-page__header">
-        <div>
-          <h1>Vendor Dashboard</h1>
-          <p>{profile?.businessName || 'Complete your listing'} — instantly live on WowWed (M07)</p>
-        </div>
+      <PageHeader
+        moduleId="vendor-overview"
+        title="Vendor Dashboard"
+        tagline={profile?.businessName ? `${profile.businessName} — your listing is live on WowWed` : 'Complete your listing to go live instantly — no approval wait'}
+      >
         {!profile && <Link to="/vendor/profile" className="dash-btn dash-btn--primary">Create listing</Link>}
-      </header>
+      </PageHeader>
       <div className="dash-stats">
         <article className="dash-stat-card"><span>Pending requests</span><strong>{pending}</strong></article>
         <article className="dash-stat-card"><span>Confirmed</span><strong>{confirmed}</strong></article>

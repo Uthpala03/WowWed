@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getBudget, getWeddingProfile, saveBudget } from '../../utils/storage';
 import { predictWeddingCost } from '../../utils/costPrediction';
+import PageHeader from '../../components/ui/PageHeader';
 
 const categoryColors = ['#e8a88c', '#7a9eb8', '#b8a0c8', '#d4b85c', '#c96a5a', '#6b9e78', '#5c6d8a', '#8a7268'];
 const sortOptions = ['Default', 'Name', 'Remaining budget', 'Budget allocated'];
@@ -77,9 +78,7 @@ function BudgetPage() {
 
   return (
     <div className="dash-page">
-      <header className="dash-page__header">
-        <div><h1>Budget</h1><p>Track spending for your wedding</p></div>
-      </header>
+      <PageHeader moduleId="budget" />
 
       {overspent && (
         <div className="dash-alert dash-alert--danger">

@@ -3,6 +3,7 @@ import TableVisual from '../../components/seating/TableVisual';
 import { guestGroups, tableShapes } from '../../data/dashboardData';
 import { SeatingChart, Table, tableSuites } from '../../models/Seating';
 import { getGuests, getSeating, saveSeating } from '../../utils/storage';
+import PageHeader from '../../components/ui/PageHeader';
 
 const emptyTableForm = {
   name: '',
@@ -151,16 +152,12 @@ function SeatingChartPage() {
 
   return (
     <div className="dash-page dash-page--seating">
-      <header className="dash-page__header">
-        <div>
-          <h1>Seating Chart</h1>
-          <p>Arrange tables by area — seat guests in one click</p>
-        </div>
+      <PageHeader moduleId="seating">
         <div className="dash-page__actions">
           <button type="button" className="dash-btn dash-btn--outline" onClick={runAutoSeat}>Auto-seat all</button>
           <button type="button" className="dash-btn dash-btn--primary" onClick={openAddTable}>+ Add table</button>
         </div>
-      </header>
+      </PageHeader>
 
       {toast && <div className="guest-import-toast">{toast}</div>}
 

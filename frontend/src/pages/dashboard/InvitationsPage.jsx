@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { getInvitation, getWeddingProfile, saveInvitation } from '../../utils/storage';
+import PageHeader from '../../components/ui/PageHeader';
 
 const templates = [
   { id: 'classic', name: 'Classic Elegance', color: '#5c3d2e' },
@@ -35,13 +36,9 @@ function InvitationsPage() {
 
   return (
     <div className="dash-page">
-      <header className="dash-page__header">
-        <div>
-          <h1>Invitation Designer</h1>
-          <p>Choose a template, customise your message, and export as PDF (M12)</p>
-        </div>
+      <PageHeader moduleId="invitations" title="Invitation Designer">
         <button type="button" className="dash-btn dash-btn--primary" onClick={exportPdf}>Export PDF</button>
-      </header>
+      </PageHeader>
 
       <div className="invite-layout">
         <div className="dash-card">

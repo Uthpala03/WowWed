@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { guestGroups, rsvpStatuses } from '../../data/dashboardData';
 import { getGuests, saveGuests } from '../../utils/storage';
+import PageHeader from '../../components/ui/PageHeader';
 
 const emptyGuest = { name: '', email: '', phone: '', group: 'No Group', rsvp: 'Pending', notes: '' };
 const PAGE_SIZES = [25, 50, 100, 250];
@@ -314,11 +315,7 @@ function GuestListPage() {
 
   return (
     <div className="dash-page dash-page--guests">
-      <header className="dash-page__header">
-        <div>
-          <h1>Guest List</h1>
-          <p>Manage hundreds or thousands of guests — import, bulk update, and export RSVPs</p>
-        </div>
+      <PageHeader moduleId="guests">
         <div className="dash-page__actions">
           <button type="button" className="dash-btn dash-btn--outline" onClick={exportCsv}>Export CSV</button>
           <label className="dash-btn dash-btn--outline csv-upload">
@@ -328,7 +325,7 @@ function GuestListPage() {
           <button type="button" className="dash-btn dash-btn--outline" onClick={() => setBulkAddOpen(true)}>Add many</button>
           <button type="button" className="dash-btn dash-btn--primary" onClick={openAdd}>+ Add guest</button>
         </div>
-      </header>
+      </PageHeader>
 
       {importResult && (
         <div className="guest-import-toast">

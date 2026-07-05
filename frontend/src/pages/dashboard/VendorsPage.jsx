@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { defaultVendors, vendorCategories } from '../../data/dashboardData';
-import { getBookings, getUser, getWeddingProfile, getVendorListings, saveBookings } from '../../utils/storage';
+import { vendorCategories } from '../../data/dashboardData';
+import { addBooking, getUser, getWeddingProfile, getVendorListings } from '../../utils/storage';
+import PageHeader from '../../components/ui/PageHeader';
 
 function recommendVendors(vendors, profile) {
   if (!profile) return vendors;
@@ -23,12 +24,7 @@ function VendorsPage() {
   const [bookingVendor, setBookingVendor] = useState(null);
   const [bookForm, setBookForm] = useState({ date: '', amount: '', message: '' });
 
-  const allVendors = useMemo(() => {
-    const registered = getVendorListings();
-    const merged = [...defaultVendors];
-    registered.forEach((v) => { if (!merged.find((m) => m.id === v.id)) merged.push(v); });
-    return merged;
-  }, []);
+  const allVendors = useMemo(() => getVendorListings(), []);
 
   const filtered = useMemo(() => {
     const list = allVendors.filter((v) => {
@@ -41,10 +37,9 @@ function VendorsPage() {
     return recommendVendors(list, profile);
   }, [allVendors, category, city, search, profile]);
 
-  const submitBooking = (e) => {
+  const submitBooking = async (e) => {
     e.preventDefault();
-    const bookings = getBookings();
-    saveBookings([...bookings, {
+    await addBooking({
       id: `bk${Date.now()}`,
       vendorName: bookingVendor.name,
       vendorEmail: bookingVendor.ownerEmail || '',
@@ -55,24 +50,21 @@ function VendorsPage() {
       message: bookForm.message,
       status: 'Pending',
       createdAt: new Date().toISOString(),
-    }]);
+    });
     setBookingVendor(null);
     setBookForm({ date: '', amount: '', message: '' });
   };
 
   return (
     <div className="dash-page vendors-page">
-      <header className="dash-page__header vendors-hero">
-        <h1>Find Your Perfect Wedding Vendors</h1>
-        <p>Smart recommendations by district & budget (M09) · Book instantly (M08)</p>
-        <div className="vendor-search-bar">
-          <select value={category} onChange={(e) => setCategory(e.target.value)}>
-            {vendorCategories.map((c) => <option key={c}>{c}</option>)}
-          </select>
-          <input placeholder="Search by city" value={city} onChange={(e) => setCity(e.target.value)} />
-          <input placeholder="Search vendors..." value={search} onChange={(e) => setSearch(e.target.value)} />
-        </div>
-      </header>
+      <PageHeader moduleId="vendors" title="Find Your Perfect Wedding Vendors" className="vendors-hero" />
+      <div className="vendor-search-bar vendor-search-bar--standalone">
+        <select value={category} onChange={(e) => setCategory(e.target.value)}>
+          {vendorCategories.map((c) => <option key={c}>{c}</option>)}
+        </select>
+        <input placeholder="Search by city" value={city} onChange={(e) => setCity(e.target.value)} />
+        <input placeholder="Search vendors..." value={search} onChange={(e) => setSearch(e.target.value)} />
+      </div>
 
       {profile && <p className="vendor-rec-note">✨ Recommended for {profile.district} · {profile.ceremonyType}</p>}
 

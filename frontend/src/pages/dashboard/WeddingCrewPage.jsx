@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { crewRoles } from '../../data/dashboardData';
 import { getCrew, saveCrew } from '../../utils/storage';
+import PageHeader from '../../components/ui/PageHeader';
 
 function WeddingCrewPage() {
   const [crew, setCrew] = useState(() => getCrew());
@@ -26,13 +27,9 @@ function WeddingCrewPage() {
 
   return (
     <div className="dash-page">
-      <header className="dash-page__header">
-        <div>
-          <h1>Wedding Crew</h1>
-          <p>Manage your bridal party and wedding helpers</p>
-        </div>
+      <PageHeader moduleId="crew">
         <button type="button" className="dash-btn dash-btn--primary" onClick={() => setPanelOpen(true)}>+ Add Member</button>
-      </header>
+      </PageHeader>
 
       <div className="dash-card">
         {crew.length === 0 ? (

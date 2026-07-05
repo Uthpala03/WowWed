@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { getChatbotReply } from '../../data/chatbotKnowledge';
+import PageHeader from '../../components/ui/PageHeader';
 
 function ChatbotPage() {
   const [messages, setMessages] = useState([
@@ -17,12 +18,7 @@ function ChatbotPage() {
 
   return (
     <div className="dash-page">
-      <header className="dash-page__header">
-        <div>
-          <h1>Planning Assistant</h1>
-          <p>Offline guidance powered by our wedding knowledge base (M16)</p>
-        </div>
-      </header>
+      <PageHeader moduleId="assistant" title="Planning Assistant" />
       <div className="dash-card chatbot-dash">
         <div className="chatbot__messages">
           {messages.map((msg, i) => (

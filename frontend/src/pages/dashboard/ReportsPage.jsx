@@ -1,4 +1,5 @@
 import { getBudget, getGuests, getSeating, getTasks, getWeddingProfile, getBookings } from '../../utils/storage';
+import PageHeader from '../../components/ui/PageHeader';
 
 const reportTypes = [
   { id: 'guests', title: 'Guest List Report', desc: 'All guests with RSVP status and groups' },
@@ -52,12 +53,7 @@ function ReportsPage() {
 
   return (
     <div className="dash-page">
-      <header className="dash-page__header">
-        <div>
-          <h1>PDF Reports</h1>
-          <p>One-click exports for your wedding documents (M17)</p>
-        </div>
-      </header>
+      <PageHeader moduleId="reports" title="PDF Reports" />
       <div className="reports-grid">
         {reportTypes.map((r) => (
           <article key={r.id} className="dash-card report-card">

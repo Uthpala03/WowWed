@@ -1,142 +1,283 @@
-const USER_KEY = 'wowwed_user';
-const PROFILE_KEY = 'wowwed_wedding_profile';
-const ONBOARDING_KEY = 'wowwed_onboarding';
-const TASKS_KEY = 'wowwed_tasks';
-const GUESTS_KEY = 'wowwed_guests';
-const BUDGET_KEY = 'wowwed_budget';
-const SEATING_KEY = 'wowwed_seating';
-const CREW_KEY = 'wowwed_crew';
-const BOOKINGS_KEY = 'wowwed_bookings';
-const VENDOR_PROFILE_KEY = 'wowwed_vendor_profile';
-const INVITATIONS_KEY = 'wowwed_invitations';
-const VENDOR_LISTINGS_KEY = 'wowwed_vendor_listings';
+import { api, setToken } from '../services/api';
 
-export function saveUser(user) {
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
+const ONBOARDING_DRAFT_KEY = 'wowwed_onboarding_draft';
+
+const cache = {
+  user: null,
+  weddingProfile: null,
+  onboarding: null,
+  vendorProfile: null,
+  vendorListings: [],
+  tasks: null,
+  guests: [],
+  budget: null,
+  seating: { tables: [], assignments: {} },
+  crew: [],
+  bookings: [],
+  invitation: null,
+  hydrated: false,
+};
+
+function getOnboardingDraft() {
+  const raw = localStorage.getItem(ONBOARDING_DRAFT_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+
+function saveOnboardingDraft(data) {
+  localStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify(data));
+}
+
+function clearOnboardingDraft() {
+  localStorage.removeItem(ONBOARDING_DRAFT_KEY);
 }
 
 export function getUser() {
-  const raw = localStorage.getItem(USER_KEY);
-  return raw ? JSON.parse(raw) : null;
+  return cache.user;
+}
+
+export async function registerUser(userData, onboarding) {
+  const { token, user } = await api.register({
+    fullName: userData.fullName,
+    email: userData.email,
+    phone: userData.phone,
+    password: userData.password,
+    role: userData.role || 'couple',
+    onboarding: onboarding || getOnboardingDraft(),
+  });
+
+  setToken(token);
+  cache.user = user;
+  cache.onboarding = onboarding || getOnboardingDraft();
+  clearOnboardingDraft();
+  await hydrateUserData();
+  return user;
+}
+
+export async function loginUser(email, password) {
+  const { token, user } = await api.login({ email, password });
+  setToken(token);
+  cache.user = user;
+  await hydrateUserData();
+  return user;
 }
 
 export function clearUser() {
-  localStorage.removeItem(USER_KEY);
+  setToken(null);
+  cache.user = null;
+  cache.weddingProfile = null;
+  cache.onboarding = null;
+  cache.vendorProfile = null;
+  cache.vendorListings = [];
+  cache.tasks = null;
+  cache.guests = [];
+  cache.budget = null;
+  cache.seating = { tables: [], assignments: {} };
+  cache.crew = [];
+  cache.bookings = [];
+  cache.invitation = null;
+  cache.hydrated = false;
 }
 
-export function saveWeddingProfile(profile) {
-  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+export async function restoreSession() {
+  if (!localStorage.getItem('wowwed_token')) return null;
+  try {
+    const { user } = await api.me();
+    cache.user = user;
+    await hydrateUserData();
+    return user;
+  } catch {
+    clearUser();
+    return null;
+  }
 }
 
-export function getWeddingProfile() {
-  const raw = localStorage.getItem(PROFILE_KEY);
-  return raw ? JSON.parse(raw) : null;
+export async function hydrateUserData() {
+  if (!cache.user) return;
+
+  const requests = [
+    api.getAllData(),
+    api.getBookings(),
+    api.getVendorListings(),
+  ];
+
+  if (cache.user.role === 'couple') {
+    requests.push(api.getWeddingProfile(), api.getOnboarding());
+  } else {
+    requests.push(api.getVendorProfile(), api.getOnboarding());
+  }
+
+  const results = await Promise.all(requests);
+  const data = results[0];
+  const bookings = results[1];
+  const vendors = results[2];
+
+  cache.tasks = data.tasks;
+  cache.guests = data.guests || [];
+  cache.budget = data.budget;
+  cache.seating = data.seating || { tables: [], assignments: {} };
+  cache.crew = data.crew || [];
+  cache.invitation = data.invitation;
+  cache.bookings = bookings.bookings || [];
+  cache.vendorListings = vendors.listings || [];
+
+  if (cache.user.role === 'couple') {
+    cache.weddingProfile = results[3]?.profile || null;
+    cache.onboarding = results[4]?.onboarding || null;
+  } else {
+    cache.vendorProfile = results[3]?.profile || null;
+    cache.onboarding = results[4]?.onboarding || null;
+  }
+
+  cache.hydrated = true;
 }
 
 export function saveOnboarding(data) {
-  localStorage.setItem(ONBOARDING_KEY, JSON.stringify(data));
+  saveOnboardingDraft(data);
+  cache.onboarding = data;
 }
 
 export function getOnboarding() {
-  const raw = localStorage.getItem(ONBOARDING_KEY);
-  return raw ? JSON.parse(raw) : null;
+  return cache.onboarding || getOnboardingDraft();
 }
 
-export function getTasks() {
-  const raw = localStorage.getItem(TASKS_KEY);
-  return raw ? JSON.parse(raw) : null;
+export function getWeddingProfile() {
+  return cache.weddingProfile;
 }
 
-export function saveTasks(tasks) {
-  localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
-}
-
-export function getGuests() {
-  const raw = localStorage.getItem(GUESTS_KEY);
-  return raw ? JSON.parse(raw) : [];
-}
-
-export function saveGuests(guests) {
-  localStorage.setItem(GUESTS_KEY, JSON.stringify(guests));
-}
-
-export function getBudget() {
-  const raw = localStorage.getItem(BUDGET_KEY);
-  return raw ? JSON.parse(raw) : null;
-}
-
-export function saveBudget(budget) {
-  localStorage.setItem(BUDGET_KEY, JSON.stringify(budget));
-}
-
-export function getSeating() {
-  const raw = localStorage.getItem(SEATING_KEY);
-  return raw ? JSON.parse(raw) : { tables: [], assignments: {} };
-}
-
-export function saveSeating(seating) {
-  localStorage.setItem(SEATING_KEY, JSON.stringify(seating));
-}
-
-export function getCrew() {
-  const raw = localStorage.getItem(CREW_KEY);
-  return raw ? JSON.parse(raw) : [];
-}
-
-export function saveCrew(crew) {
-  localStorage.setItem(CREW_KEY, JSON.stringify(crew));
-}
-
-export function getBookings() {
-  const raw = localStorage.getItem(BOOKINGS_KEY);
-  return raw ? JSON.parse(raw) : [];
-}
-
-export function saveBookings(bookings) {
-  localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings));
+export async function saveWeddingProfile(profile) {
+  cache.weddingProfile = profile;
+  if (cache.user) {
+    const { profile: saved } = await api.saveWeddingProfile(profile);
+    cache.weddingProfile = saved;
+  }
 }
 
 export function getVendorProfile() {
-  const raw = localStorage.getItem(VENDOR_PROFILE_KEY);
-  return raw ? JSON.parse(raw) : null;
+  return cache.vendorProfile;
 }
 
-export function saveVendorProfile(profile) {
-  localStorage.setItem(VENDOR_PROFILE_KEY, JSON.stringify(profile));
-  const listings = getVendorListings().filter((v) => v.ownerEmail !== profile.ownerEmail);
-  listings.push({
-    id: profile.id || `v-${Date.now()}`,
-    name: profile.businessName,
-    category: profile.category,
-    city: profile.district,
-    district: profile.district,
-    priceRange: profile.priceRange,
-    description: profile.description,
-    rating: profile.rating || 4.5,
-    ownerEmail: profile.ownerEmail,
-    spotlight: false,
-  });
-  localStorage.setItem(VENDOR_LISTINGS_KEY, JSON.stringify(listings));
+export async function saveVendorProfile(profile) {
+  cache.vendorProfile = profile;
+  if (cache.user) {
+    const { profile: saved } = await api.saveVendorProfile(profile);
+    cache.vendorProfile = saved;
+    const { listings } = await api.getVendorListings();
+    cache.vendorListings = listings;
+  }
 }
 
 export function getVendorListings() {
-  const raw = localStorage.getItem(VENDOR_LISTINGS_KEY);
-  return raw ? JSON.parse(raw) : [];
+  return cache.vendorListings;
+}
+
+export function getTasks() {
+  return cache.tasks;
+}
+
+export async function saveTasks(tasks) {
+  cache.tasks = tasks;
+  if (cache.user) await api.saveData('tasks', tasks);
+}
+
+export function getGuests() {
+  return cache.guests;
+}
+
+export async function saveGuests(guests) {
+  cache.guests = guests;
+  if (cache.user) await api.saveData('guests', guests);
+}
+
+export function getBudget() {
+  return cache.budget;
+}
+
+export async function saveBudget(budget) {
+  cache.budget = budget;
+  if (cache.user) await api.saveData('budget', budget);
+}
+
+export function getSeating() {
+  return cache.seating;
+}
+
+export async function saveSeating(seating) {
+  cache.seating = seating;
+  if (cache.user) await api.saveData('seating', seating);
+}
+
+export function getCrew() {
+  return cache.crew;
+}
+
+export async function saveCrew(crew) {
+  cache.crew = crew;
+  if (cache.user) await api.saveData('crew', crew);
+}
+
+export function getBookings() {
+  return cache.bookings;
+}
+
+export async function saveBookings(bookings) {
+  cache.bookings = bookings;
+}
+
+export async function addBooking(booking) {
+  if (cache.user) {
+    const { booking: saved } = await api.createBooking(booking);
+    cache.bookings = [...cache.bookings, saved];
+    return saved;
+  }
+  cache.bookings = [...cache.bookings, booking];
+  return booking;
+}
+
+export async function updateBookingStatus(id, status) {
+  if (cache.user) {
+    const { booking } = await api.updateBooking(id, { status });
+    cache.bookings = cache.bookings.map((b) => (b.id === id ? booking : b));
+    return booking;
+  }
+  cache.bookings = cache.bookings.map((b) => (b.id === id ? { ...b, status } : b));
+  return cache.bookings.find((b) => b.id === id);
 }
 
 export function getInvitation() {
-  const raw = localStorage.getItem(INVITATIONS_KEY);
-  return raw ? JSON.parse(raw) : null;
+  return cache.invitation;
 }
 
-export function saveInvitation(data) {
-  localStorage.setItem(INVITATIONS_KEY, JSON.stringify(data));
+export async function saveInvitation(data) {
+  cache.invitation = data;
+  if (cache.user) await api.saveData('invitation', data);
 }
 
-export function initDashboardData(defaultTasks, defaultGuests = []) {
-  if (!getTasks()) saveTasks(defaultTasks);
-  if (getGuests().length === 0 && defaultGuests.length) saveGuests(defaultGuests);
-  if (!getBudget()) {
-    saveBudget({ total: 10000000, categories: [], expenses: [] });
+export async function resetPassword(email, password) {
+  await api.resetPassword({ email, password });
+}
+
+export async function initDashboardData(defaultTasks, defaultGuests = []) {
+  if (!cache.user || cache.user.role !== 'couple') return;
+
+  let changed = false;
+  if (!cache.tasks) {
+    cache.tasks = defaultTasks;
+    await api.saveData('tasks', defaultTasks);
+    changed = true;
   }
+  if (!cache.guests?.length && defaultGuests.length) {
+    cache.guests = defaultGuests;
+    await api.saveData('guests', defaultGuests);
+    changed = true;
+  }
+  if (!cache.budget) {
+    cache.budget = { total: 10000000, categories: [], expenses: [] };
+    await api.saveData('budget', cache.budget);
+    changed = true;
+  }
+  return changed;
+}
+
+export function isHydrated() {
+  return cache.hydrated;
 }

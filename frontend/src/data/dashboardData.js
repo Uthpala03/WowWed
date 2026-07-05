@@ -1,35 +1,11 @@
-export const dashboardNav = [
-  { to: '/dashboard', label: 'Home', icon: '✨', end: true, accent: '#fff0e8', ring: '#e8a88c' },
-  { to: '/dashboard/checklist', label: 'Checklist', icon: '✅', accent: '#eef6f0', ring: '#6b9e78' },
-  { to: '/dashboard/guests', label: 'Guest List', icon: '🎟️', accent: '#fff5ef', ring: '#e8a88c' },
-  { to: '/dashboard/seating', label: 'Seating Chart', icon: '🪑', accent: '#f0f4f8', ring: '#7a9eb8' },
-  { to: '/dashboard/budget', label: 'Budget', icon: '💰', accent: '#fdf8ee', ring: '#d4a84b' },
-  { to: '/dashboard/vendors', label: 'Vendors', icon: '🏪', accent: '#fdf0ee', ring: '#c96a5a' },
-  { to: '/dashboard/invitations', label: 'Invitations', icon: '💌', accent: '#f8f0f8', ring: '#b8a0c8' },
-  { to: '/dashboard/analytics', label: 'Analytics', icon: '📈', accent: '#eef6f0', ring: '#6b9e78' },
-  { to: '/dashboard/reports', label: 'Reports', icon: '📄', accent: '#f0f4f8', ring: '#7a9eb8' },
-  { to: '/dashboard/assistant', label: 'Assistant', icon: '💬', accent: '#fff0e8', ring: '#e8a88c' },
-  { to: '/dashboard/crew', label: 'Wedding Crew', icon: '💐', accent: '#f8f0f8', ring: '#b8a0c8' },
-];
+import { wowWedModules } from '../models/AppModule';
+import { vendorCategories, vendorCategoryLabels } from '../models/VendorCategory';
 
-export const vendorNav = [
-  { to: '/vendor', label: 'Overview', icon: '🏪', end: true, accent: '#fdf0ee', ring: '#c96a5a' },
-  { to: '/vendor/bookings', label: 'Bookings', icon: '📅', accent: '#f0f4f8', ring: '#7a9eb8' },
-  { to: '/vendor/profile', label: 'My Listing', icon: '✏️', accent: '#fff0e8', ring: '#e8a88c' },
-];
+export { vendorCategories, vendorCategoryLabels };
 
-export const quickLinkHints = {
-  '/dashboard/checklist': 'Track tasks by month',
-  '/dashboard/crew': 'Manage bridal party',
-  '/dashboard/guests': 'RSVPs & guest groups',
-  '/dashboard/seating': 'Plan reception layout',
-  '/dashboard/budget': 'Track spending in LKR',
-  '/dashboard/vendors': 'Find & book vendors',
-  '/dashboard/invitations': 'Design & export PDF',
-  '/dashboard/analytics': 'Charts & readiness',
-  '/dashboard/reports': 'Download PDF reports',
-  '/dashboard/assistant': 'Offline planning help',
-};
+export const dashboardNav = wowWedModules.getDashboardNav().map((m) => m.toNavItem());
+export const vendorNav = wowWedModules.getVendorNav().map((m) => m.toNavItem());
+export const quickLinkHints = wowWedModules.getQuickLinkHints();
 
 export const taskCategories = [
   { id: 'guests', label: 'Guests', icon: '👤' },
@@ -162,23 +138,14 @@ export const defaultGuests = [
 ];
 
 export const defaultVendors = [
-  { id: 'v1', name: 'Blue Fin Bartenders', category: 'Bar Services & Food Carts', city: 'Colombo', spotlight: true },
-  { id: 'v2', name: 'Project Cocktail', category: 'Bar Services & Food Carts', city: 'Colombo', spotlight: true },
-  { id: 'v3', name: 'Dasun Nimantha Photography', category: 'Photographers & Videographers', city: 'Kandy', spotlight: true },
-  { id: 'v4', name: 'RAWDS', category: 'Photographers & Videographers', city: 'Galle', spotlight: false },
-  { id: 'v5', name: 'Grand Ballroom Colombo', category: 'Venues & Reception Halls', city: 'Colombo', spotlight: false },
-  { id: 'v6', name: 'Silk & Lace Bridal', category: 'Bridal Wear', city: 'Colombo', spotlight: false },
-];
-
-export const vendorCategories = [
-  'All Categories',
-  'Venues & Reception Halls',
-  'Bridal Wear',
-  'Mens Suits',
-  'Photographers & Videographers',
-  'Bands, DJs & Entertainment',
-  'Bar Services & Food Carts',
-  'Catering',
+  { id: 'v1', name: 'Grand Ballroom Colombo', category: 'Venue & Res. Halls', city: 'Colombo', spotlight: true },
+  { id: 'v2', name: 'Silk & Lace Bridal', category: 'Bridal Service', city: 'Colombo', spotlight: true },
+  { id: 'v3', name: 'Royal Groom Tailors', category: 'Groom service', city: 'Colombo', spotlight: false },
+  { id: 'v4', name: 'Dasun Nimantha Photography', category: 'Photography & Videography', city: 'Kandy', spotlight: true },
+  { id: 'v5', name: 'Ceylon Gold Jewellers', category: 'Jewellary', city: 'Colombo', spotlight: false },
+  { id: 'v6', name: 'Bloom & Vine Florals', category: 'Floral & Deco', city: 'Kandy', spotlight: false },
+  { id: 'v7', name: 'Island Feast Caterers', category: 'Caters', city: 'Galle', spotlight: true },
+  { id: 'v8', name: 'Sweet Layers Cakes', category: 'Cakes', city: 'Colombo', spotlight: false },
 ];
 
 export function getCategoryMeta(id) {

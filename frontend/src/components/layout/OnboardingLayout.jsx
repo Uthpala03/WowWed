@@ -1,7 +1,7 @@
-function OnboardingLayout({ children, step = 1 }) {
+function OnboardingLayout({ children, step = 1, variant = 'couple' }) {
   return (
-    <div className="onboarding">
-      <div className="onboarding__visual" aria-hidden="true">
+    <div className={`onboarding onboarding--${variant}`}>
+      <div className={`onboarding__visual onboarding__visual--${variant}`} aria-hidden="true">
         <div className="onboarding__visual-overlay" />
       </div>
       <div className="onboarding__panel">

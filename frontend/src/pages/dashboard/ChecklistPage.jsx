@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { crewRoles, defaultTasks, getCategoryMeta, getTaskDateGroups, groupTasksByMonth, taskCategories } from '../../data/dashboardData';
 import { getTasks, saveTasks } from '../../utils/storage';
+import PageHeader from '../../components/ui/PageHeader';
 
 function ChecklistPage() {
   const [tasks, setTasks] = useState(() => getTasks() || defaultTasks);
@@ -88,15 +89,11 @@ function ChecklistPage() {
 
   return (
     <div className="dash-page dash-page--checklist">
-      <header className="dash-page__header">
-        <div>
-          <h1>Wedding Checklist</h1>
-          <p>Tick off tasks month by month — your wedding timeline in one place</p>
-        </div>
+      <PageHeader moduleId="checklist">
         <div className="dash-page__actions">
           <button type="button" className="dash-btn dash-btn--primary" onClick={addTask}>+ Add task</button>
         </div>
-      </header>
+      </PageHeader>
 
       <section className="checklist-summary" aria-label="Checklist progress">
         <article className="checklist-summary__card checklist-summary__card--done">

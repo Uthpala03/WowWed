@@ -7,6 +7,7 @@ import {
   getCategoryMeta,
   quickLinkHints,
 } from '../../data/dashboardData';
+import AppIcon from '../../components/ui/AppIcon';
 import { getBudget, getGuests, getTasks, getUser, getWeddingProfile, initDashboardData } from '../../utils/storage';
 import { getReadinessStatus } from '../../utils/notifications';
 
@@ -156,7 +157,7 @@ function DashboardOverview() {
               className="dash-tool"
               style={{ '--tool-bg': item.accent, '--tool-ring': item.ring }}
             >
-              <span className="dash-tool__icon">{item.icon}</span>
+              <span className="dash-tool__icon"><AppIcon name={item.icon} size={22} /></span>
               <span className="dash-tool__name">{item.label}</span>
               <span className="dash-tool__hint">{quickLinkHints[item.to]}</span>
             </Link>

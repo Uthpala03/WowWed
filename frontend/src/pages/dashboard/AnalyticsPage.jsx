@@ -1,5 +1,6 @@
 import { getBudget, getGuests, getTasks, getWeddingProfile } from '../../utils/storage';
 import { getReadinessStatus } from '../../utils/notifications';
+import PageHeader from '../../components/ui/PageHeader';
 
 function AnalyticsPage() {
   const profile = getWeddingProfile();
@@ -22,13 +23,9 @@ function AnalyticsPage() {
 
   return (
     <div className="dash-page">
-      <header className="dash-page__header">
-        <div>
-          <h1>Analytics Dashboard</h1>
-          <p>Personal insights — budget, RSVP, and task progress (M13 & M15)</p>
-        </div>
+      <PageHeader moduleId="analytics" title="Analytics Dashboard">
         <span className={`readiness-badge ${status.className}`}>{status.label} · {readiness}%</span>
-      </header>
+      </PageHeader>
 
       <div className="analytics-grid">
         <section className="dash-card">

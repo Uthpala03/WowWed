@@ -2,20 +2,31 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { dashboardNav } from '../../data/dashboardData';
 import { buildNotifications } from '../../utils/notifications';
-import { clearUser, getUser, getWeddingProfile } from '../../utils/storage';
+import { getWeddingProfile } from '../../utils/storage';
+import { useAuth } from '../../context/AuthContext';
+import { coupleOnboarding } from '../../models/OnboardingPath';
+import AppIcon from '../ui/AppIcon';
 import NotificationsPanel from './NotificationsPanel';
 import '../../styles/dashboard.css';
 
 function DashboardLayout() {
   const navigate = useNavigate();
-  const user = getUser();
+  const { user, loading, logout } = useAuth();
   const profile = getWeddingProfile();
   const [notifOpen, setNotifOpen] = useState(false);
   const notifCount = buildNotifications().length;
 
   useEffect(() => {
-    if (user?.role === 'vendor') navigate('/vendor', { replace: true });
-  }, [user, navigate]);
+    if (!loading && user?.role === 'vendor') navigate('/vendor', { replace: true });
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="dash-auth">
+        <div className="dash-auth__card"><p>Loading your wedding data…</p></div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -25,7 +36,7 @@ function DashboardLayout() {
           <h1>Welcome to WowWed</h1>
           <p>Your beautiful wedding planner awaits.</p>
           <button type="button" className="dash-btn dash-btn--primary" onClick={() => navigate('/login')}>Log in</button>
-          <button type="button" className="dash-btn dash-btn--outline" onClick={() => navigate('/get-started')}>Start planning</button>
+          <button type="button" className="dash-btn dash-btn--outline" onClick={() => navigate(coupleOnboarding.route)}>Start planning</button>
         </div>
       </div>
     );
@@ -56,7 +67,9 @@ function DashboardLayout() {
         <nav className="dash-sidebar__nav">
           {dashboardNav.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => `dash-sidebar__link${isActive ? ' is-active' : ''}`} style={{ '--nav-accent': item.ring }}>
-              <span className="dash-sidebar__icon" style={{ background: item.accent }}>{item.icon}</span>
+              <span className="dash-sidebar__icon" style={{ background: item.accent, color: item.ring }}>
+                <AppIcon name={item.icon} size={18} />
+              </span>
               {item.label}
             </NavLink>
           ))}
@@ -64,10 +77,10 @@ function DashboardLayout() {
 
         <div className="dash-sidebar__bottom">
           <NavLink to="/dashboard/settings" className={({ isActive }) => `dash-sidebar__link dash-sidebar__link--sub${isActive ? ' is-active' : ''}`}>Settings</NavLink>
-          <button type="button" className="dash-sidebar__link dash-sidebar__link--sub dash-sidebar__link--btn" onClick={() => { clearUser(); navigate('/'); }}>Log out</button>
+          <button type="button" className="dash-sidebar__link dash-sidebar__link--sub dash-sidebar__link--btn" onClick={() => { logout(); navigate('/'); }}>Log out</button>
         </div>
       </aside>
-      <div className="dash-main"><Outlet /></div>
+      <div className="dash-main"><Outlet key={user.id} /></div>
     </div>
   );
 }

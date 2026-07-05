@@ -1,27 +1,46 @@
-import { features } from '../../data/siteContent';
+import Button from '../ui/Button';
+import AppIcon from '../ui/AppIcon';
+import { coupleOnboarding } from '../../models/OnboardingPath';
+import { wowWedModules } from '../../models/AppModule';
+
+function FeatureShowcaseCard({ module: mod }) {
+  const tone = mod.getToneStyle();
+
+  return (
+    <article
+      className="feature-showcase"
+      style={{ background: tone.bg, color: tone.text }}
+    >
+      <span className="feature-showcase__icon" aria-hidden="true">
+        <AppIcon name={mod.icon} size={26} />
+      </span>
+      <h3 className="feature-showcase__title">{mod.name}</h3>
+      <p className="feature-showcase__text">{mod.description}</p>
+    </article>
+  );
+}
 
 function Features() {
+  const cards = wowWedModules.getShowcaseCards();
+
   return (
     <section className="section features" id="features">
-      <div className="container">
-        <div className="section__header">
-          <span className="section__eyebrow">Why WowWed</span>
-          <h2>Everything you need, thoughtfully in one place</h2>
-          <p>
-            No more scattered spreadsheets. WowWed replaces manual methods with a unified,
-            intelligent platform designed for real Sri Lankan weddings.
-          </p>
-        </div>
-
-        <div className="features__grid">
-          {features.map((feature) => (
-            <article key={feature.title} className="feature-card">
-              <span className="feature-card__icon" aria-hidden="true">{feature.icon}</span>
-              <h3>{feature.title}</h3>
-              <p>{feature.description}</p>
-            </article>
+      <div className="container features-toolkit">
+        <div className="features-toolkit__grid">
+          {cards.map((mod) => (
+            <FeatureShowcaseCard key={mod.id} module={mod} />
           ))}
         </div>
+
+        <aside className="features-toolkit__aside">
+          <h2>Everything your wedding needs, together</h2>
+          <p>
+            WowWed brings checklist, guests, seating, budget, and vendors into one calm
+            dashboard — built for Sri Lankan Poruwa, Christian, Muslim, and Civil ceremonies.
+          </p>
+          <Button variant="primary" to={coupleOnboarding.route}>Start planning</Button>
+          <div className="features-toolkit__roses" aria-hidden="true">🌹</div>
+        </aside>
       </div>
     </section>
   );

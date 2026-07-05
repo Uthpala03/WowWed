@@ -1,23 +1,20 @@
 import { useState } from 'react';
-import { getBookings, getUser, saveBookings } from '../../utils/storage';
+import { useAuth } from '../../context/AuthContext';
+import { getBookings, updateBookingStatus } from '../../utils/storage';
+import PageHeader from '../../components/ui/PageHeader';
 
 function VendorBookingsPage() {
-  const user = getUser();
+  const { user } = useAuth();
   const [bookings, setBookings] = useState(() => getBookings().filter((b) => b.vendorEmail === user?.email));
 
-  const respond = (id, status, counterAmount) => {
-    const all = getBookings();
-    const next = all.map((b) => {
-      if (b.id !== id) return b;
-      return { ...b, status, counterAmount: counterAmount || b.counterAmount, respondedAt: new Date().toISOString() };
-    });
-    saveBookings(next);
-    setBookings(next.filter((b) => b.vendorEmail === user?.email));
+  const respond = async (id, status) => {
+    await updateBookingStatus(id, status);
+    setBookings(getBookings().filter((b) => b.vendorEmail === user?.email));
   };
 
   return (
     <div className="dash-page">
-      <header className="dash-page__header"><div><h1>Booking requests</h1><p>Accept, reject, or negotiate (M08)</p></div></header>
+      <PageHeader moduleId="vendor-bookings" title="Booking requests" />
       <div className="dash-card">
         {bookings.length === 0 ? <p>No requests yet.</p> : bookings.map((b) => (
           <div key={b.id} className="booking-row">
@@ -26,10 +23,7 @@ function VendorBookingsPage() {
               <div className="booking-actions">
                 <button type="button" className="dash-btn dash-btn--primary" onClick={() => respond(b.id, 'Confirmed')}>Accept</button>
                 <button type="button" className="dash-btn dash-btn--outline" onClick={() => respond(b.id, 'Rejected')}>Reject</button>
-                <button type="button" className="dash-btn dash-btn--white" onClick={() => {
-                  const amt = window.prompt('Counter offer (LKR):', b.amount);
-                  if (amt) respond(b.id, 'Negotiating', Number(amt));
-                }}>Negotiate</button>
+                <button type="button" className="dash-btn dash-btn--white" onClick={() => respond(b.id, 'Negotiating')}>Negotiate</button>
               </div>
             ) : <span className="rsvp-badge">{b.status}</span>}
           </div>

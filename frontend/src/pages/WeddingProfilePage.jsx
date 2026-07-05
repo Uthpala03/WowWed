@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FormLayout from '../components/layout/FormLayout';
 import Button from '../components/ui/Button';
 import { ceremonyTypes, districts, onboardingCeremonyTypes, weddingScales } from '../data/formOptions';
+import { useAuth } from '../context/AuthContext';
+import { coupleOnboarding } from '../models/OnboardingPath';
 import { getOnboarding, getUser, getWeddingProfile, saveWeddingProfile } from '../utils/storage';
 
 function ceremonyLabelFromOnboarding(id) {
@@ -46,15 +48,22 @@ function emptyProfileFromSaved(saved, onboarding) {
 
 function WeddingProfilePage() {
   const navigate = useNavigate();
-  const user = getUser();
-  const [form, setForm] = useState(() => emptyProfileFromSaved(getWeddingProfile(), getOnboarding()));
+  const { user, loading } = useAuth();
+  const [form, setForm] = useState(null);
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!loading) {
+      setForm(emptyProfileFromSaved(getWeddingProfile(), getOnboarding()));
+    }
+  }, [loading, user?.id]);
 
   const update = (field) => (event) => {
     setForm((current) => ({ ...current, [field]: event.target.value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
 
@@ -76,18 +85,29 @@ function WeddingProfilePage() {
       guestCount: Number(form.guestCount),
       budget: Number(form.budget),
       updatedAt: new Date().toISOString(),
-      ownerEmail: user?.email || null,
+      ownerEmail: user?.email || getUser()?.email || null,
     };
 
-    saveWeddingProfile(profile);
-    navigate('/dashboard');
+    setSubmitting(true);
+    try {
+      await saveWeddingProfile(profile);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'Could not save profile.');
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (loading || !form) {
+    return <FormLayout title="Create your wedding profile" subtitle="Loading…"><p>Loading your profile…</p></FormLayout>;
+  }
 
   return (
     <FormLayout
       title="Create your wedding profile"
       subtitle="Tell us about your celebration. All other WowWed modules use this information."
-      backTo={user ? '/dashboard' : '/get-started'}
+      backTo={user ? '/dashboard' : coupleOnboarding.route}
     >
       <form className="form" onSubmit={handleSubmit}>
         <div className="form__row">
@@ -122,9 +142,7 @@ function WeddingProfilePage() {
             <span>District</span>
             <select value={form.district} onChange={update('district')}>
               {districts.map((district) => (
-                <option key={district} value={district}>
-                  {district}
-                </option>
+                <option key={district} value={district}>{district}</option>
               ))}
             </select>
           </label>
@@ -132,9 +150,7 @@ function WeddingProfilePage() {
             <span>Ceremony type</span>
             <select value={form.ceremonyType} onChange={update('ceremonyType')}>
               {ceremonyTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
+                <option key={type} value={type}>{type}</option>
               ))}
             </select>
           </label>
@@ -149,9 +165,7 @@ function WeddingProfilePage() {
             <span>Wedding scale</span>
             <select value={form.scale} onChange={update('scale')}>
               {weddingScales.map((scale) => (
-                <option key={scale.value} value={scale.value}>
-                  {scale.label}
-                </option>
+                <option key={scale.value} value={scale.value}>{scale.label}</option>
               ))}
             </select>
           </label>
@@ -159,8 +173,8 @@ function WeddingProfilePage() {
 
         {error && <p className="form__error">{error}</p>}
 
-        <Button type="submit" variant="primary" className="form__submit">
-          Save wedding profile
+        <Button type="submit" variant="primary" className="form__submit" disabled={submitting}>
+          {submitting ? 'Saving…' : 'Save wedding profile'}
         </Button>
       </form>
     </FormLayout>

@@ -1,12 +1,23 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { vendorNav } from '../../data/dashboardData';
-import { clearUser, getUser, getVendorProfile } from '../../utils/storage';
+import { getVendorProfile } from '../../utils/storage';
+import { useAuth } from '../../context/AuthContext';
+import { vendorOnboarding } from '../../models/OnboardingPath';
+import AppIcon from '../ui/AppIcon';
 import '../../styles/dashboard.css';
 
 function VendorLayout() {
   const navigate = useNavigate();
-  const user = getUser();
+  const { user, loading, logout } = useAuth();
   const profile = getVendorProfile();
+
+  if (loading) {
+    return (
+      <div className="dash-auth">
+        <div className="dash-auth__card"><p>Loading vendor dashboard…</p></div>
+      </div>
+    );
+  }
 
   if (!user || user.role !== 'vendor') {
     return (
@@ -14,7 +25,7 @@ function VendorLayout() {
         <div className="dash-auth__card">
           <h1>Vendor access only</h1>
           <p>Register or log in as a vendor to access this area.</p>
-          <button type="button" className="dash-btn dash-btn--primary" onClick={() => navigate('/get-started')}>Become a vendor</button>
+          <button type="button" className="dash-btn dash-btn--primary" onClick={() => navigate(vendorOnboarding.route)}>Become a vendor</button>
         </div>
       </div>
     );
@@ -36,16 +47,18 @@ function VendorLayout() {
         <nav className="dash-sidebar__nav">
           {vendorNav.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => `dash-sidebar__link${isActive ? ' is-active' : ''}`} style={{ '--nav-accent': item.ring }}>
-              <span className="dash-sidebar__icon" style={{ background: item.accent }}>{item.icon}</span>
+              <span className="dash-sidebar__icon" style={{ background: item.accent, color: item.ring }}>
+                <AppIcon name={item.icon} size={18} />
+              </span>
               {item.label}
             </NavLink>
           ))}
         </nav>
         <div className="dash-sidebar__bottom">
-          <button type="button" className="dash-sidebar__link dash-sidebar__link--sub dash-sidebar__link--btn" onClick={() => { clearUser(); navigate('/'); }}>Log out</button>
+          <button type="button" className="dash-sidebar__link dash-sidebar__link--sub dash-sidebar__link--btn" onClick={() => { logout(); navigate('/'); }}>Log out</button>
         </div>
       </aside>
-      <div className="dash-main"><Outlet /></div>
+      <div className="dash-main"><Outlet key={user.id} /></div>
     </div>
   );
 }
