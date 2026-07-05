@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../components/layout/OnboardingLayout';
+import OnboardingIcon from '../components/ui/OnboardingIcon';
+import OnboardingOption from '../components/ui/OnboardingOption';
 import {
   districts,
   onboardingCeremonyTypes,
+  optionStyle,
   planningStages,
   venueTypes,
 } from '../data/formOptions';
@@ -55,15 +58,12 @@ function CoupleGetStartedPage() {
           <legend>Where are you in planning?</legend>
           <div className="onboarding__options onboarding__options--stack">
             {planningStages.map((opt) => (
-              <button
+              <OnboardingOption
                 key={opt.id}
-                type="button"
-                className={`onboarding__option${form.planningStage === opt.id ? ' is-on' : ''}`}
-                onClick={() => setForm((f) => ({ ...f, planningStage: opt.id }))}
-              >
-                <span>{opt.icon}</span>
-                {opt.label}
-              </button>
+                option={opt}
+                selected={form.planningStage === opt.id}
+                onSelect={() => setForm((f) => ({ ...f, planningStage: opt.id }))}
+              />
             ))}
           </div>
         </fieldset>
@@ -81,8 +81,8 @@ function CoupleGetStartedPage() {
 
       <label className="onboarding__field">
         <span>Wedding Location (Optional)</span>
-        <div className="onboarding__input-wrap">
-          <span>📍</span>
+        <div className="onboarding__input-wrap" style={optionStyle({ bg: '#e6f6ee', color: '#2e7d32' })}>
+          <span className="onboarding__option-icon onboarding__option-icon--input"><OnboardingIcon name="pin" size={18} /></span>
           <input
             placeholder="Enter city name"
             value={form.location}
@@ -93,8 +93,8 @@ function CoupleGetStartedPage() {
 
       <label className="onboarding__field">
         <span>Wedding Date (Optional)</span>
-        <div className="onboarding__input-wrap">
-          <span>📅</span>
+        <div className="onboarding__input-wrap" style={optionStyle({ bg: '#e8f2ff', color: '#1565c0' })}>
+          <span className="onboarding__option-icon onboarding__option-icon--input"><OnboardingIcon name="calendar" size={18} /></span>
           <input
             type="date"
             value={form.weddingDate}
@@ -107,15 +107,13 @@ function CoupleGetStartedPage() {
         <legend>Venue Type *</legend>
         <div className="onboarding__options onboarding__options--row">
           {venueTypes.map((opt) => (
-            <button
+            <OnboardingOption
               key={opt.id}
-              type="button"
-              className={`onboarding__option onboarding__option--tile${form.venueType === opt.id ? ' is-on' : ''}`}
-              onClick={() => setForm((f) => ({ ...f, venueType: opt.id }))}
-            >
-              <span>{opt.icon}</span>
-              {opt.label}
-            </button>
+              option={opt}
+              tile
+              selected={form.venueType === opt.id}
+              onSelect={() => setForm((f) => ({ ...f, venueType: opt.id }))}
+            />
           ))}
         </div>
       </fieldset>
@@ -124,15 +122,13 @@ function CoupleGetStartedPage() {
         <legend>Ceremony Type *</legend>
         <div className="onboarding__options onboarding__options--grid">
           {onboardingCeremonyTypes.map((opt) => (
-            <button
+            <OnboardingOption
               key={opt.id}
-              type="button"
-              className={`onboarding__option onboarding__option--tile${form.ceremonyType === opt.id ? ' is-on' : ''}`}
-              onClick={() => setForm((f) => ({ ...f, ceremonyType: opt.id }))}
-            >
-              <span>{opt.icon}</span>
-              {opt.label}
-            </button>
+              option={opt}
+              tile
+              selected={form.ceremonyType === opt.id}
+              onSelect={() => setForm((f) => ({ ...f, ceremonyType: opt.id }))}
+            />
           ))}
         </div>
       </fieldset>

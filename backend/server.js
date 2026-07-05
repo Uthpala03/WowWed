@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
+const { initDatabase } = require('./config/initSchema');
 const authRoutes = require('./routes/auth');
 const dataRoutes = require('./routes/data');
 const profileRoutes = require('./routes/profiles');
@@ -18,8 +19,13 @@ app.get('/', (req, res) => {
 app.get('/api/health', async (req, res) => {
   try {
     const { query } = require('./config/db');
-    await query('SELECT 1 AS ok');
-    res.json({ ok: true, database: 'connected' });
+    const tables = await query('SHOW TABLES');
+    res.json({
+      ok: true,
+      database: process.env.DB_NAME || 'wowwed',
+      tables: tables.length,
+      connected: true,
+    });
   } catch (err) {
     res.status(503).json({ ok: false, database: 'disconnected', error: err.message });
   }
@@ -31,6 +37,20 @@ app.use('/api/profiles', profileRoutes);
 app.use('/api/bookings', bookingRoutes);
 
 const PORT = process.env.PORT || 5002;
-app.listen(PORT, () => {
-  console.log(`WowWed server running on port ${PORT}`);
-});
+
+async function start() {
+  try {
+    await initDatabase({ silent: false });
+  } catch (err) {
+    console.error('Could not initialize database:', err.message);
+    console.error('Fix MySQL connection in backend/.env then restart the server.');
+    process.exit(1);
+  }
+
+  app.listen(PORT, () => {
+    console.log(`WowWed server running on port ${PORT}`);
+    console.log(`Database: ${process.env.DB_NAME || 'wowwed'} @ ${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 3306}`);
+  });
+}
+
+start();

@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 function OnboardingLayout({ children, step = 1, variant = 'couple' }) {
   return (
     <div className={`onboarding onboarding--${variant}`}>
@@ -6,6 +8,7 @@ function OnboardingLayout({ children, step = 1, variant = 'couple' }) {
       </div>
       <div className="onboarding__panel">
         <div className="onboarding__card">
+          <Link to="/" className="onboarding__home-link">← Back to home</Link>
           <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="WowWed" className="onboarding__logo" />
           <div className="onboarding__steps">
             <span className={`onboarding__step${step > 1 ? ' is-done' : ' is-active'}`}>{step > 1 ? '✓' : '1'}</span>

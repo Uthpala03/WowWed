@@ -1,9 +1,15 @@
--- WowWed MySQL database setup
--- Run: mysql -u root -p < docs/mysql-setup.sql
+-- WowWed MySQL schema (single source of truth)
+-- =============================================================
+-- AUTO-SYNC: All statements here run automatically when the
+-- backend starts (backend/config/initSchema.js) or when you run:
+--   npm run db:init --prefix backend
+--
+-- To add a NEW table: append CREATE TABLE IF NOT EXISTS below.
+-- No manual phpMyAdmin steps needed — restart the backend.
+-- =============================================================
 
 CREATE DATABASE IF NOT EXISTS wowwed CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE wowwed;
-
 CREATE TABLE IF NOT EXISTS users (
   id INT PRIMARY KEY AUTO_INCREMENT,
   full_name VARCHAR(100) NOT NULL,

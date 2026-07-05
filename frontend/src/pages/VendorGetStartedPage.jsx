@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../components/layout/OnboardingLayout';
-import { vendorCategoryLabels } from '../data/dashboardData';
-import { districts, vendorStages } from '../data/formOptions';
+import OnboardingIcon from '../components/ui/OnboardingIcon';
+import OnboardingOption from '../components/ui/OnboardingOption';
+import { districts, optionStyle, vendorCategoryOptions, vendorStages } from '../data/formOptions';
 import { saveOnboarding } from '../utils/storage';
 
 function VendorGetStartedPage() {
@@ -49,15 +50,12 @@ function VendorGetStartedPage() {
           <legend>Where are you as a vendor?</legend>
           <div className="onboarding__options onboarding__options--stack">
             {vendorStages.map((opt) => (
-              <button
+              <OnboardingOption
                 key={opt.id}
-                type="button"
-                className={`onboarding__option${form.vendorStage === opt.id ? ' is-on' : ''}`}
-                onClick={() => setForm((f) => ({ ...f, vendorStage: opt.id }))}
-              >
-                <span>{opt.icon}</span>
-                {opt.label}
-              </button>
+                option={opt}
+                selected={form.vendorStage === opt.id}
+                onSelect={() => setForm((f) => ({ ...f, vendorStage: opt.id }))}
+              />
             ))}
           </div>
         </fieldset>
@@ -76,15 +74,14 @@ function VendorGetStartedPage() {
       <fieldset className="onboarding__group">
         <legend>Service category *</legend>
         <div className="onboarding__options onboarding__options--grid">
-          {vendorCategoryLabels.map((category) => (
-            <button
-              key={category}
-              type="button"
-              className={`onboarding__option onboarding__option--tile${form.vendorCategory === category ? ' is-on' : ''}`}
-              onClick={() => setForm((f) => ({ ...f, vendorCategory: category }))}
-            >
-              {category}
-            </button>
+          {vendorCategoryOptions.map((opt) => (
+            <OnboardingOption
+              key={opt.label}
+              option={opt}
+              tile
+              selected={form.vendorCategory === opt.label}
+              onSelect={() => setForm((f) => ({ ...f, vendorCategory: opt.label }))}
+            />
           ))}
         </div>
       </fieldset>
@@ -92,16 +89,19 @@ function VendorGetStartedPage() {
       <fieldset className="onboarding__group">
         <legend>Business district *</legend>
         <label className="onboarding__field">
-          <select
-            className="onboarding__select"
-            value={form.vendorDistrict}
-            onChange={(e) => setForm((f) => ({ ...f, vendorDistrict: e.target.value }))}
-          >
-            <option value="">Select district</option>
-            {districts.map((district) => (
-              <option key={district} value={district}>{district}</option>
-            ))}
-          </select>
+          <div className="onboarding__input-wrap" style={optionStyle({ bg: '#eef0ff', color: '#3949ab' })}>
+            <span className="onboarding__option-icon onboarding__option-icon--input"><OnboardingIcon name="pin" size={18} /></span>
+            <select
+              className="onboarding__select onboarding__select--with-icon"
+              value={form.vendorDistrict}
+              onChange={(e) => setForm((f) => ({ ...f, vendorDistrict: e.target.value }))}
+            >
+              <option value="">Select district</option>
+              {districts.map((district) => (
+                <option key={district} value={district}>{district}</option>
+              ))}
+            </select>
+          </div>
         </label>
       </fieldset>
 

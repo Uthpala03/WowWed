@@ -1,0 +1,43 @@
+---
+description: WowWed MySQL auto-schema — new tables are created automatically on server start
+alwaysApply: true
+---
+
+# WowWed MySQL auto-schema
+
+## Rule (always follow)
+
+When adding or changing database storage for WowWed:
+
+1. **Add the table to `docs/mysql-setup.sql`** using `CREATE TABLE IF NOT EXISTS ...`
+2. **Do NOT** ask the user to run manual SQL in phpMyAdmin — tables are created **automatically**
+3. On every backend start, `backend/config/initSchema.js` runs all statements from `docs/mysql-setup.sql`
+4. Seed data uses `INSERT IGNORE` so re-runs are safe
+
+## Where things live
+
+| File | Role |
+|------|------|
+| `docs/mysql-setup.sql` | Single source of truth for all tables + seeds |
+| `backend/config/initSchema.js` | Runs schema on startup and via `npm run db:init` |
+| `backend/server.js` | Calls `initDatabase()` before listening |
+| `backend/.env` | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME=wowwed` |
+
+## Adding a new table (template)
+
+```sql
+CREATE TABLE IF NOT EXISTS my_new_table (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  ...
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+```
+
+Then add API routes in `backend/routes/` and wire frontend via `frontend/src/services/api.js` + `frontend/src/utils/storage.js`.
+
+## Current tables
+
+users, onboarding, wedding_profiles, vendor_profiles, vendor_listings, user_data, bookings
+
+Restart the backend after schema changes — no manual phpMyAdmin steps needed.

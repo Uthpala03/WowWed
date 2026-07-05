@@ -4,33 +4,37 @@ Wedding planning app — React + Node.js + MySQL.
 
 ## Run (VS Code)
 
-### 1. Set up MySQL
+## Database (MySQL — auto-sync)
 
-Install MySQL 8+ and create the database:
+**Database name:** `wowwed` on `localhost:3306`
+
+Tables are created **automatically** when the backend starts. You do not need phpMyAdmin to create tables manually.
+
+### Add a new table later
+
+1. Add `CREATE TABLE IF NOT EXISTS ...` to `docs/mysql-setup.sql`
+2. Restart the backend (`npm run dev`) — the new table appears automatically
+
+Or run manually once:
+
+```powershell
+npm run db:init --prefix backend
+```
+
+### First-time setup
 
 ```powershell
 cd WowWed\backend
 copy .env.example .env
-# Edit .env — set DB_PASSWORD to your MySQL root password
+# Edit .env — set DB_PASSWORD if your MySQL root user has one
 
 npm install
 npm run db:init
 ```
 
-Or run the SQL file manually:
+Create the empty `wowwed` database in phpMyAdmin first (or let `db:init` create it).
 
-```powershell
-mysql -u root -p < docs\mysql-setup.sql
-```
-
-### 2. Start the app
-
-```powershell
-cd WowWed
-npm install
-npm run install:all
-npm run dev
-```
+### Start the app
 
 Open http://localhost:3001
 
