@@ -36,12 +36,14 @@ function weddingFromRow(row) {
 }
 
 function parsePortfolioJson(raw) {
-  if (!raw) return { images: [], quotations: [], quotationPdf: null };
+  if (!raw) return { images: [], quotations: [], quotationPdf: null, categories: [], districts: [] };
   const data = typeof raw === 'object' ? raw : JSON.parse(raw);
   return {
     images: Array.isArray(data.images) ? data.images : [],
     quotations: Array.isArray(data.quotations) ? data.quotations : [],
     quotationPdf: data.quotationPdf || null,
+    categories: Array.isArray(data.categories) ? data.categories : [],
+    districts: Array.isArray(data.districts) ? data.districts : [],
   };
 }
 
@@ -57,6 +59,8 @@ function serializePortfolio(portfolio) {
       pdfUrl: q.pdfUrl || '',
     })),
     quotationPdf: portfolio.quotationPdf || null,
+    categories: portfolio.categories || [],
+    districts: portfolio.districts || [],
   });
 }
 
@@ -75,11 +79,19 @@ async function savePortfolioForVendor(userId, listingId, portfolio) {
 function vendorFromRow(row) {
   if (!row) return null;
   const portfolio = parsePortfolioJson(row.portfolio_json);
+  const categories = portfolio.categories.length
+    ? portfolio.categories
+    : (row.category ? [row.category] : []);
+  const districts = portfolio.districts.length
+    ? portfolio.districts
+    : (row.district ? [row.district] : []);
   return {
     id: row.user_id ? `vp-${row.user_id}` : row.id,
     businessName: row.business_name,
-    category: row.category,
-    district: row.district,
+    category: categories[0] || row.category,
+    categories,
+    district: districts[0] || row.district,
+    districts,
     priceRange: row.price_range,
     description: row.description || '',
     rating: Number(row.rating) || 4.5,
@@ -92,12 +104,20 @@ function vendorFromRow(row) {
 
 function listingFromRow(row) {
   const portfolio = parsePortfolioJson(row.portfolio_json);
+  const categories = portfolio.categories.length
+    ? portfolio.categories
+    : (row.category ? [row.category] : []);
+  const districts = portfolio.districts.length
+    ? portfolio.districts
+    : (row.district ? [row.district] : []);
   return {
     id: row.id,
     name: row.name,
-    category: row.category,
-    city: row.city,
-    district: row.district,
+    category: categories[0] || row.category,
+    categories,
+    city: districts[0] || row.city,
+    district: districts[0] || row.district,
+    districts,
     priceRange: row.price_range,
     description: row.description || '',
     rating: Number(row.rating) || 4.5,
@@ -110,6 +130,12 @@ function listingFromRow(row) {
 }
 
 function portfolioPayload(p) {
+  const categories = p.categories?.length
+    ? p.categories
+    : (p.category ? [p.category] : []);
+  const districts = p.districts?.length
+    ? p.districts
+    : (p.district ? [p.district] : []);
   return serializePortfolio({
     images: p.portfolioImages || [],
     quotations: (p.quotations || []).map((q) => ({
@@ -121,7 +147,19 @@ function portfolioPayload(p) {
       pdfUrl: q.pdfUrl || '',
     })),
     quotationPdf: p.quotationPdf || null,
+    categories,
+    districts,
   });
+}
+
+function primaryCategory(p) {
+  const list = p.categories?.length ? p.categories : (p.category ? [p.category] : []);
+  return list[0] || p.category || null;
+}
+
+function primaryDistrict(p) {
+  const list = p.districts?.length ? p.districts : (p.district ? [p.district] : []);
+  return list[0] || p.district || null;
 }
 
 router.get('/wedding', authRequired, async (req, res) => {
@@ -226,8 +264,8 @@ router.put('/vendor', authRequired, async (req, res) => {
       {
         userId,
         businessName: p.businessName,
-        category: p.category,
-        district: p.district,
+        category: primaryCategory(p),
+        district: primaryDistrict(p),
         priceRange: p.priceRange,
         description: p.description || '',
         portfolioJson: portfolioPayload(p),
@@ -248,9 +286,9 @@ router.put('/vendor', authRequired, async (req, res) => {
         id: listingId,
         userId,
         name: p.businessName,
-        category: p.category,
-        city: p.district,
-        district: p.district,
+        category: primaryCategory(p),
+        city: primaryDistrict(p),
+        district: primaryDistrict(p),
         priceRange: p.priceRange,
         description: p.description || '',
         portfolioJson: portfolioPayload(p),

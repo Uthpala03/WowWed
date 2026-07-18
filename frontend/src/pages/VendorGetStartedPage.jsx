@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../components/layout/OnboardingLayout';
-import OnboardingIcon from '../components/ui/OnboardingIcon';
 import OnboardingOption from '../components/ui/OnboardingOption';
-import { districts, optionStyle, vendorCategoryOptions, vendorStages } from '../data/formOptions';
+import { districts, vendorCategoryOptions, vendorStages } from '../data/formOptions';
 import { saveOnboarding } from '../utils/storage';
+import { toggleListItem } from '../utils/vendorMeta';
 
 function VendorGetStartedPage() {
   const navigate = useNavigate();
@@ -13,9 +13,23 @@ function VendorGetStartedPage() {
   const [form, setForm] = useState({
     role: 'vendor',
     vendorStage: '',
-    vendorCategory: '',
-    vendorDistrict: '',
+    vendorCategories: [],
+    vendorDistricts: [],
   });
+
+  const toggleCategory = (label) => {
+    setForm((f) => ({
+      ...f,
+      vendorCategories: toggleListItem(f.vendorCategories, label),
+    }));
+  };
+
+  const toggleDistrict = (district) => {
+    setForm((f) => ({
+      ...f,
+      vendorDistricts: toggleListItem(f.vendorDistricts, district),
+    }));
+  };
 
   const goNext = () => {
     setError('');
@@ -28,15 +42,20 @@ function VendorGetStartedPage() {
 
   const complete = () => {
     setError('');
-    if (!form.vendorCategory) {
-      setError('Please select your service category.');
+    if (!form.vendorCategories.length) {
+      setError('Please select at least one service category.');
       return;
     }
-    if (!form.vendorDistrict) {
-      setError('Please select your business district.');
+    if (!form.vendorDistricts.length) {
+      setError('Please select at least one business district.');
       return;
     }
-    saveOnboarding({ ...form, completedAt: new Date().toISOString() });
+    saveOnboarding({
+      ...form,
+      vendorCategory: form.vendorCategories[0],
+      vendorDistrict: form.vendorDistricts[0],
+      completedAt: new Date().toISOString(),
+    });
     navigate('/create-account');
   };
 
@@ -72,37 +91,42 @@ function VendorGetStartedPage() {
       <p className="onboarding__subtitle">A few details to set up your vendor listing.</p>
 
       <fieldset className="onboarding__group">
-        <legend>Service category *</legend>
+        <legend>Service categories *</legend>
+        <p className="onboarding__hint">Select all services you offer — you can choose more than one.</p>
         <div className="onboarding__options onboarding__options--grid">
           {vendorCategoryOptions.map((opt) => (
             <OnboardingOption
               key={opt.label}
               option={opt}
               tile
-              selected={form.vendorCategory === opt.label}
-              onSelect={() => setForm((f) => ({ ...f, vendorCategory: opt.label }))}
+              selected={form.vendorCategories.includes(opt.label)}
+              onSelect={() => toggleCategory(opt.label)}
             />
           ))}
         </div>
+        {form.vendorCategories.length > 0 && (
+          <p className="onboarding__selected-count">{form.vendorCategories.length} selected</p>
+        )}
       </fieldset>
 
       <fieldset className="onboarding__group">
-        <legend>Business district *</legend>
-        <label className="onboarding__field">
-          <div className="onboarding__input-wrap" style={optionStyle({ bg: '#eef0ff', color: '#3949ab' })}>
-            <span className="onboarding__option-icon onboarding__option-icon--input"><OnboardingIcon name="pin" size={18} /></span>
-            <select
-              className="onboarding__select onboarding__select--with-icon"
-              value={form.vendorDistrict}
-              onChange={(e) => setForm((f) => ({ ...f, vendorDistrict: e.target.value }))}
+        <legend>Business districts *</legend>
+        <p className="onboarding__hint">Select every district where you provide services.</p>
+        <div className="onboarding__options onboarding__options--districts">
+          {districts.map((district) => (
+            <button
+              key={district}
+              type="button"
+              className={`onboarding__district${form.vendorDistricts.includes(district) ? ' is-on' : ''}`}
+              onClick={() => toggleDistrict(district)}
             >
-              <option value="">Select district</option>
-              {districts.map((district) => (
-                <option key={district} value={district}>{district}</option>
-              ))}
-            </select>
-          </div>
-        </label>
+              {district}
+            </button>
+          ))}
+        </div>
+        {form.vendorDistricts.length > 0 && (
+          <p className="onboarding__selected-count">{form.vendorDistricts.length} selected</p>
+        )}
       </fieldset>
 
       {error && <p className="onboarding__error">{error}</p>}

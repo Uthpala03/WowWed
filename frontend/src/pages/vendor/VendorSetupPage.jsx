@@ -7,6 +7,12 @@ import { useAuth } from '../../context/AuthContext';
 import { getOnboarding, getVendorProfile, saveVendorProfile } from '../../utils/storage';
 import { api } from '../../services/api';
 import { quoteHasPdf, quotePdfHref, resolveUploadUrl } from '../../utils/uploadUrl';
+import {
+  formatVendorCategories,
+  formatVendorDistricts,
+  normalizeStringList,
+  toggleListItem,
+} from '../../utils/vendorMeta';
 import PageHeader from '../../components/ui/PageHeader';
 
 const MAX_IMAGES = 6;
@@ -57,17 +63,35 @@ function newQuotation() {
   return { id: `q-${Date.now()}`, title: '', price: '', details: '', pdfName: '', pdfUrl: '' };
 }
 
+function categoriesFromSources(onboarding, existing) {
+  if (existing?.categories?.length) return existing.categories;
+  if (onboarding?.vendorCategories?.length) return onboarding.vendorCategories;
+  if (onboarding?.vendorCategory) return [onboarding.vendorCategory];
+  if (existing?.category) return [existing.category];
+  return [vendorCatalog.getDefault().label];
+}
+
+function districtsFromSources(onboarding, existing) {
+  if (existing?.districts?.length) return existing.districts;
+  if (onboarding?.vendorDistricts?.length) return onboarding.vendorDistricts;
+  if (onboarding?.vendorDistrict) return [onboarding.vendorDistrict];
+  if (existing?.district) return [existing.district];
+  return ['Colombo'];
+}
+
 function emptyForm(onboarding, user, existing) {
   return {
     businessName: '',
-    category: onboarding?.vendorCategory || vendorCatalog.getDefault().label,
-    district: onboarding?.vendorDistrict || 'Colombo',
+    categories: categoriesFromSources(onboarding, existing),
+    districts: districtsFromSources(onboarding, existing),
     priceRange: '100000-500000',
     description: '',
     portfolioImages: [],
     quotations: [],
     ownerEmail: user?.email,
     ...existing,
+    categories: categoriesFromSources(onboarding, existing),
+    districts: districtsFromSources(onboarding, existing),
     portfolioImages: existing?.portfolioImages || [],
     quotations: existing?.quotations || [],
     quotationPdf: existing?.quotationPdf || null,
@@ -76,7 +100,8 @@ function emptyForm(onboarding, user, existing) {
 
 function ListingPreview({ form }) {
   const initial = form.businessName?.trim()?.[0]?.toUpperCase() || 'V';
-  const emoji = CATEGORY_EMOJI[form.category] || '🏪';
+  const categories = normalizeStringList(form.categories);
+  const emoji = CATEGORY_EMOJI[categories[0]] || '🏪';
   const cover = form.portfolioImages?.[0];
   const quotes = activeQuotes(form.quotations || []);
   const mainPdf = form.quotationPdf;
@@ -107,8 +132,8 @@ function ListingPreview({ form }) {
           <div className="vendor-avatar">{initial}</div>
           <div>
             <strong>{form.businessName?.trim() || 'Your business name'}</strong>
-            <small>{form.category || 'Category'}</small>
-            <small>{form.district || 'District'} · ★ 4.5</small>
+            <small>{formatVendorCategories({ categories })}</small>
+            <small>{formatVendorDistricts({ districts: form.districts })} · ★ 4.5</small>
           </div>
         </div>
 
@@ -166,6 +191,22 @@ function VendorSetupPage() {
   const setField = (field) => (value) => {
     setSaved(false);
     setForm((f) => ({ ...f, [field]: value }));
+  };
+
+  const toggleCategory = (cat) => {
+    setSaved(false);
+    setForm((f) => ({
+      ...f,
+      categories: toggleListItem(normalizeStringList(f.categories), cat),
+    }));
+  };
+
+  const toggleDistrict = (district) => {
+    setSaved(false);
+    setForm((f) => ({
+      ...f,
+      districts: toggleListItem(normalizeStringList(f.districts), district),
+    }));
   };
 
   const pickPrice = (value) => {
@@ -296,11 +337,17 @@ function VendorSetupPage() {
   const submit = async (e) => {
     e.preventDefault();
     if (!form.businessName.trim()) return;
+    if (!form.categories?.length) return;
+    if (!form.districts?.length) return;
     setSubmitting(true);
     try {
       await saveVendorProfile({
         ...form,
         id: existing?.id || `vp-${user?.id || Date.now()}`,
+        category: form.categories[0],
+        categories: form.categories,
+        district: form.districts[0],
+        districts: form.districts,
         rating: existing?.rating || 4.5,
         ownerEmail: user.email,
         portfolioImages: form.portfolioImages || [],
@@ -342,14 +389,14 @@ function VendorSetupPage() {
             </label>
 
             <div className="vendor-listing-field">
-              <span>Category</span>
+              <span>Categories <small>(select all that apply)</small></span>
               <div className="vendor-listing-categories">
                 {vendorCategoryLabels.map((cat) => (
                   <button
                     key={cat}
                     type="button"
-                    className={`vendor-listing-cat${form.category === cat ? ' is-on' : ''}`}
-                    onClick={() => setField('category')(cat)}
+                    className={`vendor-listing-cat${form.categories?.includes(cat) ? ' is-on' : ''}`}
+                    onClick={() => toggleCategory(cat)}
                   >
                     <em>{CATEGORY_EMOJI[cat] || '🏪'}</em>
                     <small>{cat}</small>
@@ -531,12 +578,21 @@ function VendorSetupPage() {
             <h2 className="vendor-listing-section__title">
               <span>📍</span> Location &amp; general pricing
             </h2>
-            <label className="vendor-listing-field">
-              <span>District</span>
-              <select value={form.district} onChange={(e) => setField('district')(e.target.value)}>
-                {districts.map((d) => <option key={d}>{d}</option>)}
-              </select>
-            </label>
+            <div className="vendor-listing-field">
+              <span>Districts <small>(select all that apply)</small></span>
+              <div className="vendor-listing-districts">
+                {districts.map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    className={`vendor-listing-district${form.districts?.includes(d) ? ' is-on' : ''}`}
+                    onClick={() => toggleDistrict(d)}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div className="vendor-listing-field">
               <span>Overall price range (shown if no packages added)</span>

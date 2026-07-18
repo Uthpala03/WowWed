@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { vendorNav } from '../../data/dashboardData';
 import { getVendorProfile } from '../../utils/storage';
+import { formatVendorCategories } from '../../utils/vendorMeta';
 import { useAuth } from '../../context/AuthContext';
 import { vendorOnboarding } from '../../models/OnboardingPath';
 import AppIcon from '../ui/AppIcon';
@@ -41,7 +42,7 @@ function VendorLayout() {
         {profile && (
           <div className="dash-sidebar__couple">
             <span className="dash-sidebar__avatar">🏪</span>
-            <div><strong>{profile.businessName}</strong><small>{profile.category}</small></div>
+            <div><strong>{profile.businessName}</strong><small>{formatVendorCategories(profile)}</small></div>
           </div>
         )}
         <nav className="dash-sidebar__nav">

@@ -2,6 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { vendorCategories } from '../../data/dashboardData';
 import { addBooking, getUser, getWeddingProfile, getVendorListings, refreshVendorListings } from '../../utils/storage';
 import { quoteHasPdf } from '../../utils/uploadUrl';
+import {
+  formatVendorCategories,
+  formatVendorDistricts,
+  vendorMatchesCategory,
+  vendorMatchesDistrict,
+  vendorMatchesLocation,
+} from '../../utils/vendorMeta';
 import PageHeader from '../../components/ui/PageHeader';
 import VendorDetailModal from '../../components/vendor/VendorDetailModal';
 
@@ -14,9 +21,8 @@ function recommendVendors(vendors, profile) {
   if (!profile) return vendors;
   return [...vendors].sort((a, b) => {
     let scoreA = 0; let scoreB = 0;
-    if (a.district === profile.district || a.city === profile.district) { scoreA += 3; scoreB += 3; }
-    if (a.district === profile.district) scoreA += 1;
-    if (b.district === profile.district) scoreB += 1;
+    if (vendorMatchesLocation(a, profile.district)) scoreA += 4;
+    if (vendorMatchesLocation(b, profile.district)) scoreB += 4;
     scoreA += (a.rating || 4) - (b.rating || 4);
     return scoreB - scoreA;
   });
@@ -41,9 +47,8 @@ function VendorsPage() {
 
   const filtered = useMemo(() => {
     const list = allVendors.filter((v) => {
-      const matchCat = category === 'All Categories' || v.category === category;
-      const loc = v.city || v.district || '';
-      const matchCity = !city || loc.toLowerCase().includes(city.toLowerCase());
+      const matchCat = vendorMatchesCategory(v, category);
+      const matchCity = vendorMatchesDistrict(v, city);
       const matchSearch = !search || v.name.toLowerCase().includes(search.toLowerCase());
       return matchCat && matchCity && matchSearch;
     });
@@ -117,8 +122,8 @@ function VendorsPage() {
                 <div className="vendor-avatar">{vendor.name[0]}</div>
                 <div>
                   <strong>{vendor.name}</strong>
-                  <small>{vendor.category}</small>
-                  <small>{vendor.city || vendor.district} {vendor.rating ? `· ★ ${vendor.rating}` : ''}</small>
+                  <small>{formatVendorCategories(vendor)}</small>
+                  <small>{formatVendorDistricts(vendor)} {vendor.rating ? `· ★ ${vendor.rating}` : ''}</small>
                 </div>
               </div>
               {(vendor.quotationPdf?.url
@@ -159,7 +164,7 @@ function VendorsPage() {
           <form className="dash-panel dash-panel--center vendor-booking-panel" onSubmit={submitBooking} onClick={(e) => e.stopPropagation()}>
             <h2>Send booking request</h2>
             <p className="dash-panel__title">{bookingVendor.name}</p>
-            <p className="vendor-booking-panel__sub">{bookingVendor.category} · {bookingVendor.city || bookingVendor.district}</p>
+            <p className="vendor-booking-panel__sub">{formatVendorCategories(bookingVendor)} · {formatVendorDistricts(bookingVendor)}</p>
 
             <label className="dash-field">
               <span>Event date</span>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { quoteHasPdf, quotePdfHref, resolveUploadUrl } from '../../utils/uploadUrl';
+import { formatVendorCategories, formatVendorDistricts } from '../../utils/vendorMeta';
 
 function formatQuotePrice(price) {
   const n = Number(String(price || '').replace(/,/g, ''));
@@ -52,7 +53,6 @@ function VendorDetailModal({ vendor, onClose, onRequestBooking }) {
   const mainPdf = vendor.quotationPdf;
   const hasAnyPdf = mainPdf?.url || pdfQuotes.length > 0;
   const cover = images[activeImage] || images[0];
-  const location = vendor.city || vendor.district || 'Sri Lanka';
 
   return (
     <div className="vendor-detail-overlay" onClick={onClose} role="presentation">
@@ -93,7 +93,7 @@ function VendorDetailModal({ vendor, onClose, onRequestBooking }) {
             <div>
               <h2>{vendor.name}</h2>
               <p className="vendor-detail__meta">
-                {vendor.category} · {location}
+                {formatVendorCategories(vendor)} · {formatVendorDistricts(vendor)}
                 {vendor.rating ? ` · ★ ${vendor.rating}` : ''}
               </p>
             </div>
