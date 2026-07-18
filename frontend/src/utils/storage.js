@@ -170,6 +170,12 @@ export function getVendorListings() {
   return cache.vendorListings;
 }
 
+export async function refreshVendorListings() {
+  const { listings } = await api.getVendorListings();
+  cache.vendorListings = listings || [];
+  return cache.vendorListings;
+}
+
 export function getTasks() {
   return cache.tasks;
 }

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const { initDatabase } = require('./config/initSchema');
@@ -10,7 +11,8 @@ const bookingRoutes = require('./routes/bookings');
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '15mb' }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/', (req, res) => {
   res.json({ message: 'WowWed API is running!', appUrl: 'http://localhost:3001' });

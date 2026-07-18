@@ -42,6 +42,7 @@ export const api = {
   getOnboarding: () => fetchApi('/api/profiles/onboarding'),
   getVendorProfile: () => fetchApi('/api/profiles/vendor'),
   saveVendorProfile: (profile) => fetchApi('/api/profiles/vendor', { method: 'PUT', body: JSON.stringify(profile) }),
+  uploadVendorPdf: (payload) => fetchApi('/api/profiles/vendor/pdf', { method: 'POST', body: JSON.stringify(payload) }),
   getVendorListings: () => fetchApi('/api/profiles/vendors'),
 
   getBookings: () => fetchApi('/api/bookings'),

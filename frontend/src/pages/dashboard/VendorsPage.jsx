@@ -1,7 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { vendorCategories } from '../../data/dashboardData';
-import { addBooking, getUser, getWeddingProfile, getVendorListings } from '../../utils/storage';
+import { addBooking, getUser, getWeddingProfile, getVendorListings, refreshVendorListings } from '../../utils/storage';
+import { quoteHasPdf } from '../../utils/uploadUrl';
 import PageHeader from '../../components/ui/PageHeader';
+import VendorDetailModal from '../../components/vendor/VendorDetailModal';
+
+function formatQuotePrice(price) {
+  const n = Number(String(price || '').replace(/,/g, ''));
+  return n ? `Rs. ${n.toLocaleString()}` : '—';
+}
 
 function recommendVendors(vendors, profile) {
   if (!profile) return vendors;
@@ -21,10 +28,16 @@ function VendorsPage() {
   const [category, setCategory] = useState('All Categories');
   const [city, setCity] = useState('');
   const [search, setSearch] = useState('');
+  const [selectedVendor, setSelectedVendor] = useState(null);
   const [bookingVendor, setBookingVendor] = useState(null);
   const [bookForm, setBookForm] = useState({ date: '', amount: '', message: '' });
+  const [listVersion, setListVersion] = useState(0);
 
-  const allVendors = useMemo(() => getVendorListings(), []);
+  useEffect(() => {
+    refreshVendorListings().then(() => setListVersion((v) => v + 1));
+  }, []);
+
+  const allVendors = useMemo(() => getVendorListings(), [listVersion]);
 
   const filtered = useMemo(() => {
     const list = allVendors.filter((v) => {
@@ -36,6 +49,17 @@ function VendorsPage() {
     });
     return recommendVendors(list, profile);
   }, [allVendors, category, city, search, profile]);
+
+  const openBooking = (vendor) => {
+    setSelectedVendor(null);
+    setBookingVendor(vendor);
+    const firstPrice = vendor.quotations?.[0]?.price;
+    setBookForm({
+      date: profile?.weddingDate || '',
+      amount: firstPrice ? String(firstPrice) : '',
+      message: '',
+    });
+  };
 
   const submitBooking = async (e) => {
     e.preventDefault();
@@ -71,8 +95,22 @@ function VendorsPage() {
       <section className="vendors-section">
         <div className="vendor-grid">
           {filtered.map((vendor) => (
-            <article key={vendor.id} className="vendor-card">
-              <div className="vendor-card__image">
+            <article
+              key={vendor.id}
+              className="vendor-card vendor-card--clickable"
+              onClick={() => setSelectedVendor(vendor)}
+              onKeyDown={(e) => e.key === 'Enter' && setSelectedVendor(vendor)}
+              role="button"
+              tabIndex={0}
+            >
+              <div
+                className="vendor-card__image"
+                style={vendor.portfolioImages?.[0] ? {
+                  backgroundImage: `url(${vendor.portfolioImages[0]})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                } : undefined}
+              >
                 {vendor.spotlight && <span className="vendor-spotlight">💍 Spotlight</span>}
               </div>
               <div className="vendor-card__body">
@@ -83,22 +121,60 @@ function VendorsPage() {
                   <small>{vendor.city || vendor.district} {vendor.rating ? `· ★ ${vendor.rating}` : ''}</small>
                 </div>
               </div>
-              <button type="button" className="dash-btn dash-btn--primary vendor-card__cta" onClick={() => setBookingVendor(vendor)}>Send booking request</button>
+              {(vendor.quotationPdf?.url
+                || vendor.quotations?.some((q) => quoteHasPdf(q))
+                || vendor.quotations?.length > 0) && (
+                <p className="vendor-card__quote-hint">
+                  {(vendor.quotationPdf?.url || vendor.quotations?.some((q) => quoteHasPdf(q))) && '📄 Quotation PDF · '}
+                  {vendor.quotations.length > 0
+                    ? `${vendor.quotations.length} package${vendor.quotations.length > 1 ? 's' : ''} from ${formatQuotePrice(vendor.quotations[0].price)}`
+                    : 'Packages available'}
+                </p>
+              )}
+              <button
+                type="button"
+                className="dash-btn dash-btn--primary vendor-card__cta"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedVendor(vendor);
+                }}
+              >
+                View details
+              </button>
             </article>
           ))}
         </div>
       </section>
 
+      {selectedVendor && (
+        <VendorDetailModal
+          vendor={selectedVendor}
+          onClose={() => setSelectedVendor(null)}
+          onRequestBooking={openBooking}
+        />
+      )}
+
       {bookingVendor && (
         <div className="dash-overlay" onClick={() => setBookingVendor(null)}>
-          <form className="dash-panel dash-panel--center" onSubmit={submitBooking} onClick={(e) => e.stopPropagation()}>
-            <h2>Booking request</h2>
+          <form className="dash-panel dash-panel--center vendor-booking-panel" onSubmit={submitBooking} onClick={(e) => e.stopPropagation()}>
+            <h2>Send booking request</h2>
             <p className="dash-panel__title">{bookingVendor.name}</p>
-            <label className="dash-field"><span>Event date</span><input type="date" required value={bookForm.date} onChange={(e) => setBookForm({ ...bookForm, date: e.target.value })} /></label>
-            <label className="dash-field"><span>Budget (LKR)</span><input type="number" required value={bookForm.amount} onChange={(e) => setBookForm({ ...bookForm, amount: e.target.value })} /></label>
-            <label className="dash-field"><span>Message</span><textarea rows={3} value={bookForm.message} onChange={(e) => setBookForm({ ...bookForm, message: e.target.value })} /></label>
+            <p className="vendor-booking-panel__sub">{bookingVendor.category} · {bookingVendor.city || bookingVendor.district}</p>
+
+            <label className="dash-field">
+              <span>Event date</span>
+              <input type="date" required value={bookForm.date} onChange={(e) => setBookForm({ ...bookForm, date: e.target.value })} />
+            </label>
+            <label className="dash-field">
+              <span>Budget (LKR)</span>
+              <input type="number" required value={bookForm.amount} onChange={(e) => setBookForm({ ...bookForm, amount: e.target.value })} placeholder="Your budget for this vendor" />
+            </label>
+            <label className="dash-field">
+              <span>Message to vendor</span>
+              <textarea rows={3} value={bookForm.message} onChange={(e) => setBookForm({ ...bookForm, message: e.target.value })} placeholder="Tell them about your wedding plans…" />
+            </label>
             <div className="dash-panel__actions">
-              <button type="button" className="dash-btn dash-btn--ghost" onClick={() => setBookingVendor(null)}>Cancel</button>
+              <button type="button" className="dash-btn dash-btn--ghost" onClick={() => { setBookingVendor(null); setSelectedVendor(bookingVendor); }}>← Back to details</button>
               <button type="submit" className="dash-btn dash-btn--primary">Send request</button>
             </div>
           </form>

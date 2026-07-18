@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS vendor_profiles (
   district VARCHAR(50) DEFAULT NULL,
   price_range VARCHAR(50) DEFAULT NULL,
   description TEXT DEFAULT NULL,
+  portfolio_json JSON DEFAULT NULL,
   rating DECIMAL(2, 1) DEFAULT 4.5,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -66,6 +67,7 @@ CREATE TABLE IF NOT EXISTS vendor_listings (
   district VARCHAR(50) DEFAULT NULL,
   price_range VARCHAR(50) DEFAULT NULL,
   description TEXT DEFAULT NULL,
+  portfolio_json JSON DEFAULT NULL,
   rating DECIMAL(2, 1) DEFAULT 4.5,
   spotlight TINYINT(1) DEFAULT 0,
   owner_email VARCHAR(100) DEFAULT NULL,

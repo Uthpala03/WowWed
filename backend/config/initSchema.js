@@ -21,6 +21,21 @@ function tableNameFromStatement(statement) {
   return match ? match[1] : null;
 }
 
+async function migrateSchema(connection, database) {
+  await connection.query(`USE \`${database}\``);
+  const alters = [
+    'ALTER TABLE vendor_profiles ADD COLUMN portfolio_json JSON DEFAULT NULL',
+    'ALTER TABLE vendor_listings ADD COLUMN portfolio_json JSON DEFAULT NULL',
+  ];
+  for (const sql of alters) {
+    try {
+      await connection.query(sql);
+    } catch (err) {
+      if (err.code !== 'ER_DUP_FIELDNAME') throw err;
+    }
+  }
+}
+
 async function initDatabase(options = {}) {
   const host = options.host || process.env.DB_HOST || 'localhost';
   const port = Number(options.port || process.env.DB_PORT || 3306);
@@ -73,6 +88,8 @@ async function initDatabase(options = {}) {
 
       await connection.query(statement);
     }
+
+    await migrateSchema(connection, database);
 
     const [afterRows] = await connection.query('SHOW TABLES');
     const tableNames = afterRows.map((r) => Object.values(r)[0]);

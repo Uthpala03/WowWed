@@ -1,8 +1,11 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const { query } = require('../config/db');
 const { authRequired } = require('../middleware/auth');
 
 const router = express.Router();
+const UPLOAD_DIR = path.join(__dirname, '../uploads/vendors');
 
 function formatDateValue(value) {
   if (!value) return '';
@@ -32,8 +35,46 @@ function weddingFromRow(row) {
   };
 }
 
+function parsePortfolioJson(raw) {
+  if (!raw) return { images: [], quotations: [], quotationPdf: null };
+  const data = typeof raw === 'object' ? raw : JSON.parse(raw);
+  return {
+    images: Array.isArray(data.images) ? data.images : [],
+    quotations: Array.isArray(data.quotations) ? data.quotations : [],
+    quotationPdf: data.quotationPdf || null,
+  };
+}
+
+function serializePortfolio(portfolio) {
+  return JSON.stringify({
+    images: portfolio.images || [],
+    quotations: (portfolio.quotations || []).map((q) => ({
+      id: q.id,
+      title: q.title || '',
+      price: q.price || '',
+      details: q.details || '',
+      pdfName: q.pdfName || '',
+      pdfUrl: q.pdfUrl || '',
+    })),
+    quotationPdf: portfolio.quotationPdf || null,
+  });
+}
+
+async function savePortfolioForVendor(userId, listingId, portfolio) {
+  const portfolioJson = serializePortfolio(portfolio);
+  await query(
+    'UPDATE vendor_profiles SET portfolio_json = :portfolioJson, updated_at = NOW() WHERE user_id = :userId',
+    { userId, portfolioJson },
+  );
+  await query(
+    'UPDATE vendor_listings SET portfolio_json = :portfolioJson WHERE id = :listingId OR user_id = :userId',
+    { userId, listingId, portfolioJson },
+  );
+}
+
 function vendorFromRow(row) {
   if (!row) return null;
+  const portfolio = parsePortfolioJson(row.portfolio_json);
   return {
     id: row.user_id ? `vp-${row.user_id}` : row.id,
     businessName: row.business_name,
@@ -43,7 +84,44 @@ function vendorFromRow(row) {
     description: row.description || '',
     rating: Number(row.rating) || 4.5,
     ownerEmail: row.email || row.owner_email,
+    portfolioImages: portfolio.images,
+    quotations: portfolio.quotations,
+    quotationPdf: portfolio.quotationPdf,
   };
+}
+
+function listingFromRow(row) {
+  const portfolio = parsePortfolioJson(row.portfolio_json);
+  return {
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    city: row.city,
+    district: row.district,
+    priceRange: row.price_range,
+    description: row.description || '',
+    rating: Number(row.rating) || 4.5,
+    ownerEmail: row.owner_email,
+    spotlight: Boolean(row.spotlight),
+    portfolioImages: portfolio.images,
+    quotations: portfolio.quotations,
+    quotationPdf: portfolio.quotationPdf,
+  };
+}
+
+function portfolioPayload(p) {
+  return serializePortfolio({
+    images: p.portfolioImages || [],
+    quotations: (p.quotations || []).map((q) => ({
+      id: q.id,
+      title: q.title || '',
+      price: q.price || '',
+      details: q.details || '',
+      pdfName: q.pdfName || '',
+      pdfUrl: q.pdfUrl || '',
+    })),
+    quotationPdf: p.quotationPdf || null,
+  });
 }
 
 router.get('/wedding', authRequired, async (req, res) => {
@@ -139,11 +217,12 @@ router.put('/vendor', authRequired, async (req, res) => {
     const userId = req.user.id;
 
     await query(
-      `INSERT INTO vendor_profiles (user_id, business_name, category, district, price_range, description, rating)
-       VALUES (:userId, :businessName, :category, :district, :priceRange, :description, :rating)
+      `INSERT INTO vendor_profiles (user_id, business_name, category, district, price_range, description, portfolio_json, rating)
+       VALUES (:userId, :businessName, :category, :district, :priceRange, :description, :portfolioJson, :rating)
        ON DUPLICATE KEY UPDATE
          business_name = :businessName, category = :category, district = :district,
-         price_range = :priceRange, description = :description, rating = :rating, updated_at = NOW()`,
+         price_range = :priceRange, description = :description, portfolio_json = :portfolioJson,
+         rating = :rating, updated_at = NOW()`,
       {
         userId,
         businessName: p.businessName,
@@ -151,6 +230,7 @@ router.put('/vendor', authRequired, async (req, res) => {
         district: p.district,
         priceRange: p.priceRange,
         description: p.description || '',
+        portfolioJson: portfolioPayload(p),
         rating: Number(p.rating) || 4.5,
       },
     );
@@ -158,11 +238,12 @@ router.put('/vendor', authRequired, async (req, res) => {
     const listingId = p.id || `vp-${userId}`;
     await query(
       `INSERT INTO vendor_listings
-       (id, user_id, name, category, city, district, price_range, description, rating, owner_email)
-       VALUES (:id, :userId, :name, :category, :city, :district, :priceRange, :description, :rating, :ownerEmail)
+       (id, user_id, name, category, city, district, price_range, description, portfolio_json, rating, owner_email)
+       VALUES (:id, :userId, :name, :category, :city, :district, :priceRange, :description, :portfolioJson, :rating, :ownerEmail)
        ON DUPLICATE KEY UPDATE
          user_id = :userId, name = :name, category = :category, city = :city, district = :district,
-         price_range = :priceRange, description = :description, rating = :rating, owner_email = :ownerEmail`,
+         price_range = :priceRange, description = :description, portfolio_json = :portfolioJson,
+         rating = :rating, owner_email = :ownerEmail`,
       {
         id: listingId,
         userId,
@@ -172,6 +253,7 @@ router.put('/vendor', authRequired, async (req, res) => {
         district: p.district,
         priceRange: p.priceRange,
         description: p.description || '',
+        portfolioJson: portfolioPayload(p),
         rating: Number(p.rating) || 4.5,
         ownerEmail: p.ownerEmail,
       },
@@ -189,21 +271,77 @@ router.put('/vendor', authRequired, async (req, res) => {
   }
 });
 
+router.post('/vendor/pdf', authRequired, async (req, res) => {
+  try {
+    if (req.user.role !== 'vendor') {
+      res.status(403).json({ error: 'Vendor access only.' });
+      return;
+    }
+
+    const { dataUrl, fileName, quoteId, scope } = req.body;
+    if (!dataUrl || !fileName) {
+      res.status(400).json({ error: 'PDF file is required.' });
+      return;
+    }
+
+    const base64 = String(dataUrl).replace(/^data:application\/pdf[^,]*,/, '');
+    const buffer = Buffer.from(base64, 'base64');
+    if (buffer.length > 3 * 1024 * 1024) {
+      res.status(400).json({ error: 'PDF must be under 3 MB.' });
+      return;
+    }
+
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+    const safeName = `${req.user.id}-${quoteId || 'main'}-${Date.now()}.pdf`;
+    fs.writeFileSync(path.join(UPLOAD_DIR, safeName), buffer);
+    const url = `/uploads/vendors/${safeName}`;
+
+    const userId = req.user.id;
+    const listingId = `vp-${userId}`;
+    const rows = await query(
+      'SELECT portfolio_json FROM vendor_profiles WHERE user_id = :userId',
+      { userId },
+    );
+    const portfolio = parsePortfolioJson(rows[0]?.portfolio_json);
+
+    if (scope === 'main' || !quoteId) {
+      portfolio.quotationPdf = { name: fileName, url };
+    } else {
+      const quote = portfolio.quotations.find((q) => q.id === quoteId);
+      if (quote) {
+        quote.pdfName = fileName;
+        quote.pdfUrl = url;
+      } else {
+        portfolio.quotations.push({
+          id: quoteId,
+          title: fileName.replace(/\.pdf$/i, ''),
+          price: '',
+          details: '',
+          pdfName: fileName,
+          pdfUrl: url,
+        });
+      }
+    }
+
+    await savePortfolioForVendor(userId, listingId, portfolio);
+
+    res.json({
+      url,
+      fileName,
+      quoteId: quoteId || null,
+      quotationPdf: portfolio.quotationPdf,
+      quotations: portfolio.quotations,
+    });
+  } catch (err) {
+    console.error('Upload vendor PDF error:', err);
+    res.status(500).json({ error: 'Could not upload PDF.' });
+  }
+});
+
 router.get('/vendors', async (req, res) => {
   try {
     const rows = await query('SELECT * FROM vendor_listings ORDER BY spotlight DESC, name ASC');
-    const listings = rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      category: row.category,
-      city: row.city,
-      district: row.district,
-      priceRange: row.price_range,
-      description: row.description || '',
-      rating: Number(row.rating) || 4.5,
-      ownerEmail: row.owner_email,
-      spotlight: Boolean(row.spotlight),
-    }));
+    const listings = rows.map(listingFromRow);
     res.json({ listings });
   } catch (err) {
     console.error('Get vendor listings error:', err);
