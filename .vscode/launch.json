@@ -3,11 +3,15 @@
   "configurations": [
     {
       "name": "Run WowWed",
-      "type": "msedge",
+      "type": "node-terminal",
       "request": "launch",
-      "url": "http://localhost:3001",
-      "webRoot": "${workspaceFolder}/frontend/src",
-      "preLaunchTask": "WowWed: Run"
+      "command": "npm run dev",
+      "cwd": "${workspaceFolder}",
+      "serverReadyAction": {
+        "pattern": "Compiled successfully|webpack compiled",
+        "uriFormat": "http://localhost:3001",
+        "action": "openExternally"
+      }
     },
     {
       "name": "Run WowWed (Chrome)",
@@ -15,7 +19,9 @@
       "request": "launch",
       "url": "http://localhost:3001",
       "webRoot": "${workspaceFolder}/frontend/src",
-      "preLaunchTask": "WowWed: Run"
+      "preLaunchTask": "WowWed: Run",
+      "timeout": 180000,
+      "userDataDir": "${workspaceFolder}/.vscode/chrome-debug-profile"
     }
   ]
 }
