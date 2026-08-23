@@ -1,9 +1,17 @@
 import { Link } from 'react-router-dom';
+import coupleVisual from '../../assets/couple-onboarding.jpg';
+import vendorVisual from '../../assets/vendor-onboarding.jpg';
+
+const visuals = {
+  couple: coupleVisual,
+  vendor: vendorVisual,
+};
 
 function OnboardingLayout({ children, step = 1, variant = 'couple', wide = false }) {
   return (
     <div className={`onboarding onboarding--${variant}`}>
       <div className={`onboarding__visual onboarding__visual--${variant}`} aria-hidden="true">
+        <img src={visuals[variant] || visuals.couple} alt="" className="onboarding__visual-img" />
         <div className="onboarding__visual-overlay" />
       </div>
       <div className="onboarding__panel">

@@ -518,13 +518,24 @@
 
 .onboarding__visual {
   position: relative;
+  overflow: hidden;
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
 }
 
+.onboarding__visual-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .onboarding__visual--couple {
-  background-image: url('https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=1200&q=80');
+  background-color: #d4c4b8;
+  background-image: url('./assets/couple-onboarding.jpg');
 }
 
 .onboarding__visual--vendor {
@@ -539,6 +550,7 @@
 .onboarding__visual-overlay {
   position: absolute;
   inset: 0;
+  z-index: 1;
   background: linear-gradient(180deg, rgba(92, 61, 46, 0.1), rgba(92, 61, 46, 0.25));
 }
 

@@ -138,14 +138,14 @@ export const defaultGuests = [
 ];
 
 export const defaultVendors = [
-  { id: 'v1', name: 'Grand Ballroom Colombo', category: 'Venue & Res. Halls', city: 'Colombo', spotlight: true },
-  { id: 'v2', name: 'Silk & Lace Bridal', category: 'Bridal Service', city: 'Colombo', spotlight: true },
-  { id: 'v3', name: 'Royal Groom Tailors', category: 'Groom service', city: 'Colombo', spotlight: false },
-  { id: 'v4', name: 'Dasun Nimantha Photography', category: 'Photography & Videography', city: 'Kandy', spotlight: true },
-  { id: 'v5', name: 'Ceylon Gold Jewellers', category: 'Jewellary', city: 'Colombo', spotlight: false },
-  { id: 'v6', name: 'Bloom & Vine Florals', category: 'Floral & Deco', city: 'Kandy', spotlight: false },
-  { id: 'v7', name: 'Island Feast Caterers', category: 'Caters', city: 'Galle', spotlight: true },
-  { id: 'v8', name: 'Sweet Layers Cakes', category: 'Cakes', city: 'Colombo', spotlight: false },
+  { id: 'vw-01', name: 'Kandyan Reach Hotel', category: 'Venue & Res. Halls', city: 'Kurunegala', spotlight: true },
+  { id: 'vw-36', name: 'Seethawaka Regency', category: 'Venue & Res. Halls', city: 'Avissawella', spotlight: true },
+  { id: 'vw-34', name: 'Clover Banquets & Resorts', category: 'Venue & Res. Halls', city: 'Kelaniya', spotlight: true },
+  { id: 'vw-39', name: 'AVANI Kalutara Resort', category: 'Venue & Res. Halls', city: 'Kalutara', spotlight: true },
+  { id: 'vw-17', name: 'Romance Wedding Photography', category: 'Photography & Videography', city: 'Colombo', spotlight: true },
+  { id: 'vw-49', name: 'Brides Mark', category: 'Bridal Service', city: 'Yakkala', spotlight: true },
+  { id: 'vw-59', name: 'Swarnamahal', category: 'Jewellary', city: 'Colombo', spotlight: true },
+  { id: 'vw-58', name: 'Lanka Chandani Cake Creations', category: 'Cakes', city: 'Kadawatha', spotlight: true },
 ];
 
 export function getCategoryMeta(id) {
