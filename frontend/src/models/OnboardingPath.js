@@ -15,6 +15,8 @@ export const coupleOnboarding = new OnboardingPath({
   description: 'Wedding planning for couples',
 });
 
+coupleOnboarding.freshRoute = '/get-started/couple?new=1';
+
 export const vendorOnboarding = new OnboardingPath({
   id: 'vendor',
   label: 'Join as a vendor',

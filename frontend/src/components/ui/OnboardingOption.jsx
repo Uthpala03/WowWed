@@ -18,7 +18,10 @@ function OnboardingOption({ option, selected, onSelect, tile = false, multi = fa
       <span className={`onboarding__option-icon${tile ? ' onboarding__option-icon--tile' : ''}`}>
         <OnboardingIcon name={option.icon} />
       </span>
-      {option.label}
+      <span className="onboarding__option-copy">
+        <span className="onboarding__option-label">{option.label}</span>
+        {option.hint && <span className="onboarding__option-hint">{option.hint}</span>}
+      </span>
     </button>
   );
 }

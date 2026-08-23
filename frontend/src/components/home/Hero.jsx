@@ -17,7 +17,7 @@ function Hero() {
           </p>
 
           <div className="landing-hero__actions">
-            <Button variant="primary" to={coupleOnboarding.route} className="landing-hero__cta">
+            <Button variant="primary" to={coupleOnboarding.freshRoute} className="landing-hero__cta">
               Start planning free
             </Button>
             <button type="button" className="landing-hero__link" onClick={() => scrollToSection('features')}>

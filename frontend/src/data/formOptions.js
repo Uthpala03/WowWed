@@ -1,11 +1,65 @@
-export const ceremonyTypes = ['Poruwa', 'Christian', 'Muslim', 'Civil'];
-
 export const onboardingCeremonyTypes = [
-  { id: 'poruwa', label: 'Poruwa', icon: 'poruwa', accent: { bg: '#fff4e6', color: '#c45c00' } },
-  { id: 'church', label: 'Church', icon: 'church', accent: { bg: '#eef0ff', color: '#3949ab' } },
-  { id: 'both', label: 'Poruwa & Church', icon: 'dualCeremony', accent: { bg: '#f6ecff', color: '#7b1fa2' } },
-  { id: 'reception', label: 'Reception only', icon: 'reception', accent: { bg: '#fffbe6', color: '#b8860b' } },
+  {
+    id: 'poruwa',
+    label: 'Poruwa Ceremony',
+    hint: 'Sinhalese / Buddhist tradition',
+    icon: 'poruwa',
+    accent: { bg: '#fff4e6', color: '#c45c00' },
+  },
+  {
+    id: 'church',
+    label: 'Church Wedding',
+    hint: 'Christian / Western tradition',
+    icon: 'church',
+    accent: { bg: '#eef0ff', color: '#3949ab' },
+  },
+  {
+    id: 'hindu',
+    label: 'Hindu Tamil Wedding',
+    hint: 'Tamil / Hindu tradition',
+    icon: 'hindu',
+    accent: { bg: '#fff3e0', color: '#e65100' },
+  },
+  {
+    id: 'nikah',
+    label: 'Muslim Nikah Ceremony',
+    hint: 'Islamic tradition',
+    icon: 'nikah',
+    accent: { bg: '#e8f5e9', color: '#2e7d32' },
+  },
+  {
+    id: 'reception',
+    label: 'Reception',
+    hint: 'Celebration only',
+    icon: 'reception',
+    accent: { bg: '#fffbe6', color: '#b8860b' },
+  },
 ];
+
+export const ceremonyTypes = onboardingCeremonyTypes.map((type) => type.label);
+
+const ceremonyAliases = {
+  Poruwa: 'Poruwa Ceremony',
+  Christian: 'Church Wedding',
+  Church: 'Church Wedding',
+  Muslim: 'Muslim Nikah Ceremony',
+  Civil: 'Reception',
+  'Reception only': 'Reception',
+  'Poruwa & Church': 'Poruwa Ceremony',
+  both: 'Poruwa Ceremony',
+};
+
+export function ceremonyLabelFromOnboarding(id) {
+  const match = onboardingCeremonyTypes.find((type) => type.id === id);
+  if (match) return match.label;
+  return ceremonyAliases[id] || 'Poruwa Ceremony';
+}
+
+export function normalizeCeremonyType(value) {
+  if (!value) return 'Poruwa Ceremony';
+  if (ceremonyTypes.includes(value)) return value;
+  return ceremonyAliases[value] || ceremonyLabelFromOnboarding(value);
+}
 
 export const venueTypes = [
   { id: 'indoor', label: 'Indoor', icon: 'indoor', accent: { bg: '#ede7f6', color: '#5e35b1' } },
@@ -88,6 +142,7 @@ export const weddingScales = [
   { value: 'premium', label: 'Premium' },
   { value: 'luxury', label: 'Luxury' },
 ];
+
 
 export function optionStyle(accent) {
   if (!accent) return undefined;

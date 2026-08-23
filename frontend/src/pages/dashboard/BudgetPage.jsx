@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useOutletContext } from 'react-router-dom';
 import { getBudget, getWeddingProfile, saveBudget } from '../../utils/storage';
 import { predictWeddingCost } from '../../utils/costPrediction';
 import PageHeader from '../../components/ui/PageHeader';
@@ -8,7 +8,15 @@ const categoryColors = ['#e8a88c', '#7a9eb8', '#b8a0c8', '#d4b85c', '#c96a5a', '
 const sortOptions = ['Default', 'Name', 'Remaining budget', 'Budget allocated'];
 
 function BudgetPage() {
-  const [budget, setBudget] = useState(() => getBudget() || { total: 10000000, categories: [], expenses: [] });
+  const coupleData = useOutletContext();
+  const profileBudget = Number(coupleData?.profile?.budget) || 0;
+  const emptyBudget = { total: profileBudget, categories: [], expenses: [] };
+  const [budget, setBudget] = useState(() => coupleData?.budget || getBudget() || emptyBudget);
+
+  useEffect(() => {
+    const next = coupleData?.budget || getBudget();
+    if (next) setBudget(next);
+  }, [coupleData]);
   const [showCategory, setShowCategory] = useState(false);
   const [showExpense, setShowExpense] = useState(false);
   const [showEditBudget, setShowEditBudget] = useState(false);
@@ -17,15 +25,36 @@ function BudgetPage() {
   const [expForm, setExpForm] = useState({ name: '', amount: 0, categoryId: '', date: new Date().toISOString().slice(0, 10), notes: '' });
   const [editTotal, setEditTotal] = useState(budget.total);
   const [prediction, setPrediction] = useState(null);
-  const profile = getWeddingProfile();
+  const [predicting, setPredicting] = useState(false);
+  const [predictError, setPredictError] = useState('');
+  const profile = coupleData?.profile || getWeddingProfile();
 
-  const spent = useMemo(() => budget.expenses.reduce((s, e) => s + Number(e.amount || 0), 0), [budget]);
+  const runPrediction = async () => {
+    setPredicting(true);
+    setPredictError('');
+    try {
+      const result = await predictWeddingCost({ ...profile, weddingMonth: profile?.weddingDate });
+      setPrediction(result);
+    } catch (err) {
+      setPredictError(err.message || 'Could not run cost prediction.');
+    } finally {
+      setPredicting(false);
+    }
+  };
+
+  const applyEstimate = () => {
+    if (!prediction?.estimate) return;
+    persist({ ...budget, total: Number(prediction.estimate) });
+    setEditTotal(prediction.estimate);
+  };
+
+  const spent = useMemo(() => (budget.expenses || []).reduce((s, e) => s + Number(e.amount || 0), 0), [budget]);
   const overspent = spent > budget.total;
   const left = budget.total - spent;
   const pct = budget.total ? Math.round((spent / budget.total) * 100) : 0;
 
   const sortedCategories = useMemo(() => {
-    const cats = [...budget.categories];
+    const cats = [...(budget.categories || [])];
     if (sortBy === 'Name') cats.sort((a, b) => a.name.localeCompare(b.name));
     if (sortBy === 'Budget allocated') cats.sort((a, b) => Number(b.allocated) - Number(a.allocated));
     if (sortBy === 'Remaining budget') {
@@ -91,17 +120,28 @@ function BudgetPage() {
         <div className="ai-prediction__head">
           <div>
             <h3>AI cost prediction</h3>
-            <p>Estimate based on guest count, location, and ceremony type</p>
+            <p>Random Forest estimate from guests, district, ceremony, scale, and season</p>
           </div>
-          <button type="button" className="dash-btn dash-btn--primary" onClick={() => setPrediction(predictWeddingCost({ ...profile, weddingMonth: profile?.weddingDate }))}>
-            Run prediction
+          <button type="button" className="dash-btn dash-btn--primary" onClick={runPrediction} disabled={predicting}>
+            {predicting ? 'Predicting…' : 'Run prediction'}
           </button>
         </div>
+        {predictError && <p className="ai-prediction__error">{predictError}</p>}
         {prediction && (
           <div className="ai-prediction__result">
-            <p><strong>Estimated total:</strong> Rs. {prediction.estimate.toLocaleString()}</p>
-            <p><strong>Range:</strong> Rs. {prediction.low.toLocaleString()} – Rs. {prediction.high.toLocaleString()} ({prediction.confidence})</p>
-            <p className="ai-prediction__note">Based on {prediction.factors.guests} guests · {prediction.factors.district} · {prediction.factors.ceremonyType || 'Standard'} · {prediction.factors.seasonal}</p>
+            <p><strong>Estimated total:</strong> Rs. {Number(prediction.estimate).toLocaleString()}</p>
+            <p><strong>Range:</strong> Rs. {Number(prediction.low).toLocaleString()} – Rs. {Number(prediction.high).toLocaleString()} ({prediction.confidence})</p>
+            <p className="ai-prediction__note">
+              Based on {prediction.factors.guests} guests · {prediction.factors.district} · {prediction.factors.ceremonyType || 'Standard'} · {prediction.factors.scale || profile?.scale} · {prediction.factors.seasonal}
+            </p>
+            <p className="ai-prediction__note">
+              {prediction.source === 'local'
+                ? 'Using the on-page estimate until the cost model API is running.'
+                : `Model ${prediction.source}${prediction.metrics?.r2 != null ? ` · R² ${prediction.metrics.r2}` : ''}`}
+            </p>
+            <button type="button" className="dash-btn dash-btn--white" onClick={applyEstimate}>
+              Use estimate as total budget
+            </button>
           </div>
         )}
       </div>

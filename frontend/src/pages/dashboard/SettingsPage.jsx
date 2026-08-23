@@ -18,7 +18,10 @@ function SettingsPage() {
         <Link to="/wedding-profile" className="dash-btn dash-btn--outline">Edit wedding profile</Link>
         {profile && (
           <p className="settings-profile">
-            {profile.partnerOne} &amp; {profile.partnerTwo} · {profile.ceremonyType} · {profile.district}
+            {profile.partnerOne} &amp; {profile.partnerTwo}
+            {profile.ceremonyType ? ` · ${profile.ceremonyType}` : ''}
+            {profile.district ? ` · ${profile.district}` : ''}
+            {profile.weddingDate ? ` · ${profile.weddingDate}` : ''}
           </p>
         )}
       </div>

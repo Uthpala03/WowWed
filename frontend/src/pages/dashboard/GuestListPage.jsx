@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react';
-import { guestGroups, rsvpStatuses } from '../../data/dashboardData';
-import { getGuests, saveGuests } from '../../utils/storage';
+import { useEffect, useMemo, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import { guestGroups, normalizeGuestGroup, rsvpStatuses } from '../../data/dashboardData';
+import { getGuests, getSeating, saveGuests, saveSeating } from '../../utils/storage';
 import PageHeader from '../../components/ui/PageHeader';
 
-const emptyGuest = { name: '', email: '', phone: '', group: 'No Group', rsvp: 'Pending', notes: '' };
+const emptyGuest = { name: '', email: '', phone: '', group: 'No Group', rsvp: 'Pending', age: '', notes: '', avoid: '' };
 const PAGE_SIZES = [25, 50, 100, 250];
-const CSV_HEADER = 'name,email,phone,group,rsvp,notes';
+const CSV_HEADER = 'name,email,phone,group,rsvp,age,notes,avoid';
 
 const RSVP_LABELS = {
   Pending: { label: 'Waiting', icon: '⏳', hint: 'Has not replied yet' },
@@ -14,15 +15,59 @@ const RSVP_LABELS = {
   Declined: { label: 'Not coming', icon: '✗', hint: 'Declined invitation' },
 };
 
-function rsvpKey(status) {
-  return (status || 'Pending').toLowerCase();
-}
-
 function normalizeRsvp(value) {
   const v = (value || '').trim().toLowerCase();
   if (['accepted', 'coming', 'yes', 'y'].includes(v)) return 'Accepted';
   if (['rejected', 'declined', 'not coming', 'no', 'n'].includes(v)) return 'Rejected';
   return 'Pending';
+}
+
+function RsvpToggle({ value, onChange, disabled, compact }) {
+  const options = [
+    { key: 'Accepted', label: 'Coming', cls: 'coming' },
+    { key: 'Pending', label: 'Waiting', cls: 'waiting' },
+    { key: 'Rejected', label: 'Not coming', cls: 'notcoming' },
+  ];
+  return (
+    <div className={`rsvp-toggle${compact ? ' rsvp-toggle--compact' : ''}`} role="group">
+      {options.map((opt) => (
+        <button
+          key={opt.key}
+          type="button"
+          disabled={disabled}
+          className={`rsvp-toggle__btn rsvp-toggle__btn--${opt.cls}${value === opt.key ? ' is-on' : ''}`}
+          onClick={() => onChange(opt.key)}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function guestMeta(guest) {
+  const age = String(guest.age || '').trim();
+  return [guest.group || 'No Group', age ? `Age ${age}` : '', guest.phone || guest.email].filter(Boolean).join(' · ');
+}
+
+function GuestRow({ guest, selected, onToggle, onRsvp, onEdit, onDelete }) {
+  return (
+    <li className={`guest-row${selected ? ' is-selected' : ''}${guest.rsvp === 'Accepted' ? ' guest-row--coming' : ''}${guest.rsvp === 'Rejected' || guest.rsvp === 'Declined' ? ' guest-row--notcoming' : ''}`}>
+      <label className="guest-row__check">
+        <input type="checkbox" checked={selected} onChange={() => onToggle(guest.id)} aria-label={`Select ${guest.name}`} />
+      </label>
+      <span className="guest-row__avatar">{guest.name.charAt(0).toUpperCase()}</span>
+      <div className="guest-row__info">
+        <strong>{guest.name}</strong>
+        <small>{guestMeta(guest)}</small>
+      </div>
+      <RsvpToggle compact value={normalizeRsvp(guest.rsvp)} onChange={(rsvp) => onRsvp(guest.id, rsvp)} />
+      <div className="guest-row__actions">
+        <button type="button" className="guest-icon-btn" onClick={() => onEdit(guest)} aria-label={`Edit ${guest.name}`}>✏️</button>
+        <button type="button" className="guest-icon-btn guest-icon-btn--danger" onClick={() => onDelete(guest.id)} aria-label={`Delete ${guest.name}`}>🗑️</button>
+      </div>
+    </li>
+  );
 }
 
 function guestMatchKey(g) {
@@ -34,16 +79,23 @@ function guestMatchKey(g) {
   return `name:${name}`;
 }
 
-function parseCsvLine(line) {
+function parseCsvLine(line, headers) {
   const parts = line.split(',').map((s) => s.trim().replace(/^"|"$/g, ''));
-  const [name, email, phone, group, rsvp, notes] = parts;
+  const get = (name, fallbackIndex) => {
+    const i = headers.indexOf(name);
+    if (i >= 0) return parts[i] || '';
+    if (fallbackIndex < 0) return '';
+    return parts[fallbackIndex] || '';
+  };
   return {
-    name: name || '',
-    email: email || '',
-    phone: phone || '',
-    group: group || 'No Group',
-    rsvp: normalizeRsvp(rsvp),
-    notes: notes || '',
+    name: get('name', 0),
+    email: get('email', 1),
+    phone: get('phone', 2),
+    group: normalizeGuestGroup(get('group', 3)),
+    rsvp: normalizeRsvp(get('rsvp', 4)),
+    age: get('age', -1),
+    notes: get('notes', 5),
+    avoid: get('avoid', 6),
   };
 }
 
@@ -54,17 +106,31 @@ function guestsToCsv(guestList) {
     g.phone || '',
     g.group || 'No Group',
     g.rsvp || 'Pending',
+    g.age || '',
     (g.notes || '').replace(/,/g, ';'),
+    (g.avoid || '').replace(/,/g, ';'),
   ].map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','));
   return [CSV_HEADER, ...rows].join('\n');
 }
 
 function GuestListPage() {
-  const [guests, setGuests] = useState(() => getGuests());
+  const coupleData = useOutletContext();
+  const [guests, setGuests] = useState(() => getGuests() || coupleData?.guests || []);
+
+  useEffect(() => {
+    const incoming = getGuests() || coupleData?.guests || [];
+    let changed = false;
+    const next = incoming.map((guest) => {
+      const group = normalizeGuestGroup(guest.group);
+      if (group !== (guest.group || 'No Group')) changed = true;
+      return group === guest.group ? guest : { ...guest, group };
+    });
+    setGuests(next);
+    if (changed) saveGuests(next);
+  }, [coupleData]);
   const [search, setSearch] = useState('');
   const [groupFilter, setGroupFilter] = useState('All Groups');
   const [rsvpFilter, setRsvpFilter] = useState('All Statuses');
-  const [view, setView] = useState('table');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -73,7 +139,9 @@ function GuestListPage() {
   const [editingId, setEditingId] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [csvDeleteConfirm, setCsvDeleteConfirm] = useState(false);
   const [importResult, setImportResult] = useState(null);
+  const [groupRsvpNote, setGroupRsvpNote] = useState('');
   const [form, setForm] = useState(emptyGuest);
   const [bulkForm, setBulkForm] = useState({ names: '', group: 'No Group', rsvp: 'Pending' });
 
@@ -87,6 +155,17 @@ function GuestListPage() {
   const responsePct = stats.total
     ? Math.round(((stats.accepted + stats.declined) / stats.total) * 100)
     : 0;
+
+  const activeGroupMembers = useMemo(() => {
+    if (groupFilter === 'All Groups') return guests;
+    return guests.filter((guest) => (guest.group || 'No Group') === groupFilter);
+  }, [guests, groupFilter]);
+
+  const activeGroupStatus = useMemo(() => {
+    if (!activeGroupMembers.length) return '';
+    const first = normalizeRsvp(activeGroupMembers[0].rsvp);
+    return activeGroupMembers.every((guest) => normalizeRsvp(guest.rsvp) === first) ? first : '';
+  }, [activeGroupMembers]);
 
   const filtered = useMemo(() => guests.filter((g) => {
     const q = search.toLowerCase();
@@ -163,7 +242,21 @@ function GuestListPage() {
   };
 
   const applyGroupRsvp = (group, rsvp) => {
-    persist(guests.map((g) => (g.group === group ? { ...g, rsvp } : g)));
+    const markAll = group === 'All Groups';
+    const members = markAll
+      ? guests
+      : guests.filter((g) => (g.group || 'No Group') === group);
+    if (!members.length) return;
+    persist(guests.map((g) => (
+      markAll || (g.group || 'No Group') === group ? { ...g, rsvp } : g
+    )));
+    const label = RSVP_LABELS[rsvp]?.label || rsvp;
+    setGroupRsvpNote(`${members.length} ${members.length === 1 ? 'guest' : 'guests'} in ${group} marked ${label}.`);
+    window.setTimeout(() => setGroupRsvpNote(''), 3500);
+  };
+
+  const setGuestRsvp = (id, rsvp) => {
+    persist(guests.map((guest) => (guest.id === id ? { ...guest, rsvp } : guest)));
   };
 
   const openAdd = () => {
@@ -243,12 +336,15 @@ function GuestListPage() {
             phone: incoming.phone || merged[idx].phone,
             group: incoming.group !== 'No Group' ? incoming.group : merged[idx].group,
             rsvp: incoming.rsvp !== 'Pending' ? incoming.rsvp : merged[idx].rsvp,
+            age: incoming.age || merged[idx].age || '',
             notes: incoming.notes || merged[idx].notes,
+            avoid: incoming.avoid || merged[idx].avoid || '',
+            fromCsv: true,
           };
           updated += 1;
         }
       } else {
-        merged.push(incoming);
+        merged.push({ ...incoming, fromCsv: true });
         lookup.set(key, incoming);
         added += 1;
       }
@@ -259,13 +355,33 @@ function GuestListPage() {
     setTimeout(() => setImportResult(null), 5000);
   };
 
+  const csvGuests = guests.filter((g) => g.fromCsv);
+  const csvDeleteCount = csvGuests.length || guests.length;
+
+  const clearImportedCsv = () => {
+    const removeIds = new Set((csvGuests.length ? csvGuests : guests).map((g) => g.id));
+    persist(guests.filter((g) => !removeIds.has(g.id)));
+    const seating = getSeating();
+    if (seating?.assignments) {
+      const assignments = { ...seating.assignments };
+      Object.keys(assignments).forEach((key) => {
+        if (removeIds.has(assignments[key])) delete assignments[key];
+      });
+      saveSeating({ ...seating, assignments });
+    }
+    clearSelection();
+    setCsvDeleteConfirm(false);
+    setImportResult(null);
+  };
+
   const importCsv = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       const lines = String(reader.result).split(/\r?\n/).filter(Boolean);
-      const rows = lines.slice(1).map(parseCsvLine).filter((r) => r.name);
+      const header = lines[0].split(',').map((s) => s.trim().replace(/^"|"$/g, '').toLowerCase());
+      const rows = lines.slice(1).map((line) => parseCsvLine(line, header)).filter((r) => r.name);
       if (rows.length) mergeImport(rows);
     };
     reader.readAsText(file);
@@ -322,6 +438,11 @@ function GuestListPage() {
             Import / Update CSV
             <input type="file" accept=".csv" hidden onChange={importCsv} />
           </label>
+          {guests.length > 0 && (
+            <button type="button" className="dash-btn dash-btn--outline guest-delete-btn" onClick={() => setCsvDeleteConfirm(true)}>
+              Delete imported CSV
+            </button>
+          )}
           <button type="button" className="dash-btn dash-btn--outline" onClick={() => setBulkAddOpen(true)}>Add many</button>
           <button type="button" className="dash-btn dash-btn--primary" onClick={openAdd}>+ Add guest</button>
         </div>
@@ -340,7 +461,7 @@ function GuestListPage() {
           <p>
             <strong>1.</strong> Export CSV → update RSVPs in Excel/Google Sheets (Accepted / Rejected / Pending) → re-import to update all at once.
             <strong> 2.</strong> Select multiple guests and bulk-mark Coming or Not coming.
-            <strong> 3.</strong> Mark an entire group (Family, Friends…) with one click below.
+            <strong> 3.</strong> Choose a group above, then mark Coming, Waiting, or Not coming. Or use the RSVP buttons on each guest.
           </p>
         </div>
       </section>
@@ -370,23 +491,12 @@ function GuestListPage() {
         </div>
       )}
 
-      <div className="guest-quick-group dash-card">
-        <span className="guest-quick-group__label">Quick group RSVP:</span>
-        {guestGroups.filter((g) => g !== 'No Group').map((group) => (
-          <div key={group} className="guest-quick-group__item">
-            <span>{group}</span>
-            <button type="button" className="guest-rsvp-btn guest-rsvp-btn--accepted" onClick={() => applyGroupRsvp(group, 'Accepted')}>All coming</button>
-            <button type="button" className="guest-rsvp-btn guest-rsvp-btn--rejected" onClick={() => applyGroupRsvp(group, 'Rejected')}>All not coming</button>
-          </div>
-        ))}
-      </div>
-
       <div className="guest-toolbar">
         <div className="guest-search">
           <span aria-hidden="true">🔍</span>
           <input type="search" placeholder="Search by name, email, or phone..." value={search} onChange={(e) => handleSearchChange(e.target.value)} />
         </div>
-        <select value={groupFilter} onChange={(e) => handleGroupFilterChange(e.target.value)} aria-label="Filter by group">
+        <select className="guest-filter-select" value={groupFilter} onChange={(e) => handleGroupFilterChange(e.target.value)} aria-label="Filter by group">
           <option>All Groups</option>
           {guestGroups.map((g) => <option key={g}>{g}</option>)}
         </select>
@@ -395,10 +505,23 @@ function GuestListPage() {
           {rsvpStatuses.map((s) => <option key={s}>{RSVP_LABELS[s]?.label || s}</option>)}
         </select>
         {hasActiveFilters && <button type="button" className="guest-clear-filters" onClick={clearFilters}>Clear</button>}
-        <div className="view-toggle">
-          <button type="button" className={view === 'table' ? 'is-on' : ''} onClick={() => setView('table')}>Table</button>
-          <button type="button" className={view === 'list' ? 'is-on' : ''} onClick={() => setView('list')}>Cards</button>
+      </div>
+
+      <div className={`guest-selected-group${activeGroupMembers.length === 0 ? ' is-empty' : ''}`}>
+        <div className="guest-selected-group__meta">
+          <strong>{groupFilter}</strong>
+          <span>
+            {activeGroupMembers.length
+              ? `${activeGroupMembers.length} ${activeGroupMembers.length === 1 ? 'guest' : 'guests'} — mark this group`
+              : 'No guests yet'}
+          </span>
         </div>
+        <RsvpToggle
+          value={activeGroupStatus}
+          disabled={!activeGroupMembers.length}
+          onChange={(rsvp) => applyGroupRsvp(groupFilter, rsvp)}
+        />
+        {groupRsvpNote && <p className="guest-selected-group__note" role="status">{groupRsvpNote}</p>}
       </div>
 
       {selectedCount > 0 && (
@@ -443,7 +566,7 @@ function GuestListPage() {
               <button type="button" className="dash-btn dash-btn--outline" onClick={clearFilters}>Clear filters</button>
             )}
           </div>
-        ) : view === 'table' ? (
+        ) : (
           <>
             <div className="guest-table-toolbar">
               <div className="guest-select-actions">
@@ -463,87 +586,18 @@ function GuestListPage() {
               </div>
               <span className="guest-page-info">Showing {pageStart}–{pageEnd} of {filtered.length}</span>
             </div>
-            <div className="guest-table-wrap">
-              <table className="guest-table">
-                <thead>
-                  <tr>
-                    <th aria-label="Select" />
-                    <th>Name</th>
-                    <th>Contact</th>
-                    <th>Group</th>
-                    <th>RSVP</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginated.map((g) => (
-                    <tr key={g.id} className={selectedIds.has(g.id) ? 'is-selected' : ''}>
-                      <td>
-                        <input type="checkbox" checked={selectedIds.has(g.id)} onChange={() => toggleSelect(g.id)} aria-label={`Select ${g.name}`} />
-                      </td>
-                      <td><strong>{g.name}</strong></td>
-                      <td>
-                        {g.phone && <div>{g.phone}</div>}
-                        {g.email && <small>{g.email}</small>}
-                        {!g.phone && !g.email && <span className="guest-no-contact">—</span>}
-                      </td>
-                      <td><span className="guest-group-badge">{g.group}</span></td>
-                      <td>
-                        <span className={`rsvp-badge rsvp-badge--${rsvpKey(g.rsvp)}`}>
-                          {RSVP_LABELS[g.rsvp]?.icon} {RSVP_LABELS[g.rsvp]?.label || g.rsvp}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="guest-row-actions">
-                          <button type="button" className="guest-action-btn" onClick={() => openEdit(g)} aria-label={`Edit ${g.name}`}>✏️</button>
-                          <button type="button" className="guest-action-btn guest-action-btn--danger" onClick={() => setDeleteConfirm(g.id)} aria-label={`Delete ${g.name}`}>🗑️</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="guest-pagination">
-              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} aria-label="Rows per page">
-                {PAGE_SIZES.map((size) => <option key={size} value={size}>{size} per page</option>)}
-              </select>
-              <div className="guest-pagination__nav">
-                <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>← Prev</button>
-                <span>Page {safePage} of {totalPages}</span>
-                <button type="button" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Next →</button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <ul className="guest-cards">
-              {paginated.map((g) => {
-                const rsvpInfo = RSVP_LABELS[g.rsvp] || RSVP_LABELS.Pending;
-                return (
-                  <li key={g.id} className={`guest-card${selectedIds.has(g.id) ? ' is-selected' : ''}${g.rsvp === 'Accepted' ? ' guest-card--accepted' : ''}${g.rsvp === 'Rejected' || g.rsvp === 'Declined' ? ' guest-card--declined' : ''}`}>
-                    <label className="guest-card__check">
-                      <input type="checkbox" checked={selectedIds.has(g.id)} onChange={() => toggleSelect(g.id)} />
-                    </label>
-                    <div className="guest-card__avatar">{g.name.charAt(0).toUpperCase()}</div>
-                    <div className="guest-card__info">
-                      <div className="guest-card__top">
-                        <strong>{g.name}</strong>
-                        <span className={`rsvp-badge rsvp-badge--${rsvpKey(g.rsvp)}`}>{rsvpInfo.icon} {rsvpInfo.label}</span>
-                      </div>
-                      <div className="guest-card__contact">
-                        {g.phone && <span>📱 {g.phone}</span>}
-                        {g.email && <span>✉️ {g.email}</span>}
-                      </div>
-                      <span className="guest-group-badge">{g.group}</span>
-                    </div>
-                    <div className="guest-card__actions">
-                      <button type="button" className="guest-action-btn" onClick={() => openEdit(g)}>✏️ Edit</button>
-                      <button type="button" className="guest-action-btn guest-action-btn--danger" onClick={() => setDeleteConfirm(g.id)}>🗑️</button>
-                    </div>
-                  </li>
-                );
-              })}
+            <ul className="guest-rows">
+              {paginated.map((guest) => (
+                <GuestRow
+                  key={guest.id}
+                  guest={guest}
+                  selected={selectedIds.has(guest.id)}
+                  onToggle={toggleSelect}
+                  onRsvp={setGuestRsvp}
+                  onEdit={openEdit}
+                  onDelete={setDeleteConfirm}
+                />
+              ))}
             </ul>
             <div className="guest-pagination">
               <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} aria-label="Rows per page">
@@ -611,7 +665,15 @@ function GuestListPage() {
                 {rsvpStatuses.map((s) => <option key={s} value={s}>{RSVP_LABELS[s]?.label || s}</option>)}
               </select>
             </label>
+            <label className="dash-field">
+              <span>Age</span>
+              <input type="number" min="1" max="120" value={form.age || ''} onChange={(e) => setForm({ ...form, age: e.target.value })} placeholder="e.g. 8 or 72" />
+            </label>
             <label className="dash-field"><span>Notes</span><textarea rows={3} value={form.notes || ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
+            <label className="dash-field">
+              <span>Do not sit with (names, comma separated)</span>
+              <input value={form.avoid || ''} onChange={(e) => setForm({ ...form, avoid: e.target.value })} placeholder="Full name, other name" />
+            </label>
             <div className="dash-panel__actions">
               {editingId && <button type="button" className="dash-btn dash-btn--ghost guest-delete-btn" onClick={() => setDeleteConfirm(editingId)}>Delete guest</button>}
               <button type="button" className="dash-btn dash-btn--ghost" onClick={closePanel}>Cancel</button>
@@ -629,6 +691,19 @@ function GuestListPage() {
             <div className="dash-panel__actions">
               <button type="button" className="dash-btn dash-btn--ghost" onClick={() => setDeleteConfirm(null)}>Cancel</button>
               <button type="button" className="dash-btn dash-btn--primary guest-delete-btn" onClick={() => removeGuest(deleteConfirm)}>Yes, remove</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {csvDeleteConfirm && (
+        <div className="dash-overlay" onClick={() => setCsvDeleteConfirm(false)}>
+          <div className="dash-panel guest-delete-panel" onClick={(e) => e.stopPropagation()}>
+            <h2>Delete imported CSV?</h2>
+            <p>This will remove <strong>{csvDeleteCount}</strong> {csvDeleteCount === 1 ? 'guest' : 'guests'} from the list. You can import a CSV again after.</p>
+            <div className="dash-panel__actions">
+              <button type="button" className="dash-btn dash-btn--ghost" onClick={() => setCsvDeleteConfirm(false)}>Cancel</button>
+              <button type="button" className="dash-btn dash-btn--primary guest-delete-btn" onClick={clearImportedCsv}>Yes, delete imported list</button>
             </div>
           </div>
         </div>

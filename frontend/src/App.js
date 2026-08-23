@@ -33,7 +33,9 @@ import './App.css';
 function AppShell() {
   const location = useLocation();
   const isDashboard = location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/vendor');
-  const isOnboarding = location.pathname.startsWith('/get-started') || location.pathname === '/create-account';
+  const isOnboarding = location.pathname.startsWith('/get-started')
+    || location.pathname === '/create-account'
+    || (location.pathname === '/wedding-profile' && location.state?.fromSignup);
 
   return (
     <div className="app">

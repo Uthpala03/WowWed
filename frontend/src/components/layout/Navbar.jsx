@@ -90,7 +90,7 @@ function Navbar() {
           <Button variant="vendor" to={vendorOnboarding.route} className="navbar__btn-vendor">
             Join as a vendor
           </Button>
-          <Button variant="primary" to={coupleOnboarding.route} className="navbar__btn-plan">
+          <Button variant="primary" to={coupleOnboarding.freshRoute} className="navbar__btn-plan">
             Start planning
           </Button>
         </div>
@@ -124,7 +124,7 @@ function Navbar() {
           <div className="navbar__mobile-actions">
             <Link className="navbar__login navbar__login--block" to="/login" onClick={() => setMenuOpen(false)}>Log in</Link>
             <Button variant="vendor" to={vendorOnboarding.route} onClick={() => setMenuOpen(false)}>Join as a vendor</Button>
-            <Button variant="primary" to={coupleOnboarding.route} onClick={() => setMenuOpen(false)}>Start planning</Button>
+            <Button variant="primary" to={coupleOnboarding.freshRoute} onClick={() => setMenuOpen(false)}>Start planning</Button>
           </div>
         </nav>
       )}

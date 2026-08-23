@@ -1,14 +1,12 @@
-import { useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useMemo } from 'react';
+import { Link, useOutletContext } from 'react-router-dom';
 import {
   dashboardNav,
-  defaultTasks,
-  defaultGuests,
   getCategoryMeta,
   quickLinkHints,
 } from '../../data/dashboardData';
 import AppIcon from '../../components/ui/AppIcon';
-import { getBudget, getGuests, getTasks, getUser, getWeddingProfile, initDashboardData } from '../../utils/storage';
+import { getUser } from '../../utils/storage';
 import { getReadinessStatus } from '../../utils/notifications';
 
 function daysUntil(dateString) {
@@ -39,11 +37,13 @@ function ProgressRing({ value, color, label }) {
 }
 
 function DashboardOverview() {
+  const coupleData = useOutletContext();
   const user = getUser();
-  const profile = getWeddingProfile();
-  const tasks = getTasks() || defaultTasks;
-  const guests = getGuests();
-  const budget = getBudget();
+  const profile = coupleData?.profile || null;
+  const onboarding = coupleData?.onboarding || null;
+  const tasks = coupleData?.tasks || [];
+  const guests = coupleData?.guests || [];
+  const budget = coupleData?.budget || null;
   const done = tasks.filter((t) => t.done).length;
   const accepted = guests.filter((g) => g.rsvp === 'Accepted').length;
   const spent = (budget?.expenses || []).reduce((s, e) => s + Number(e.amount || 0), 0);
@@ -52,7 +52,15 @@ function DashboardOverview() {
   const budgetPct = budget?.total ? Math.round((spent / budget.total) * 100) : 0;
   const readiness = Math.round(taskPct * 0.4 + guestPct * 0.35 + budgetPct * 0.25);
   const readinessStatus = getReadinessStatus(readiness);
-  const countdown = daysUntil(profile?.weddingDate);
+  const weddingDate = String(profile?.weddingDate || onboarding?.weddingDate || '').slice(0, 10);
+  const location = String(onboarding?.location || profile?.district || '').trim();
+  const basics = {
+    weddingDate,
+    location,
+    hasDate: Boolean(weddingDate),
+    hasLocation: Boolean(location),
+  };
+  const countdown = daysUntil(weddingDate);
   const upcoming = tasks.filter((t) => !t.done).slice(0, 4);
   const sixMonthPlan = useMemo(() => {
     const now = new Date();
@@ -71,13 +79,10 @@ function DashboardOverview() {
   }, [tasks]);
   const tools = dashboardNav.filter((item) => !item.end);
 
-  useEffect(() => {
-    initDashboardData(defaultTasks, defaultGuests);
-  }, []);
-
-  const coupleName = profile
+  const coupleName = profile?.partnerOne && profile?.partnerTwo
     ? `${profile.partnerOne} & ${profile.partnerTwo}`
     : user?.fullName || 'Your wedding';
+  const needsProfile = !profile?.partnerOne || !profile?.partnerTwo || !profile?.weddingDate;
 
   return (
     <div className="dash-home">
@@ -90,12 +95,13 @@ function DashboardOverview() {
             <p className="dash-hero__tag">💍 Your love story, beautifully planned</p>
             <h1>{coupleName}</h1>
             <p className="dash-hero__sub">
-              {profile?.weddingDate
-                ? formatDate(profile.weddingDate)
+              {weddingDate
+                ? formatDate(weddingDate)
                 : 'Add your wedding date to start the countdown'}
-              {profile?.ceremonyType && ` · ${profile.ceremonyType} ceremony`}
+              {basics.hasLocation ? ` · ${basics.location}` : ''}
+              {profile?.ceremonyType && ` · ${profile.ceremonyType}`}
             </p>
-            {!profile && (
+            {needsProfile && (
               <Link to="/wedding-profile" className="dash-btn dash-btn--light">Complete your profile →</Link>
             )}
           </div>

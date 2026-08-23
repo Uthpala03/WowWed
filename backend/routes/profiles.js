@@ -3,6 +3,12 @@ const fs = require('fs');
 const path = require('path');
 const { query } = require('../config/db');
 const { authRequired } = require('../middleware/auth');
+const {
+  applyOnboardingToWeddingProfile,
+  loadOnboarding,
+  saveOnboardingRow,
+} = require('../utils/onboardingWedding');
+const { applyChecklistForCouple } = require('../utils/coupleChecklist');
 
 const router = express.Router();
 const UPLOAD_DIR = path.join(__dirname, '../uploads/vendors');
@@ -10,10 +16,8 @@ const UPLOAD_DIR = path.join(__dirname, '../uploads/vendors');
 function formatDateValue(value) {
   if (!value) return '';
   if (typeof value === 'string') return value.slice(0, 10);
-  const y = value.getFullYear();
-  const m = String(value.getMonth() + 1).padStart(2, '0');
-  const day = String(value.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  if (Number.isNaN(value.getTime())) return '';
+  return value.toISOString().slice(0, 10);
 }
 
 function weddingFromRow(row) {
@@ -23,8 +27,8 @@ function weddingFromRow(row) {
     partnerTwo: row.partner_two || '',
     weddingDate: formatDateValue(row.wedding_date),
     venue: row.venue || '',
-    district: row.district || 'Colombo',
-    ceremonyType: row.ceremony_type || 'Poruwa',
+    district: row.district || '',
+    ceremonyType: row.ceremony_type || '',
     guestCount: row.guest_count || 150,
     budget: row.budget ? Number(row.budget) : '',
     scale: row.scale || 'standard',
@@ -162,15 +166,25 @@ function primaryDistrict(p) {
   return list[0] || p.district || null;
 }
 
+async function loadWeddingProfile(userId) {
+  const rows = await query(
+    `SELECT wp.*, u.email FROM wedding_profiles wp
+     JOIN users u ON u.id = wp.user_id
+     WHERE wp.user_id = :userId`,
+    { userId },
+  );
+  return weddingFromRow(rows[0]);
+}
+
 router.get('/wedding', authRequired, async (req, res) => {
   try {
-    const rows = await query(
-      `SELECT wp.*, u.email FROM wedding_profiles wp
-       JOIN users u ON u.id = wp.user_id
-       WHERE wp.user_id = :userId`,
-      { userId: req.user.id },
-    );
-    res.json({ profile: weddingFromRow(rows[0]) });
+    if (req.user.role === 'couple') {
+      const onboarding = await loadOnboarding(req.user.id);
+      if (onboarding) {
+        await applyOnboardingToWeddingProfile(req.user.id, onboarding);
+      }
+    }
+    res.json({ profile: await loadWeddingProfile(req.user.id) });
   } catch (err) {
     console.error('Get wedding profile error:', err);
     res.status(500).json({ error: 'Could not load wedding profile.' });
@@ -185,25 +199,39 @@ router.put('/wedding', authRequired, async (req, res) => {
        (user_id, partner_one, partner_two, wedding_date, venue, district, ceremony_type, guest_count, budget, scale, venue_type, planning_stage)
        VALUES (:userId, :partnerOne, :partnerTwo, :weddingDate, :venue, :district, :ceremonyType, :guestCount, :budget, :scale, :venueType, :planningStage)
        ON DUPLICATE KEY UPDATE
-         partner_one = :partnerOne, partner_two = :partnerTwo, wedding_date = :weddingDate,
-         venue = :venue, district = :district, ceremony_type = :ceremonyType,
+         partner_one = :partnerOne, partner_two = :partnerTwo,
+         wedding_date = COALESCE(:weddingDate, wedding_date),
+         venue = COALESCE(NULLIF(:venue, ''), venue),
+         district = COALESCE(NULLIF(:district, ''), district),
+         ceremony_type = COALESCE(NULLIF(:ceremonyType, ''), ceremony_type),
          guest_count = :guestCount, budget = :budget, scale = :scale,
-         venue_type = :venueType, planning_stage = :planningStage, updated_at = NOW()`,
+         venue_type = COALESCE(NULLIF(:venueType, ''), venue_type),
+         planning_stage = COALESCE(NULLIF(:planningStage, ''), planning_stage),
+         updated_at = NOW()`,
       {
         userId: req.user.id,
-        partnerOne: p.partnerOne,
-        partnerTwo: p.partnerTwo,
+        partnerOne: p.partnerOne || null,
+        partnerTwo: p.partnerTwo || null,
         weddingDate: p.weddingDate || null,
-        venue: p.venue,
-        district: p.district,
-        ceremonyType: p.ceremonyType,
+        venue: p.venue || null,
+        district: p.district || null,
+        ceremonyType: p.ceremonyType || null,
         guestCount: Number(p.guestCount) || null,
         budget: Number(p.budget) || null,
-        scale: p.scale,
+        scale: p.scale || null,
         venueType: p.venueType || null,
         planningStage: p.planningStage || null,
       },
     );
+
+    const taskRows = await query(
+      "SELECT data_json FROM user_data WHERE user_id = :userId AND store_key = 'tasks'",
+      { userId: req.user.id },
+    );
+    const existingTasks = taskRows[0]?.data_json
+      ? (typeof taskRows[0].data_json === 'object' ? taskRows[0].data_json : JSON.parse(taskRows[0].data_json))
+      : [];
+    await applyChecklistForCouple(req.user.id, existingTasks);
 
     const rows = await query(
       `SELECT wp.*, u.email FROM wedding_profiles wp
@@ -219,18 +247,27 @@ router.put('/wedding', authRequired, async (req, res) => {
 
 router.get('/onboarding', authRequired, async (req, res) => {
   try {
-    const rows = await query('SELECT data_json, completed_at FROM onboarding WHERE user_id = :userId', {
-      userId: req.user.id,
-    });
-    if (!rows.length) {
-      res.json({ onboarding: null });
-      return;
-    }
-    const data = typeof rows[0].data_json === 'object' ? rows[0].data_json : JSON.parse(rows[0].data_json);
-    res.json({ onboarding: { ...data, completedAt: rows[0].completed_at } });
+    res.json({ onboarding: await loadOnboarding(req.user.id) });
   } catch (err) {
     console.error('Get onboarding error:', err);
     res.status(500).json({ error: 'Could not load onboarding.' });
+  }
+});
+
+router.put('/onboarding', authRequired, async (req, res) => {
+  try {
+    const onboarding = req.body || {};
+    const saved = await saveOnboardingRow(req.user.id, onboarding);
+    if (req.user.role === 'couple') {
+      await applyOnboardingToWeddingProfile(req.user.id, saved, { overwrite: true });
+    }
+    res.json({
+      onboarding: saved,
+      profile: req.user.role === 'couple' ? await loadWeddingProfile(req.user.id) : null,
+    });
+  } catch (err) {
+    console.error('Save onboarding error:', err);
+    res.status(500).json({ error: 'Could not save onboarding.' });
   }
 });
 

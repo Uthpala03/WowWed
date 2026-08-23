@@ -59,7 +59,7 @@ function LoginPage() {
       </form>
 
       <p className="form-page__footer">
-        <Link to="/password-reset">Forgot password?</Link> · New to WowWed? <Link to={coupleOnboarding.route}>Get started</Link>
+        <Link to="/password-reset">Forgot password?</Link> · New to WowWed? <Link to={coupleOnboarding.freshRoute}>Get started</Link>
       </p>
     </FormLayout>
   );

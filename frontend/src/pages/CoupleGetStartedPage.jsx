@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import OnboardingLayout from '../components/layout/OnboardingLayout';
 import OnboardingIcon from '../components/ui/OnboardingIcon';
 import OnboardingOption from '../components/ui/OnboardingOption';
@@ -10,20 +10,80 @@ import {
   planningStages,
   venueTypes,
 } from '../data/formOptions';
-import { saveOnboarding } from '../utils/storage';
+import { useAuth } from '../context/AuthContext';
+import {
+  beginGuestOnboarding,
+  getOnboarding,
+  getWeddingProfile,
+  hydrateUserData,
+  persistOnboarding,
+} from '../utils/storage';
 
-function CoupleGetStartedPage() {
-  const navigate = useNavigate();
-  const [step, setStep] = useState(1);
-  const [error, setError] = useState('');
-  const [form, setForm] = useState({
+function emptyCoupleForm() {
+  return {
     role: 'couple',
     planningStage: '',
     location: '',
     weddingDate: '',
     venueType: '',
     ceremonyType: '',
-  });
+  };
+}
+
+function formFromOwnData() {
+  const saved = getOnboarding();
+  const profile = getWeddingProfile();
+  if (!saved && !profile) return emptyCoupleForm();
+  return {
+    role: 'couple',
+    planningStage: saved?.planningStage || profile?.planningStage || '',
+    location: saved?.location || profile?.district || '',
+    weddingDate: String(saved?.weddingDate || profile?.weddingDate || '').slice(0, 10),
+    venueType: saved?.venueType || profile?.venueType || '',
+    ceremonyType: saved?.ceremonyType || '',
+  };
+}
+
+function CoupleGetStartedPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user, loading } = useAuth();
+  const isNewStart = searchParams.get('new') === '1';
+  const [step, setStep] = useState(2);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState(emptyCoupleForm);
+
+  useEffect(() => {
+    if (loading) return undefined;
+
+    let active = true;
+
+    if (!user && isNewStart) {
+      beginGuestOnboarding();
+      setForm(emptyCoupleForm());
+      setStep(2);
+      navigate('/get-started/couple', { replace: true });
+      return undefined;
+    }
+
+    (async () => {
+      if (user) {
+        try {
+          await hydrateUserData();
+        } catch {
+          /* keep this couple's cached values only */
+        }
+      }
+      if (!active) return;
+      setForm(formFromOwnData());
+      setStep(2);
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [loading, user?.id, isNewStart, navigate, user]);
 
   const goNext = () => {
     setError('');
@@ -34,7 +94,7 @@ function CoupleGetStartedPage() {
     setStep(2);
   };
 
-  const complete = () => {
+  const complete = async () => {
     setError('');
     if (!form.venueType) {
       setError('Please select a venue type.');
@@ -44,13 +104,27 @@ function CoupleGetStartedPage() {
       setError('Please select a ceremony type.');
       return;
     }
-    saveOnboarding({ ...form, completedAt: new Date().toISOString() });
-    navigate('/create-account');
+    setSaving(true);
+    try {
+      await persistOnboarding({
+        ...form,
+        location: form.location.trim(),
+        weddingDate: form.weddingDate,
+        completedAt: new Date().toISOString(),
+      });
+      navigate(user ? '/wedding-profile' : '/create-account', {
+        state: user ? { fromSignup: true } : undefined,
+      });
+    } catch (err) {
+      setError(err.message || 'Could not save your wedding details.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (step === 1) {
     return (
-      <OnboardingLayout step={1} variant="couple">
+      <OnboardingLayout step={1} totalSteps={3} variant="couple">
         <h1 className="onboarding__title">Let&apos;s plan your wedding</h1>
         <p className="onboarding__subtitle">Tell us where you are in your planning journey.</p>
 
@@ -75,19 +149,27 @@ function CoupleGetStartedPage() {
   }
 
   return (
-    <OnboardingLayout step={2} variant="couple">
+    <OnboardingLayout step={1} totalSteps={3} variant="couple">
       <h1 className="onboarding__title">Almost there!</h1>
       <p className="onboarding__subtitle">Just a few more details to personalize your dashboard.</p>
 
       <label className="onboarding__field">
-        <span>Wedding Location (Optional)</span>
+        <span>Wedding location (Optional)</span>
         <div className="onboarding__input-wrap" style={optionStyle({ bg: '#e6f6ee', color: '#2e7d32' })}>
           <span className="onboarding__option-icon onboarding__option-icon--input"><OnboardingIcon name="pin" size={18} /></span>
-          <input
-            placeholder="Enter city name"
+          <select
+            className="onboarding__select--with-icon"
             value={form.location}
             onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
-          />
+          >
+            <option value="">Select district</option>
+            {form.location && !districts.includes(form.location) && (
+              <option value={form.location}>{form.location}</option>
+            )}
+            {districts.map((district) => (
+              <option key={district} value={district}>{district}</option>
+            ))}
+          </select>
         </div>
       </label>
 
@@ -136,7 +218,9 @@ function CoupleGetStartedPage() {
       {error && <p className="onboarding__error">{error}</p>}
       <div className="onboarding__actions">
         <button type="button" className="onboarding__btn onboarding__btn--outline" onClick={() => setStep(1)}>Back</button>
-        <button type="button" className="onboarding__btn onboarding__btn--primary" onClick={complete}>Complete Setup</button>
+        <button type="button" className="onboarding__btn onboarding__btn--primary" onClick={complete} disabled={saving}>
+          {saving ? 'Saving…' : 'Complete Setup'}
+        </button>
       </div>
     </OnboardingLayout>
   );

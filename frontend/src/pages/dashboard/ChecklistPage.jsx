@@ -1,10 +1,17 @@
-import { useMemo, useState } from 'react';
-import { crewRoles, defaultTasks, getCategoryMeta, getTaskDateGroups, groupTasksByMonth, taskCategories } from '../../data/dashboardData';
+import { useEffect, useMemo, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import { crewRoles, getCategoryMeta, getTaskDateGroups, groupTasksByMonth, groupTasksByPhase, taskCategories } from '../../data/dashboardData';
 import { getTasks, saveTasks } from '../../utils/storage';
+import { Link } from 'react-router-dom';
 import PageHeader from '../../components/ui/PageHeader';
 
 function ChecklistPage() {
-  const [tasks, setTasks] = useState(() => getTasks() || defaultTasks);
+  const coupleData = useOutletContext();
+  const [tasks, setTasks] = useState(() => coupleData?.tasks || getTasks() || []);
+
+  useEffect(() => {
+    setTasks(coupleData?.tasks || getTasks() || []);
+  }, [coupleData]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [monthFilter, setMonthFilter] = useState('all');
@@ -41,7 +48,9 @@ function ChecklistPage() {
     });
   }, [tasks, statusFilter, categoryFilter, monthFilter, assignedFilter, search]);
 
-  const grouped = groupTasksByMonth(filtered);
+  const grouped = filtered.some((task) => task.phase)
+    ? groupTasksByPhase(filtered)
+    : groupTasksByMonth(filtered);
   const dateGroups = getTaskDateGroups(tasks);
   const visibleDates = showAllDates ? dateGroups : dateGroups.slice(0, 6);
 
@@ -89,7 +98,12 @@ function ChecklistPage() {
 
   return (
     <div className="dash-page dash-page--checklist">
-      <PageHeader moduleId="checklist">
+      <PageHeader
+        moduleId="checklist"
+        tagline={coupleData?.profile?.ceremonyType
+          ? `${coupleData.profile.ceremonyType} tasks, month by month, with filters and progress tracking.`
+          : undefined}
+      >
         <div className="dash-page__actions">
           <button type="button" className="dash-btn dash-btn--primary" onClick={addTask}>+ Add task</button>
         </div>
@@ -245,12 +259,16 @@ function ChecklistPage() {
               <p>
                 {hasActiveFilters
                   ? 'Try changing your filters or search term.'
-                  : 'Add your first task to start planning.'}
+                  : coupleData?.profile?.weddingDate || coupleData?.onboarding?.weddingDate
+                    ? 'Add your first task to start planning.'
+                    : 'Add your wedding date to get a Sri Lankan timeline for your couple.'}
               </p>
               {hasActiveFilters ? (
                 <button type="button" className="dash-btn dash-btn--outline" onClick={clearFilters}>Clear filters</button>
-              ) : (
+              ) : coupleData?.profile?.weddingDate || coupleData?.onboarding?.weddingDate ? (
                 <button type="button" className="dash-btn dash-btn--primary" onClick={addTask}>+ Add task</button>
+              ) : (
+                <Link to="/wedding-profile" className="dash-btn dash-btn--primary">Add wedding date</Link>
               )}
             </div>
           ) : (
@@ -300,6 +318,7 @@ function ChecklistPage() {
                               <span className="task-tag" data-category={task.category}>
                                 {cat.icon} {cat.label}
                               </span>
+                              {task.phaseLabel && <span className="task-date">{task.phaseLabel}</span>}
                               <span className="task-date">📅 {dueLabel}</span>
                               {task.assigned && task.assigned !== 'Unassigned' && (
                                 <span className="task-assigned">👤 {task.assigned}</span>

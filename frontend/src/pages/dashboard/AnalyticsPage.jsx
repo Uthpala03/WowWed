@@ -1,12 +1,15 @@
-import { getBudget, getGuests, getTasks, getWeddingProfile } from '../../utils/storage';
+import { useOutletContext } from 'react-router-dom';
+import { getBudget, getGuests, getSeating, getTasks, getWeddingProfile } from '../../utils/storage';
 import { getReadinessStatus } from '../../utils/notifications';
 import PageHeader from '../../components/ui/PageHeader';
 
 function AnalyticsPage() {
-  const profile = getWeddingProfile();
-  const tasks = getTasks() || [];
-  const guests = getGuests();
-  const budget = getBudget();
+  const coupleData = useOutletContext();
+  const profile = coupleData?.profile || getWeddingProfile();
+  const tasks = coupleData?.tasks || getTasks() || [];
+  const guests = coupleData?.guests || getGuests() || [];
+  const budget = coupleData?.budget || getBudget();
+  const seatingQuality = (coupleData?.seating || getSeating() || {}).mlQuality;
   const done = tasks.filter((t) => t.done).length;
   const accepted = guests.filter((g) => g.rsvp === 'Accepted').length;
   const rejected = guests.filter((g) => g.rsvp === 'Rejected').length;
@@ -49,6 +52,22 @@ function AnalyticsPage() {
           <div className="analytics-big">Rs. {spent.toLocaleString()}</div>
           <p>of Rs. {budget?.total?.toLocaleString() || 0} ({budgetPct}%)</p>
           <div className="bar-chart__track" style={{ marginTop: '1rem' }}><div className="bar-chart__fill is-gold" style={{ width: `${Math.min(budgetPct, 100)}%` }} /></div>
+        </section>
+
+        <section className="dash-card">
+          <h2>Smart seating quality</h2>
+          {seatingQuality ? (
+            <>
+              <div className="analytics-big">{seatingQuality.seatingAccuracy ? `${seatingQuality.seatingAccuracy}%` : (seatingQuality.silhouette ?? '—')}</div>
+              <p>Seating accuracy · k = {seatingQuality.k ?? '—'}</p>
+              <p>Table-type accuracy: {seatingQuality.labelAccuracy ?? '—'}{seatingQuality.labelAccuracy != null ? '%' : ''}</p>
+              <p>Silhouette: {seatingQuality.silhouette ?? '—'}</p>
+              <p>Capacity violations: {seatingQuality.capacityViolations ?? 0} · rate {seatingQuality.violationRate ?? 0}</p>
+              <p>{seatingQuality.assigned} of {seatingQuality.coming} Coming guests seated</p>
+            </>
+          ) : (
+            <p>Run Auto-seat all on the Seating Chart to see seating accuracy.</p>
+          )}
         </section>
 
         <section className="dash-card">

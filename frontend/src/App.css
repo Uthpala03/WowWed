@@ -581,7 +581,7 @@
 }
 
 .onboarding__card--wide {
-  width: min(100%, 540px);
+  width: min(100%, 560px);
   max-height: min(92vh, 900px);
   overflow-y: auto;
 }
@@ -642,6 +642,14 @@
   width: 80px;
   height: 2px;
   background: var(--color-border);
+}
+
+.onboarding__step-line.is-done {
+  background: #6b9e78;
+}
+
+.onboarding__steps--long .onboarding__step-line {
+  width: 48px;
 }
 
 .onboarding__title {
@@ -893,6 +901,10 @@
   grid-template-columns: repeat(2, 1fr);
 }
 
+.onboarding__options--grid .onboarding__option--tile {
+  min-height: 132px;
+}
+
 .onboarding__option {
   display: flex;
   align-items: center;
@@ -970,6 +982,27 @@
   position: relative;
 }
 
+.onboarding__option-copy {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.onboarding__option-label {
+  font-weight: 700;
+}
+
+.onboarding__option-hint {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--color-text-muted);
+}
+
+.onboarding__option--tile .onboarding__option-hint {
+  max-width: 12.5rem;
+}
+
 .onboarding__option--multi {
   min-height: 118px;
 }
@@ -1016,6 +1049,16 @@
   background: transparent;
   font: inherit;
   color: var(--color-brown);
+  min-width: 0;
+}
+
+.onboarding__input-wrap select {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: var(--color-brown);
+  min-width: 0;
 }
 
 .onboarding__field {
@@ -1595,6 +1638,39 @@
   font: inherit;
   background: var(--color-cream);
 }
+.form__saved-note {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius-md);
+  background: #e8f6ee;
+  color: #2e7d32;
+  font-size: 0.9rem;
+}
+.form__readonly-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.form__readonly {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-md);
+  background: #f4f1ec;
+}
+
+.form__readonly span {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-brown-light);
+}
+
+.form__readonly strong {
+  font-size: 0.95rem;
+  color: var(--color-brown);
+}
+
 .form__error { color: var(--color-danger); margin: 0; font-size: 0.9rem; }
 .form__submit { width: 100%; }
 .form__group { border: none; margin: 0; padding: 0; }
@@ -1697,7 +1773,7 @@
 }
 
 @media (max-width: 700px) {
-  .form__row, .role-picker { grid-template-columns: 1fr; }
+  .form__row, .form__readonly-row, .role-picker { grid-template-columns: 1fr; }
   .feature-strip__item { font-size: 0.78rem; padding: 0.35rem 0.5rem; }
   .onboarding__options--row,
   .onboarding__options--pair,

@@ -1,3 +1,4 @@
+const { spawn } = require('child_process');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -8,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const dataRoutes = require('./routes/data');
 const profileRoutes = require('./routes/profiles');
 const bookingRoutes = require('./routes/bookings');
+const mlRoutes = require('./routes/ml');
 
 const app = express();
 app.use(cors());
@@ -37,6 +39,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/ml', mlRoutes);
 
 const PORT = process.env.PORT || 5002;
 
@@ -52,7 +55,34 @@ async function start() {
   app.listen(PORT, () => {
     console.log(`WowWed server running on port ${PORT}`);
     console.log(`Database: ${process.env.DB_NAME || 'wowwed'} @ ${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 3306}`);
+    startSeatingApi();
+    startCostApi();
   });
+}
+
+function startMlApi(label, folder, port, missingHint) {
+  const dir = path.join(__dirname, '..', 'ML', folder);
+  const child = spawn('python', ['-m', 'uvicorn', 'api:app', '--port', String(port)], {
+    cwd: dir,
+    windowsHide: true,
+  });
+  child.on('error', () => {
+    console.log(`${label}: python not found. ${missingHint}`);
+  });
+  child.stderr.on('data', (buf) => {
+    const text = String(buf);
+    if (text.toLowerCase().includes('uvicorn running') || text.includes('Application startup complete')) {
+      console.log(`${label} API running on port ${port}`);
+    }
+  });
+}
+
+function startSeatingApi() {
+  startMlApi('Smart seating', 'seating', 8000, 'Auto-seat will use the built-in fallback.');
+}
+
+function startCostApi() {
+  startMlApi('Cost prediction', 'cost', 8001, 'The Budget page will use the built-in estimate.');
 }
 
 start();

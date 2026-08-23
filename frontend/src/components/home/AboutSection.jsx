@@ -21,7 +21,7 @@ function AboutSection() {
               </div>
             ))}
           </div>
-          <Button variant="primary" to={coupleOnboarding.route}>Start planning free</Button>
+          <Button variant="primary" to={coupleOnboarding.freshRoute}>Start planning free</Button>
         </div>
 
         <div className="about-section__cards">

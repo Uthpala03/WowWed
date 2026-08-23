@@ -38,7 +38,7 @@ function Features() {
             WowWed brings checklist, guests, seating, budget, and vendors into one calm
             dashboard — built for Sri Lankan Poruwa, Christian, Muslim, and Civil ceremonies.
           </p>
-          <Button variant="primary" to={coupleOnboarding.route}>Start planning</Button>
+          <Button variant="primary" to={coupleOnboarding.freshRoute}>Start planning</Button>
           <div className="features-toolkit__roses" aria-hidden="true">🌹</div>
         </aside>
       </div>

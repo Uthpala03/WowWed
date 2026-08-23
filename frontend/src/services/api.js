@@ -17,7 +17,12 @@ export async function fetchApi(path, options = {}) {
   };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+  } catch {
+    throw new Error('Cannot reach the WowWed server. Start the backend and try again.');
+  }
   const body = await response.json().catch(() => ({}));
 
   if (!response.ok) {
@@ -39,7 +44,9 @@ export const api = {
 
   getWeddingProfile: () => fetchApi('/api/profiles/wedding'),
   saveWeddingProfile: (profile) => fetchApi('/api/profiles/wedding', { method: 'PUT', body: JSON.stringify(profile) }),
+  ensureChecklist: () => fetchApi('/api/data'),
   getOnboarding: () => fetchApi('/api/profiles/onboarding'),
+  saveOnboarding: (onboarding) => fetchApi('/api/profiles/onboarding', { method: 'PUT', body: JSON.stringify(onboarding) }),
   getVendorProfile: () => fetchApi('/api/profiles/vendor'),
   saveVendorProfile: (profile) => fetchApi('/api/profiles/vendor', { method: 'PUT', body: JSON.stringify(profile) }),
   uploadVendorPdf: (payload) => fetchApi('/api/profiles/vendor/pdf', { method: 'POST', body: JSON.stringify(payload) }),
@@ -48,4 +55,6 @@ export const api = {
   getBookings: () => fetchApi('/api/bookings'),
   createBooking: (booking) => fetchApi('/api/bookings', { method: 'POST', body: JSON.stringify(booking) }),
   updateBooking: (id, payload) => fetchApi(`/api/bookings/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+
+  predictCost: (payload) => fetchApi('/api/ml/cost', { method: 'POST', body: JSON.stringify(payload) }),
 };

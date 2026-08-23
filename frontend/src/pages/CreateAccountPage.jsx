@@ -57,7 +57,9 @@ function CreateAccountPage() {
         password: form.password,
       }, onboarding);
       refresh();
-      navigate(onboarding.role === 'vendor' ? '/vendor/profile' : '/wedding-profile');
+      navigate(onboarding.role === 'vendor' ? '/vendor/profile' : '/wedding-profile', {
+        state: onboarding.role === 'vendor' ? undefined : { fromSignup: true },
+      });
     } catch (err) {
       setError(err.message || 'Could not create account. Is the server running?');
     } finally {
@@ -70,12 +72,18 @@ function CreateAccountPage() {
     : coupleOnboarding.route;
 
   return (
-    <OnboardingLayout step={2} variant={onboarding?.role === 'vendor' ? 'vendor' : 'couple'}>
+    <OnboardingLayout
+      step={2}
+      totalSteps={onboarding?.role === 'vendor' ? 2 : 3}
+      variant={onboarding?.role === 'vendor' ? 'vendor' : 'couple'}
+      backTo={backRoute}
+      backLabel="← Back"
+    >
       <h1 className="onboarding__title">Create your account</h1>
       <p className="onboarding__subtitle">
         {onboarding?.role === 'vendor'
           ? 'One last step before your vendor dashboard.'
-          : 'One last step before your planning dashboard.'}
+          : 'Next you’ll create your wedding profile.'}
       </p>
 
       <form className="onboarding__form" onSubmit={handleSubmit}>

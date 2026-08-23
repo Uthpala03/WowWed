@@ -137,7 +137,7 @@ const moduleData = [
     code: 'M04',
     name: 'Guest List',
     tagline: 'Add, edit, and organise guests with RSVP tracking and CSV import',
-    description: 'Family, Friends, VIP, and Children groups — bulk RSVP updates, search, filter, and export.',
+    description: "Bride's and groom's family, friends, colleagues, relatives, VIP, neighbours, and other groups — bulk RSVP updates, search, filter, and export.",
     icon: 'guests',
     route: '/dashboard/guests',
     accent: '#fff5ef',

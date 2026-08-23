@@ -1,6 +1,8 @@
 const express = require('express');
 const { query } = require('../config/db');
 const { authRequired } = require('../middleware/auth');
+const { isSharedDemoBudget, isSharedDemoGuestList, isSharedDemoTaskList } = require('../data/defaultData');
+const { applyChecklistForCouple } = require('../utils/coupleChecklist');
 
 const router = express.Router();
 
@@ -36,6 +38,46 @@ router.get('/', authRequired, async (req, res) => {
     rows.forEach((row) => {
       data[row.store_key] = parseJson(row.data_json, data[row.store_key]);
     });
+
+    if (isSharedDemoGuestList(data.guests)) {
+      data.guests = [];
+      await query(
+        `INSERT INTO user_data (user_id, store_key, data_json)
+         VALUES (:userId, 'guests', :data)
+         ON DUPLICATE KEY UPDATE data_json = :data, updated_at = NOW()`,
+        { userId, data: JSON.stringify([]) },
+      );
+    }
+
+    if (isSharedDemoTaskList(data.tasks)) {
+      data.tasks = [];
+      await query(
+        `INSERT INTO user_data (user_id, store_key, data_json)
+         VALUES (:userId, 'tasks', :data)
+         ON DUPLICATE KEY UPDATE data_json = :data, updated_at = NOW()`,
+        { userId, data: JSON.stringify([]) },
+      );
+    }
+
+    data.tasks = await applyChecklistForCouple(userId, data.tasks || []);
+
+    if (isSharedDemoBudget(data.budget)) {
+      const profileRows = await query(
+        'SELECT budget FROM wedding_profiles WHERE user_id = :userId',
+        { userId },
+      );
+      data.budget = {
+        total: Number(profileRows[0]?.budget) || 0,
+        categories: [],
+        expenses: [],
+      };
+      await query(
+        `INSERT INTO user_data (user_id, store_key, data_json)
+         VALUES (:userId, 'budget', :data)
+         ON DUPLICATE KEY UPDATE data_json = :data, updated_at = NOW()`,
+        { userId, data: JSON.stringify(data.budget) },
+      );
+    }
 
     res.json(data);
   } catch (err) {

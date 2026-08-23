@@ -4,6 +4,7 @@ const ONBOARDING_DRAFT_KEY = 'wowwed_onboarding_draft';
 
 const cache = {
   user: null,
+  ownerId: null,
   weddingProfile: null,
   onboarding: null,
   vendorProfile: null,
@@ -27,43 +28,12 @@ function saveOnboardingDraft(data) {
   localStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify(data));
 }
 
-function clearOnboardingDraft() {
+export function clearOnboardingDraft() {
   localStorage.removeItem(ONBOARDING_DRAFT_KEY);
 }
 
-export function getUser() {
-  return cache.user;
-}
-
-export async function registerUser(userData, onboarding) {
-  const { token, user } = await api.register({
-    fullName: userData.fullName,
-    email: userData.email,
-    phone: userData.phone,
-    password: userData.password,
-    role: userData.role || 'couple',
-    onboarding: onboarding || getOnboardingDraft(),
-  });
-
-  setToken(token);
-  cache.user = user;
-  cache.onboarding = onboarding || getOnboardingDraft();
-  clearOnboardingDraft();
-  await hydrateUserData();
-  return user;
-}
-
-export async function loginUser(email, password) {
-  const { token, user } = await api.login({ email, password });
-  setToken(token);
-  cache.user = user;
-  await hydrateUserData();
-  return user;
-}
-
-export function clearUser() {
-  setToken(null);
-  cache.user = null;
+function resetSessionData() {
+  cache.ownerId = null;
   cache.weddingProfile = null;
   cache.onboarding = null;
   cache.vendorProfile = null;
@@ -78,8 +48,57 @@ export function clearUser() {
   cache.hydrated = false;
 }
 
+export function beginGuestOnboarding() {
+  clearOnboardingDraft();
+  if (!cache.user) {
+    cache.onboarding = null;
+  }
+}
+
+export function getUser() {
+  return cache.user;
+}
+
+export async function registerUser(userData, onboarding) {
+  const ownOnboarding = onboarding || getOnboardingDraft();
+  const { token, user } = await api.register({
+    fullName: userData.fullName,
+    email: userData.email,
+    phone: userData.phone,
+    password: userData.password,
+    role: userData.role || 'couple',
+    onboarding: ownOnboarding,
+  });
+
+  resetSessionData();
+  setToken(token);
+  cache.user = user;
+  cache.onboarding = ownOnboarding || null;
+  clearOnboardingDraft();
+  await hydrateUserData();
+  return user;
+}
+
+export async function loginUser(email, password) {
+  resetSessionData();
+  clearOnboardingDraft();
+  const { token, user } = await api.login({ email, password });
+  setToken(token);
+  cache.user = user;
+  await hydrateUserData();
+  return user;
+}
+
+export function clearUser() {
+  setToken(null);
+  cache.user = null;
+  resetSessionData();
+  clearOnboardingDraft();
+}
+
 export async function restoreSession() {
   if (!localStorage.getItem('wowwed_token')) return null;
+  resetSessionData();
   try {
     const { user } = await api.me();
     cache.user = user;
@@ -89,6 +108,10 @@ export async function restoreSession() {
     clearUser();
     return null;
   }
+}
+
+function ownedByOtherUser() {
+  return cache.ownerId != null && cache.user && Number(cache.ownerId) !== Number(cache.user.id);
 }
 
 export async function hydrateUserData() {
@@ -128,7 +151,27 @@ export async function hydrateUserData() {
     cache.onboarding = results[4]?.onboarding || null;
   }
 
+  cache.ownerId = cache.user.id;
   cache.hydrated = true;
+}
+
+export function readCoupleSnapshot() {
+  if (!cache.user || ownedByOtherUser()) {
+    return {
+      profile: null,
+      onboarding: null,
+      tasks: null,
+      guests: [],
+      budget: null,
+    };
+  }
+  return {
+    profile: cache.weddingProfile,
+    onboarding: cache.onboarding,
+    tasks: cache.tasks,
+    guests: cache.guests || [],
+    budget: cache.budget,
+  };
 }
 
 export function saveOnboarding(data) {
@@ -136,20 +179,77 @@ export function saveOnboarding(data) {
   cache.onboarding = data;
 }
 
+export async function persistOnboarding(data) {
+  saveOnboarding(data);
+  if (!cache.user) return data;
+  const result = await api.saveOnboarding(data);
+  cache.onboarding = result.onboarding || data;
+  if (result.profile) cache.weddingProfile = result.profile;
+  clearOnboardingDraft();
+  return cache.onboarding;
+}
+
+function dateInputValue(value) {
+  if (!value) return '';
+  return String(value).slice(0, 10);
+}
+
+export function getCoupleBasics() {
+  const profile = getWeddingProfile();
+  const onboarding = getOnboarding();
+  const weddingDate = dateInputValue(profile?.weddingDate || onboarding?.weddingDate);
+  const location = String(onboarding?.location || profile?.district || '').trim();
+  const district = String(profile?.district || location).trim();
+  return {
+    weddingDate,
+    location,
+    district,
+    hasDate: Boolean(weddingDate),
+    hasLocation: Boolean(location),
+    onboardingCompleted: Boolean(onboarding?.completedAt),
+  };
+}
+
 export function getOnboarding() {
-  return cache.onboarding || getOnboardingDraft();
+  if (ownedByOtherUser()) return null;
+  if (cache.user) return cache.onboarding;
+  return getOnboardingDraft();
 }
 
 export function getWeddingProfile() {
+  if (ownedByOtherUser()) return null;
   return cache.weddingProfile;
 }
 
 export async function saveWeddingProfile(profile) {
-  cache.weddingProfile = profile;
-  if (cache.user) {
-    const { profile: saved } = await api.saveWeddingProfile(profile);
-    cache.weddingProfile = saved;
+  const existing = cache.weddingProfile || {};
+  const basics = getCoupleBasics();
+  const payload = {
+    partnerOne: profile.partnerOne || '',
+    partnerTwo: profile.partnerTwo || '',
+    weddingDate: profile.weddingDate || existing.weddingDate || basics.weddingDate || null,
+    venue: profile.venue || existing.venue || '',
+    district: profile.district || existing.district || basics.district || '',
+    ceremonyType: profile.ceremonyType || existing.ceremonyType || '',
+    guestCount: Number(profile.guestCount) || null,
+    budget: Number(profile.budget) || null,
+    scale: profile.scale || existing.scale || 'standard',
+    venueType: existing.venueType || profile.venueType || null,
+    planningStage: existing.planningStage || profile.planningStage || null,
+  };
+  cache.weddingProfile = { ...existing, ...payload };
+  if (cache.onboarding) {
+    cache.onboarding = {
+      ...cache.onboarding,
+      location: payload.district || cache.onboarding.location,
+      weddingDate: payload.weddingDate || cache.onboarding.weddingDate,
+    };
   }
+  if (cache.user || localStorage.getItem('wowwed_token')) {
+    const { profile: saved } = await api.saveWeddingProfile(payload);
+    if (saved) cache.weddingProfile = saved;
+  }
+  return cache.weddingProfile;
 }
 
 export function getVendorProfile() {
@@ -177,6 +277,7 @@ export async function refreshVendorListings() {
 }
 
 export function getTasks() {
+  if (ownedByOtherUser()) return null;
   return cache.tasks;
 }
 
@@ -185,16 +286,34 @@ export async function saveTasks(tasks) {
   if (cache.user) await api.saveData('tasks', tasks);
 }
 
+export async function ensureCoupleChecklist() {
+  if (!cache.user || cache.user.role !== 'couple') return getTasks() || [];
+  const data = await api.getAllData();
+  cache.tasks = data.tasks || [];
+  cache.guests = data.guests || cache.guests || [];
+  cache.budget = data.budget || cache.budget;
+  return cache.tasks;
+}
+
 export function getGuests() {
+  if (ownedByOtherUser()) return [];
   return cache.guests;
+}
+
+function notifyDataChanged() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('wowwed-data-changed'));
+  }
 }
 
 export async function saveGuests(guests) {
   cache.guests = guests;
+  notifyDataChanged();
   if (cache.user) await api.saveData('guests', guests);
 }
 
 export function getBudget() {
+  if (ownedByOtherUser()) return null;
   return cache.budget;
 }
 
@@ -262,26 +381,14 @@ export async function resetPassword(email, password) {
   await api.resetPassword({ email, password });
 }
 
-export async function initDashboardData(defaultTasks, defaultGuests = []) {
-  if (!cache.user || cache.user.role !== 'couple') return;
-
-  let changed = false;
-  if (!cache.tasks) {
-    cache.tasks = defaultTasks;
-    await api.saveData('tasks', defaultTasks);
-    changed = true;
-  }
-  if (!cache.guests?.length && defaultGuests.length) {
-    cache.guests = defaultGuests;
-    await api.saveData('guests', defaultGuests);
-    changed = true;
-  }
+export async function initDashboardData() {
+  if (!cache.user || cache.user.role !== 'couple') return false;
+  if (!Array.isArray(cache.tasks)) cache.tasks = [];
+  if (!Array.isArray(cache.guests)) cache.guests = [];
   if (!cache.budget) {
-    cache.budget = { total: 10000000, categories: [], expenses: [] };
-    await api.saveData('budget', cache.budget);
-    changed = true;
+    cache.budget = { total: Number(cache.weddingProfile?.budget) || 0, categories: [], expenses: [] };
   }
-  return changed;
+  return false;
 }
 
 export function isHydrated() {

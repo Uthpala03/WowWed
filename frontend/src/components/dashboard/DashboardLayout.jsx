@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { dashboardNav } from '../../data/dashboardData';
 import { buildNotifications } from '../../utils/notifications';
-import { getWeddingProfile } from '../../utils/storage';
+import { ensureCoupleChecklist, hydrateUserData, readCoupleSnapshot } from '../../utils/storage';
 import { useAuth } from '../../context/AuthContext';
 import { coupleOnboarding } from '../../models/OnboardingPath';
 import AppIcon from '../ui/AppIcon';
@@ -12,7 +12,8 @@ import '../../styles/dashboard.css';
 function DashboardLayout() {
   const navigate = useNavigate();
   const { user, loading, logout } = useAuth();
-  const profile = getWeddingProfile();
+  const [coupleData, setCoupleData] = useState(null);
+  const [dataReady, setDataReady] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const notifCount = buildNotifications().length;
 
@@ -20,7 +21,44 @@ function DashboardLayout() {
     if (!loading && user?.role === 'vendor') navigate('/vendor', { replace: true });
   }, [user, loading, navigate]);
 
-  if (loading) {
+  useEffect(() => {
+    let active = true;
+
+    if (loading) return undefined;
+
+    if (!user || user.role !== 'couple') {
+      setCoupleData(null);
+      setDataReady(true);
+      return undefined;
+    }
+
+    setDataReady(false);
+    setCoupleData(null);
+
+    (async () => {
+      try {
+        await hydrateUserData();
+        await ensureCoupleChecklist();
+      } catch {
+        /* show this couple's empty dashboard if the server is unreachable */
+      }
+      if (!active) return;
+      setCoupleData(readCoupleSnapshot());
+      setDataReady(true);
+    })();
+
+    const onDataChanged = () => {
+      if (active) setCoupleData(readCoupleSnapshot());
+    };
+    window.addEventListener('wowwed-data-changed', onDataChanged);
+
+    return () => {
+      active = false;
+      window.removeEventListener('wowwed-data-changed', onDataChanged);
+    };
+  }, [user?.id, loading, user]);
+
+  if (loading || (user?.role === 'couple' && !dataReady)) {
     return (
       <div className="dash-auth">
         <div className="dash-auth__card"><p>Loading your wedding data…</p></div>
@@ -36,7 +74,7 @@ function DashboardLayout() {
           <h1>Welcome to WowWed</h1>
           <p>Your beautiful wedding planner awaits.</p>
           <button type="button" className="dash-btn dash-btn--primary" onClick={() => navigate('/login')}>Log in</button>
-          <button type="button" className="dash-btn dash-btn--outline" onClick={() => navigate(coupleOnboarding.route)}>Start planning</button>
+          <button type="button" className="dash-btn dash-btn--outline" onClick={() => navigate(coupleOnboarding.freshRoute)}>Start planning</button>
         </div>
       </div>
     );
@@ -44,6 +82,7 @@ function DashboardLayout() {
 
   if (user.role === 'vendor') return null;
 
+  const profile = coupleData?.profile;
   const initials = profile ? `${profile.partnerOne?.[0] || ''}${profile.partnerTwo?.[0] || ''}` : user.fullName?.slice(0, 2).toUpperCase() || 'WW';
 
   return (
@@ -57,12 +96,17 @@ function DashboardLayout() {
         </div>
         <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} />
 
-        {profile && (
-          <div className="dash-sidebar__couple">
-            <span className="dash-sidebar__avatar">{initials}</span>
-            <div><strong>{profile.partnerOne} & {profile.partnerTwo}</strong><small>{profile.ceremonyType}</small></div>
+        <Link to="/wedding-profile" className="dash-sidebar__couple" title="Edit wedding profile">
+          <span className="dash-sidebar__avatar">{initials}</span>
+          <div>
+            <strong>
+              {profile?.partnerOne && profile?.partnerTwo
+                ? `${profile.partnerOne} & ${profile.partnerTwo}`
+                : user.fullName || 'Your wedding'}
+            </strong>
+            <small>{profile?.ceremonyType || 'Add wedding details'}</small>
           </div>
-        )}
+        </Link>
 
         <nav className="dash-sidebar__nav">
           {dashboardNav.map((item) => (
@@ -80,7 +124,7 @@ function DashboardLayout() {
           <button type="button" className="dash-sidebar__link dash-sidebar__link--sub dash-sidebar__link--btn" onClick={() => { logout(); navigate('/'); }}>Log out</button>
         </div>
       </aside>
-      <div className="dash-main"><Outlet key={user.id} /></div>
+      <div className="dash-main"><Outlet key={user.id} context={coupleData} /></div>
     </div>
   );
 }

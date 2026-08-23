@@ -1,4 +1,4 @@
-import { getBudget, getGuests, getTasks, getWeddingProfile, getBookings } from './storage';
+import { getBudget, getCoupleBasics, getGuests, getTasks, getWeddingProfile, getBookings } from './storage';
 
 export function buildNotifications() {
   const list = [];
@@ -8,8 +8,9 @@ export function buildNotifications() {
   const budget = getBudget();
   const bookings = getBookings();
 
-  if (profile?.weddingDate) {
-    const days = Math.ceil((new Date(profile.weddingDate) - new Date()) / (1000 * 60 * 60 * 24));
+  const weddingDate = profile?.weddingDate || getCoupleBasics().weddingDate;
+  if (weddingDate) {
+    const days = Math.ceil((new Date(weddingDate) - new Date()) / (1000 * 60 * 60 * 24));
     if (days >= 0 && days <= 30) {
       list.push({ id: 'countdown', type: 'info', text: `Only ${days} days until your wedding!`, link: '/dashboard' });
     }

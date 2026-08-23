@@ -21,7 +21,84 @@ export const taskCategories = [
   { id: 'other', label: 'Other', icon: '📌' },
 ];
 
-export const guestGroups = ['No Group', 'Family', 'Friends', 'VIP', 'Children'];
+export const guestGroups = [
+  'No Group',
+  "Bride's Family",
+  "Groom's Family",
+  "Bride's Friends",
+  "Groom's Friends",
+  "Bride's Colleagues",
+  "Groom's Colleagues",
+  'Relatives',
+  'VIP',
+  'Neighbours',
+  'Other',
+];
+
+const guestGroupAliases = {
+  family: 'Relatives',
+  friends: 'Other',
+  children: 'Other',
+  child: 'Other',
+  kids: 'Other',
+  neighbors: 'Neighbours',
+  neighbour: 'Neighbours',
+  neighbor: 'Neighbours',
+  relatives: 'Relatives',
+  vip: 'VIP',
+  other: 'Other',
+  'no group': 'No Group',
+  'bride family': "Bride's Family",
+  "bride's family": "Bride's Family",
+  'groom family': "Groom's Family",
+  "groom's family": "Groom's Family",
+  'bride friends': "Bride's Friends",
+  "bride's friends": "Bride's Friends",
+  'groom friends': "Groom's Friends",
+  "groom's friends": "Groom's Friends",
+  'bride colleagues': "Bride's Colleagues",
+  "bride's colleagues": "Bride's Colleagues",
+  'groom colleagues': "Groom's Colleagues",
+  "groom's colleagues": "Groom's Colleagues",
+};
+
+const guestGroupTones = {
+  'No Group': { bg: '#f4f1ee', color: '#7a6a60' },
+  "Bride's Family": { bg: '#fff1e8', color: '#c45c26' },
+  "Groom's Family": { bg: '#eef0ff', color: '#3949ab' },
+  "Bride's Friends": { bg: '#fce4ec', color: '#ad1457' },
+  "Groom's Friends": { bg: '#e3f2fd', color: '#1565c0' },
+  "Bride's Colleagues": { bg: '#fff8e1', color: '#ef6c00' },
+  "Groom's Colleagues": { bg: '#e0f2f1', color: '#00695c' },
+  Relatives: { bg: '#f3e5f5', color: '#7b1fa2' },
+  VIP: { bg: '#fff3e0', color: '#e65100' },
+  Neighbours: { bg: '#e8f5e9', color: '#2e7d32' },
+  Other: { bg: '#eceff1', color: '#546e7a' },
+};
+
+export function guestGroupTone(group) {
+  const tone = guestGroupTones[group] || guestGroupTones.Other;
+  return { background: tone.bg, color: tone.color };
+}
+
+export function normalizeGuestGroup(value) {
+  if (!value) return 'No Group';
+  const raw = String(value).trim();
+  if (guestGroups.includes(raw)) return raw;
+  const key = raw.toLowerCase().replace(/['’]/g, "'");
+  if (guestGroupAliases[key]) return guestGroupAliases[key];
+  if (key.includes('bride') && key.includes('famil')) return "Bride's Family";
+  if (key.includes('groom') && key.includes('famil')) return "Groom's Family";
+  if (key.includes('bride') && key.includes('friend')) return "Bride's Friends";
+  if (key.includes('groom') && key.includes('friend')) return "Groom's Friends";
+  if (key.includes('bride') && key.includes('colleague')) return "Bride's Colleagues";
+  if (key.includes('groom') && key.includes('colleague')) return "Groom's Colleagues";
+  if (key.includes('relative')) return 'Relatives';
+  if (key.includes('neighbour') || key.includes('neighbor')) return 'Neighbours';
+  if (key.includes('vip')) return 'VIP';
+  return 'Other';
+}
+
 export const rsvpStatuses = ['Pending', 'Accepted', 'Rejected'];
 
 export const crewRoles = [
@@ -127,15 +204,7 @@ function buildDefaultTasks() {
 
 export const defaultTasks = buildDefaultTasks();
 
-export const defaultGuests = [
-  { id: 'g1', name: 'Romesh', email: '', phone: '', group: 'Family', rsvp: 'Pending', notes: '' },
-  { id: 'g2', name: 'Uthpala', email: '', phone: '', group: 'Family', rsvp: 'Accepted', notes: '' },
-  { id: 'g3', name: 'bruno', email: '', phone: '', group: 'Friends', rsvp: 'Pending', notes: '' },
-  { id: 'g4', name: 'lanka', email: '', phone: '', group: 'Friends', rsvp: 'Pending', notes: '' },
-  { id: 'g5', name: 'randiv', email: '', phone: '', group: 'VIP', rsvp: 'Accepted', notes: '' },
-  { id: 'g6', name: 'somapala', email: '', phone: '', group: 'Family', rsvp: 'Pending', notes: '' },
-  { id: 'g7', name: 'uma', email: '', phone: '', group: 'Children', rsvp: 'Pending', notes: '' },
-];
+export const defaultGuests = [];
 
 export const defaultVendors = [
   { id: 'vw-01', name: 'Kandyan Reach Hotel', category: 'Venue & Res. Halls', city: 'Kurunegala', spotlight: true },
@@ -158,6 +227,31 @@ export function groupTasksByMonth(tasks) {
   sorted.forEach((task) => {
     const date = new Date(task.dueDate);
     const key = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(task);
+  });
+  return groups;
+}
+
+const PHASE_ORDER = ['from_start', 'six_months', 'three_months', 'one_month', 'wedding_week'];
+const PHASE_LABELS = {
+  from_start: 'From when you started',
+  six_months: '6 months before the wedding',
+  three_months: '3 months before the wedding',
+  one_month: '1 month before the wedding',
+  wedding_week: 'Wedding week',
+};
+
+export function groupTasksByPhase(tasks) {
+  const groups = {};
+  const sorted = [...tasks].sort((a, b) => {
+    const aPhase = PHASE_ORDER.indexOf(a.phase);
+    const bPhase = PHASE_ORDER.indexOf(b.phase);
+    if (aPhase !== bPhase) return (aPhase === -1 ? 99 : aPhase) - (bPhase === -1 ? 99 : bPhase);
+    return new Date(a.dueDate) - new Date(b.dueDate);
+  });
+  sorted.forEach((task) => {
+    const key = task.phaseLabel || PHASE_LABELS[task.phase] || 'Your tasks';
     if (!groups[key]) groups[key] = [];
     groups[key].push(task);
   });

@@ -165,3 +165,102 @@ INSERT IGNORE INTO vendor_listings (id, name, category, city, district, price_ra
 INSERT IGNORE INTO vendor_listings (id, name, category, city, district, price_range, description, portfolio_json, rating, spotlight, owner_email) VALUES ('vw-63', 'Isiwara Siritha', 'Floral & Deco', 'Colombo', 'Colombo', '40000-400000', 'One team, one vision, one perfect wedding. Decorations, dance group, poruwa ceremony, wedding planning and Nilame dress.', '{"images": [], "quotations": [{"id": "is-deco", "title": "Wedding decorations & poruwa", "price": "", "details": "Full traditional deco and poruwa ceremony."}, {"id": "is-dance", "title": "Dance group", "price": "", "details": "Traditional wedding dance team."}, {"id": "is-plan", "title": "Wedding planning", "price": "", "details": "End-to-end coordination."}, {"id": "is-nilame", "title": "Nilame dress", "price": "", "details": "Traditional groom attire hire/styling."}], "quotationPdf": null, "categories": ["Floral & Deco", "Groom service"], "districts": ["Colombo"]}', 4.5, 0, NULL);
 INSERT IGNORE INTO vendor_listings (id, name, category, city, district, price_range, description, portfolio_json, rating, spotlight, owner_email) VALUES ('vw-64', 'Marji Flora', 'Floral & Deco', 'Ja-Ela', 'Gampaha', '25000-400000', 'The true beauty of flowers. Church, poruwa, settee, lamp, cake structures, tables, entrance, champagne and milk fountains, bridal bouquets and car decorations.', '{"images": [], "quotations": [{"id": "mf-full", "title": "Full floral decoration", "price": "", "details": "Church, poruwa, settee, lamps, cake structures, tables, head table, entrance, fountains, bouquets, cars."}], "quotationPdf": null, "categories": ["Floral & Deco"], "districts": ["Gampaha"]}', 4.6, 0, NULL);
 INSERT IGNORE INTO vendor_listings (id, name, category, city, district, price_range, description, portfolio_json, rating, spotlight, owner_email) VALUES ('vw-65', 'Thambapanni Weddings', 'Photography & Videography', 'Colombo', 'Colombo', '80000-300000', 'One-day wedding packages. Traditional Kandyan and contemporary coverage.', '{"images": [], "quotations": [{"id": "th-1d", "title": "One day wedding package", "price": "", "details": "One-day wedding photography packages. See printed guide for album and enlargement options."}], "quotationPdf": null, "categories": ["Photography & Videography"], "districts": ["Colombo"]}', 4.5, 0, NULL);
+
+CREATE TABLE IF NOT EXISTS checklist_templates (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(200) NOT NULL,
+  category VARCHAR(40) NOT NULL,
+  phase VARCHAR(30) NOT NULL,
+  ceremony VARCHAR(30) NOT NULL DEFAULT 'all',
+  sort_order INT NOT NULL DEFAULT 0
+);
+
+INSERT IGNORE INTO checklist_templates (id, title, category, phase, ceremony, sort_order) VALUES
+(1, 'Set the wedding budget', 'budget', 'from_start', 'all', 1),
+(2, 'Confirm wedding date with both families', 'ceremony', 'from_start', 'all', 2),
+(3, 'Book the wedding venue or reception hall', 'venue', 'from_start', 'all', 3),
+(4, 'Hire photographer and videographer', 'vendors', 'from_start', 'all', 4),
+(5, 'Book bridal dressing (Kandyan, Indian or Western)', 'suite', 'from_start', 'all', 5),
+(6, 'Book grooms national dress or suit', 'suite', 'from_start', 'all', 6),
+(7, 'Book catering (rice and curry or hotel package)', 'catering', 'six_months', 'all', 7),
+(8, 'Book florist and jasmine decorations', 'decorations', 'six_months', 'all', 8),
+(9, 'Order the wedding cake', 'catering', 'six_months', 'all', 9),
+(10, 'Book band, DJ or Kandyan dancers', 'entertainment', 'six_months', 'all', 10),
+(11, 'Send save-the-date cards', 'guests', 'six_months', 'all', 11),
+(12, 'Book hotel rooms for outstation guests', 'logistics', 'six_months', 'all', 12),
+(13, 'Order wedding invitations', 'guests', 'three_months', 'all', 13),
+(14, 'Mail or hand-deliver invitations', 'guests', 'three_months', 'all', 14),
+(15, 'Book hair and makeup artist', 'suite', 'three_months', 'all', 15),
+(16, 'Order bridal jewellery', 'suite', 'three_months', 'all', 16),
+(17, 'Confirm vendor contracts', 'vendors', 'three_months', 'all', 17),
+(18, 'Collect RSVPs', 'guests', 'three_months', 'all', 18),
+(19, 'Bride clothing fitting', 'suite', 'three_months', 'all', 19),
+(20, 'Groom clothing fitting', 'suite', 'three_months', 'all', 20),
+(21, 'Create the seating chart', 'guests', 'one_month', 'all', 21),
+(22, 'Arrange guest buses and parking', 'logistics', 'one_month', 'all', 22),
+(23, 'Confirm final headcount with caterer', 'catering', 'one_month', 'all', 23),
+(24, 'Create the wedding-day timeline', 'logistics', 'one_month', 'all', 24),
+(25, 'Pack an emergency wedding kit', 'other', 'one_month', 'all', 25),
+(26, 'Confirm vendor arrival times', 'vendors', 'wedding_week', 'all', 26),
+(27, 'Enjoy your wedding day', 'other', 'wedding_week', 'all', 27),
+(28, 'Confirm auspicious date and nekatha with an astrologer', 'ceremony', 'from_start', 'poruwa', 28),
+(29, 'Book the Poruwa and ashtaka items', 'ceremony', 'six_months', 'poruwa', 29),
+(30, 'Find Jayamangala Gatha singers', 'ceremony', 'six_months', 'poruwa', 30),
+(31, 'Arrange kiribath and traditional sweetmeats', 'catering', 'three_months', 'poruwa', 31),
+(32, 'Plan the Magul homecoming', 'ceremony', 'three_months', 'poruwa', 32),
+(33, 'Collect Poruwa ceremony items', 'ceremony', 'one_month', 'poruwa', 33),
+(34, 'Confirm Poruwa setup and ashtaka', 'ceremony', 'wedding_week', 'poruwa', 34),
+(35, 'Book the church and priest', 'ceremony', 'from_start', 'church', 35),
+(36, 'Arrange the church choir and hymns', 'ceremony', 'six_months', 'church', 36),
+(37, 'Prepare marriage certificate documents', 'ceremony', 'three_months', 'church', 37),
+(38, 'Plan church aisle flowers and decor', 'decorations', 'three_months', 'church', 38),
+(39, 'Arrange the church rehearsal', 'ceremony', 'one_month', 'church', 39),
+(40, 'Confirm church arrival time', 'ceremony', 'wedding_week', 'church', 40),
+(41, 'Book the kovil and priest', 'ceremony', 'from_start', 'hindu', 41),
+(42, 'Arrange the thaali / mangalsutra', 'ceremony', 'six_months', 'hindu', 42),
+(43, 'Book the mehendi night', 'suite', 'six_months', 'hindu', 43),
+(44, 'Arrange Hindu ceremonial items', 'ceremony', 'three_months', 'hindu', 44),
+(45, 'Confirm vegetarian catering if needed', 'catering', 'one_month', 'hindu', 45),
+(46, 'Confirm kovil timing', 'ceremony', 'wedding_week', 'hindu', 46),
+(47, 'Book the mosque and imam / qazi', 'ceremony', 'from_start', 'nikah', 47),
+(48, 'Prepare nikah documents and mehr', 'ceremony', 'six_months', 'nikah', 48),
+(49, 'Plan the walima reception', 'ceremony', 'three_months', 'nikah', 49),
+(50, 'Share dress-code notes with guests', 'guests', 'one_month', 'nikah', 50),
+(51, 'Confirm nikah and walima timing', 'ceremony', 'wedding_week', 'nikah', 51),
+(52, 'Book the reception MC', 'entertainment', 'from_start', 'reception', 52),
+(53, 'Plan cake cutting and first dance', 'entertainment', 'six_months', 'reception', 53),
+(54, 'Create the reception playlist', 'entertainment', 'three_months', 'reception', 54),
+(55, 'Confirm the reception run sheet', 'logistics', 'one_month', 'reception', 55),
+(56, 'Confirm MC and cake timing', 'entertainment', 'wedding_week', 'reception', 56),
+(101, 'Confirm auspicious date and nekatha with an astrologer', 'ceremony', 'from_start', 'poruwa', 101),
+(102, 'Arrange kiribath and traditional sweetmeats', 'catering', 'three_months', 'poruwa', 102);
+
+UPDATE checklist_templates SET ceremony = 'poruwa'
+WHERE title LIKE '%Poruwa%'
+   OR title LIKE '%Jayamangala%'
+   OR title LIKE '%nekatha%'
+   OR title LIKE '%kiribath%'
+   OR title LIKE '%Magul homecoming%';
+UPDATE checklist_templates SET ceremony = 'church'
+WHERE title LIKE '%church and priest%'
+   OR title LIKE '%church choir%'
+   OR title LIKE '%church aisle%'
+   OR title LIKE '%church rehearsal%'
+   OR title LIKE '%church arrival%'
+   OR title LIKE '%marriage certificate%';
+UPDATE checklist_templates SET ceremony = 'hindu'
+WHERE title LIKE '%kovil%'
+   OR title LIKE '%thaali%'
+   OR title LIKE '%mehendi%'
+   OR title LIKE '%Hindu ceremonial%';
+UPDATE checklist_templates SET ceremony = 'nikah'
+WHERE title LIKE '%mosque%'
+   OR title LIKE '%nikah%'
+   OR title LIKE '%walima%'
+   OR title LIKE '%mehr%';
+UPDATE checklist_templates SET ceremony = 'reception'
+WHERE title LIKE '%reception MC%'
+   OR title LIKE '%first dance%'
+   OR title LIKE '%reception playlist%'
+   OR title LIKE '%reception run sheet%'
+   OR title LIKE '%MC and cake%';

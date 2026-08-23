@@ -42,11 +42,12 @@ function WeddingCrewPage() {
           <ul className="crew-list">
             {crew.map((m) => (
               <li key={m.id}>
+                <span className="dash-list-avatar">{m.name.charAt(0).toUpperCase()}</span>
                 <div>
                   <strong>{m.name}</strong>
-                  <small>{m.role}</small>
+                  <span className="guest-group-badge">{m.role}</span>
                 </div>
-                <button type="button" onClick={() => remove(m.id)} title="Remove">🗑️</button>
+                <button type="button" className="guest-action-btn guest-action-btn--danger" onClick={() => remove(m.id)} title="Remove">🗑️</button>
               </li>
             ))}
           </ul>

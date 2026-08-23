@@ -1,3 +1,16 @@
+import { normalizeGuestGroup } from '../data/dashboardData';
+
+function isComingRsvp(rsvp) {
+  const v = (rsvp || '').trim().toLowerCase();
+  return ['accepted', 'coming', 'yes', 'y'].includes(v);
+}
+
+function isSeatKey(key, tableId) {
+  const prefix = `${tableId}-`;
+  if (!key.startsWith(prefix)) return false;
+  return /^\d+$/.test(key.slice(prefix.length));
+}
+
 /** Table area / suite labels */
 export const tableSuites = [
   { id: 'vip', label: 'VIP / Head', icon: '👑' },
@@ -39,7 +52,7 @@ export class Table {
     this.shape = shape;
     this.priority = Math.max(1, Math.min(10, priority));
     this.suite = suite;
-    this.guestGroups = guestGroups;
+    this.guestGroups = (guestGroups || []).map(normalizeGuestGroup).filter((group) => group && group !== 'No Group');
   }
 
   static fromJSON(data) {
@@ -234,8 +247,8 @@ export class SeatingChart {
 
     const newSeats = this.tables[idx].seats;
     Object.keys(this.assignments).forEach((key) => {
-      if (!key.startsWith(`${tableId}-`)) return;
-      const seatIdx = Number(key.split('-').pop());
+      if (!isSeatKey(key, tableId)) return;
+      const seatIdx = Number(key.slice(`${tableId}-`.length));
       if (seatIdx >= newSeats) delete this.assignments[key];
     });
   }
@@ -243,7 +256,7 @@ export class SeatingChart {
   removeTable(tableId) {
     this.tables = this.tables.filter((t) => t.id !== tableId);
     Object.keys(this.assignments).forEach((key) => {
-      if (key.startsWith(`${tableId}-`)) delete this.assignments[key];
+      if (isSeatKey(key, tableId)) delete this.assignments[key];
     });
   }
 
@@ -255,6 +268,10 @@ export class SeatingChart {
     return this.guests.filter((g) => !this.assignedGuestIds.includes(g.id));
   }
 
+  get waitingToSeat() {
+    return this.unassignedGuests.filter((g) => isComingRsvp(g.rsvp));
+  }
+
   get assignedGuests() {
     return this.guests.filter((g) => this.assignedGuestIds.includes(g.id));
   }
@@ -262,8 +279,7 @@ export class SeatingChart {
   getTableForGuest(guestId) {
     const entry = Object.entries(this.assignments).find(([, id]) => id === guestId);
     if (!entry) return null;
-    const tableId = entry[0].split('-')[0];
-    return this.tables.find((t) => t.id === tableId) || null;
+    return this.tables.find((t) => isSeatKey(entry[0], t.id)) || null;
   }
 
   getTableFill(tableId) {
@@ -433,7 +449,7 @@ export class SeatingChart {
   /** Auto-seat all guests using table priority + group matching */
   autoSeatAll() {
     this.assignments = {};
-    const pool = this.guests.filter((g) => g.rsvp !== 'Rejected' && g.rsvp !== 'Declined');
+    const pool = this.guests.filter((g) => isComingRsvp(g.rsvp));
     const conflicts = [];
     let remaining = [...pool];
 
@@ -454,11 +470,14 @@ export class SeatingChart {
 
   get stats() {
     const totalSeats = this.tables.reduce((sum, t) => sum + t.seats, 0);
+    const coming = this.guests.filter((g) => isComingRsvp(g.rsvp));
+    const seatedComing = coming.filter((g) => this.assignedGuestIds.includes(g.id)).length;
     return {
       tables: this.tables.length,
       guests: this.guests.length,
-      assigned: this.assignedGuestIds.length,
-      unassigned: this.unassignedGuests.length,
+      coming: coming.length,
+      assigned: seatedComing,
+      unassigned: coming.length - seatedComing,
       totalSeats,
       emptySeats: totalSeats - this.assignedGuestIds.length,
     };

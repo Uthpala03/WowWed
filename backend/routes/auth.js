@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const { query } = require('../config/db');
 const { authRequired } = require('../middleware/auth');
 const { defaultTasks, defaultGuests, defaultBudget, defaultSeating } = require('../data/defaultData');
+const { applyOnboardingToWeddingProfile } = require('../utils/onboardingWedding');
+const { applyChecklistForCouple } = require('../utils/coupleChecklist');
 
 const router = express.Router();
 
@@ -84,6 +86,10 @@ router.post('/register', async (req, res) => {
 
     if (role === 'couple') {
       await seedCoupleData(userId);
+      if (onboarding) {
+        await applyOnboardingToWeddingProfile(userId, onboarding);
+      }
+      await applyChecklistForCouple(userId, []);
     }
 
     const rows = await query('SELECT * FROM users WHERE id = :id', { id: userId });

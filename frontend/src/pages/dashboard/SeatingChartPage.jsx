@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import TableVisual from '../../components/seating/TableVisual';
 import { guestGroups, tableShapes } from '../../data/dashboardData';
 import { SeatingChart, Table, tableSuites } from '../../models/Seating';
@@ -15,24 +16,35 @@ const emptyTableForm = {
 };
 
 function SeatingChartPage() {
-  const guests = getGuests();
-  const [chart, setChart] = useState(() => new SeatingChart(getSeating(), guests));
+  const coupleData = useOutletContext();
+  const guests = coupleData?.guests || getGuests() || [];
+  const [chart, setChart] = useState(() => new SeatingChart(coupleData?.seating || getSeating(), guests));
+
+  useEffect(() => {
+    setChart(new SeatingChart(coupleData?.seating || getSeating(), coupleData?.guests || getGuests() || []));
+  }, [coupleData]);
   const [selectedGuest, setSelectedGuest] = useState(null);
+  const [selectedTableId, setSelectedTableId] = useState(null);
   const [search, setSearch] = useState('');
   const [groupFilter, setGroupFilter] = useState('All');
   const [showTableModal, setShowTableModal] = useState(false);
   const [editingTableId, setEditingTableId] = useState(null);
   const [tableForm, setTableForm] = useState(emptyTableForm);
   const [toast, setToast] = useState('');
+  const [reviewFlags, setReviewFlags] = useState([]);
 
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(''), 3500);
   };
 
-  const persist = (nextChart) => {
+  const persist = (nextChart, quality) => {
     setChart(nextChart);
-    saveSeating(nextChart.toJSON());
+    const prev = coupleData?.seating || getSeating() || {};
+    saveSeating({
+      ...nextChart.toJSON(),
+      mlQuality: quality || prev.mlQuality || null,
+    });
   };
 
   const stats = useMemo(() => chart.stats, [chart]);
@@ -40,7 +52,7 @@ function SeatingChartPage() {
   const groupCounts = useMemo(() => chart.getGroupCounts(), [chart]);
   const seatGroups = guestGroups.filter((g) => g !== 'No Group');
 
-  const filteredUnassigned = chart.unassignedGuests.filter((g) => {
+  const filteredUnassigned = chart.waitingToSeat.filter((g) => {
     const q = search.toLowerCase();
     const matchSearch = !q || g.name.toLowerCase().includes(q);
     const matchGroup = groupFilter === 'All' || g.group === groupFilter;
@@ -137,17 +149,150 @@ function SeatingChartPage() {
     persist(next);
   };
 
-  const runAutoSeat = () => {
+  const updateAllTables = (updates) => {
     const next = new SeatingChart(chart.toJSON(), guests);
-    const { filled, conflicts } = next.autoSeatAll();
+    next.tables.forEach((table) => next.updateTable(table.id, updates));
     persist(next);
-    showToast(conflicts.length ? conflicts[0] : `${filled} guests seated automatically`);
+  };
+
+  const sharedShape = chart.tables.length && chart.tables.every((t) => t.shape === chart.tables[0].shape)
+    ? chart.tables[0].shape
+    : '';
+  const sharedSeats = chart.tables.length && chart.tables.every((t) => t.seats === chart.tables[0].seats)
+    ? chart.tables[0].seats
+    : null;
+
+  const comingCount = guests.filter((g) => {
+    const v = (g.rsvp || '').trim().toLowerCase();
+    return ['accepted', 'coming', 'yes', 'y'].includes(v);
+  }).length;
+
+  const tablesForComing = () => {
+    const workTables = chart.tables.map((t) => t.toJSON());
+    let seatCount = workTables.reduce((sum, t) => sum + Number(t.seats || 0), 0);
+    let nextNum = workTables.length + 1;
+    while (seatCount < comingCount) {
+      workTables.push({
+        id: `table-auto-${nextNum}`,
+        name: `Table ${nextNum}`,
+        seats: 10,
+        shape: 'round',
+        suite: 'general',
+        priority: 5,
+        guestGroups: [],
+      });
+      seatCount += 10;
+      nextNum += 1;
+    }
+    return workTables;
+  };
+
+  const runAutoSeat = async () => {
+    showToast('Smart seating running...');
+    const workTables = tablesForComing();
+    try {
+      const res = await fetch('http://127.0.0.1:8000/optimize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guests: guests.map((g) => ({
+            id: g.id,
+            name: g.name,
+            email: g.email || '',
+            phone: g.phone || '',
+            group: g.group || '',
+            notes: g.notes || '',
+            rsvp: g.rsvp || '',
+            avoid: g.avoid || '',
+            age: g.age || '',
+          })),
+          tables: workTables.map((t) => ({
+            id: t.id,
+            name: t.name,
+            seats: t.seats,
+            shape: t.shape,
+            suite: t.suite,
+            priority: t.priority,
+          })),
+        }),
+      });
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+
+      const used = new Set();
+      const matchGuest = (row) => {
+        if (row.id) {
+          const hit = guests.find((g) => String(g.id) === String(row.id) && !used.has(g.id));
+          if (hit) return hit.id;
+        }
+        const email = (row.email || '').trim().toLowerCase();
+        const phone = String(row.phone || '').replace(/\D/g, '');
+        const name = (row.name || '').trim().toLowerCase();
+        const found = guests.find((g) => {
+          if (used.has(g.id)) return false;
+          const gEmail = (g.email || '').trim().toLowerCase();
+          const gPhone = String(g.phone || '').replace(/\D/g, '');
+          if (email && gEmail && gEmail === email) return true;
+          if (phone && gPhone && gPhone === phone) return true;
+          return name && (g.name || '').trim().toLowerCase() === name;
+        });
+        return found?.id || null;
+      };
+
+      const next = new SeatingChart({ tables: workTables, assignments: {} }, guests);
+
+      let seated = 0;
+      (data.assignments || []).forEach((row) => {
+        const id = matchGuest(row);
+        if (!id) return;
+        used.add(id);
+        const table = next.tables.find((t) => t.id === row.table_id)
+          || next.tables.find((t) => t.name === row.table);
+        if (!table) return;
+        const seatIndex = Number(row.seat) - 1;
+        if (seatIndex < 0 || seatIndex >= table.seats) return;
+        next.assignGuest(table.id, seatIndex, id);
+        seated += 1;
+      });
+
+      const quality = {
+        silhouette: data.silhouette,
+        k: data.k,
+        capacityViolations: data.capacity_violations,
+        violationRate: data.violation_rate,
+        assigned: seated,
+        coming: data.coming,
+        seatingAccuracy: data.seating_accuracy,
+        labelAccuracy: data.label_accuracy,
+      };
+      persist(next, quality);
+      const leftover = Math.max(0, comingCount - seated);
+      const flags = (data.flags || []).filter((flag) => flag.type !== 'unseated' || leftover > 0);
+      if (leftover > 0 && !flags.some((flag) => flag.type === 'unseated')) {
+        flags.unshift({
+          type: 'unseated',
+          message: `${leftover} Coming guest(s) have no chair. Add tables or chairs, then Auto-seat again.`,
+        });
+      }
+      setReviewFlags(flags);
+      showToast(
+        leftover > 0
+          ? `${seated} of ${comingCount} Coming guests seated. ${leftover} still need a chair.`
+          : `${seated} Coming guests seated.`,
+      );
+    } catch (err) {
+      const next = new SeatingChart({ tables: workTables, assignments: {} }, guests);
+      const { filled, conflicts } = next.autoSeatAll();
+      persist(next);
+      showToast(conflicts[0] || `${filled} guests seated.`);
+    }
   };
 
   const removeTable = (tableId) => {
     const next = new SeatingChart(chart.toJSON(), guests);
     next.removeTable(tableId);
     persist(next);
+    if (selectedTableId === tableId) setSelectedTableId(null);
   };
 
   return (
@@ -161,17 +306,70 @@ function SeatingChartPage() {
 
       {toast && <div className="guest-import-toast">{toast}</div>}
 
-      <section className="seating-help-banner seating-help-banner--simple">
-        <span>💡</span>
-        <p>Pick a group from each table&apos;s dropdown to seat guests. Use <strong>Auto-seat all</strong> for everything at once.</p>
-      </section>
+      {reviewFlags.length > 0 && (
+        <section className="seating-review">
+          <div className="seating-review__head">
+            <strong>Review after Auto-seat</strong>
+            <button type="button" className="seating-review__close" onClick={() => setReviewFlags([])}>Dismiss</button>
+          </div>
+          <p>These are not errors. Move people by tapping a guest, then an empty chair.</p>
+          <ul>
+            {reviewFlags.map((flag, i) => (
+              <li key={`${flag.type}-${i}`}>{flag.message}</li>
+            ))}
+          </ul>
+        </section>
+      )}
 
-      <div className="seating-stats">
-        <div className="seating-stat"><strong>{stats.tables}</strong><span>Tables</span></div>
-        <div className="seating-stat"><strong>{stats.totalSeats}</strong><span>Seats</span></div>
-        <div className="seating-stat seating-stat--green"><strong>{stats.assigned}</strong><span>Seated</span></div>
-        <div className="seating-stat seating-stat--gold"><strong>{stats.unassigned}</strong><span>Waiting</span></div>
-      </div>
+      <section className="seating-controls">
+        <div className="seating-controls__stats">
+          <span><strong>{stats.tables}</strong> tables</span>
+          <span><strong>{stats.totalSeats}</strong> seats</span>
+          <span className="is-green"><strong>{stats.assigned}</strong> seated</span>
+          <span className="is-gold"><strong>{stats.unassigned}</strong> need a chair</span>
+        </div>
+
+        {chart.tables.length > 0 && (
+          <div className="seating-controls__tools">
+            <p className="seating-controls__hint">
+              {sharedShape && sharedSeats != null ? 'Applies to every table' : 'Tables are mixed — pick a shape or chairs to set all'}
+            </p>
+            <div className="seating-controls__shapes">
+              {tableShapes.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={`table-shape-option${sharedShape === s.id ? ' is-on' : ''}`}
+                  onClick={() => updateAllTables({ shape: s.id })}
+                >
+                  <em>{s.icon}</em>
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            <div className="seating-controls__chairs">
+              <span>Chairs</span>
+              <div className="seat-counter">
+                <button
+                  type="button"
+                  aria-label="Fewer chairs on all tables"
+                  onClick={() => updateAllTables({ seats: Math.max(1, (sharedSeats || 10) - 1) })}
+                >
+                  −
+                </button>
+                <strong>{sharedSeats != null ? sharedSeats : '—'}</strong>
+                <button
+                  type="button"
+                  aria-label="More chairs on all tables"
+                  onClick={() => updateAllTables({ seats: Math.min(20, (sharedSeats || 10) + 1) })}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
 
       <div className="seating-layout">
         <div className="seating-canvas-wrap dash-card">
@@ -180,7 +378,7 @@ function SeatingChartPage() {
               <div className="seating-empty">
                 <span>🪑</span>
                 <h3>No tables yet</h3>
-                <p>Add tables, then choose Family, Friends, or another group for each</p>
+                <p>Add tables, then choose Bride's Family, Relatives, or another group for each</p>
                 <button type="button" className="dash-btn dash-btn--primary" onClick={openAddTable}>+ Add table</button>
               </div>
             ) : (
@@ -193,16 +391,21 @@ function SeatingChartPage() {
                     {tables.map((table) => {
                       const fill = chart.getTableFill(table.id);
                       const currentGroup = table.guestGroups?.[0] || '';
+                      const selected = selectedTableId === table.id;
                       return (
-                        <div key={table.id} className="seating-table-card seating-table-card--simple">
+                        <div
+                          key={table.id}
+                          className={`seating-table-card seating-table-card--simple${selected ? ' is-selected' : ''}`}
+                          onClick={() => setSelectedTableId(table.id)}
+                        >
                           <div className="seating-table-card__head">
                             <div>
                               <strong>{table.name}</strong>
                               <small className="seating-table-card__sub">
-                                {fill.filled}/{fill.total} seated · Priority {table.priority}
+                                {fill.filled}/{fill.total} seated · {tableShapes.find((s) => s.id === table.shape)?.label || 'Round'} · {table.seats} chairs
                               </small>
                             </div>
-                            <div className="seating-table-card__actions">
+                            <div className="seating-table-card__actions" onClick={(e) => e.stopPropagation()}>
                               <button type="button" className="guest-action-btn" onClick={() => openEditTable(table)} title="Edit">✏️</button>
                               <button type="button" className="seating-table-card__remove" onClick={() => removeTable(table.id)} title="Delete">🗑️</button>
                             </div>
@@ -216,7 +419,7 @@ function SeatingChartPage() {
                             onSeatClick={handleSeatClick}
                           />
 
-                          <label className="seating-simple-select">
+                          <label className="seating-simple-select" onClick={(e) => e.stopPropagation()}>
                             <span>Seat with group:</span>
                             <select
                               value={currentGroup}
@@ -230,7 +433,7 @@ function SeatingChartPage() {
                           </label>
 
                           {fill.filled > 0 && (
-                            <button type="button" className="seating-clear-link" onClick={() => clearTable(table.id)}>
+                            <button type="button" className="seating-clear-link" onClick={(e) => { e.stopPropagation(); clearTable(table.id); }}>
                               Clear this table
                             </button>
                           )}
@@ -250,13 +453,13 @@ function SeatingChartPage() {
           <select value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)}>
             <option>All</option>
             {seatGroups.map((g) => (
-              <option key={g}>{g} ({groupCounts[g] || 0})</option>
+              <option key={g} value={g}>{g} ({groupCounts[g] || 0})</option>
             ))}
           </select>
           <p className="seating-sidebar__tip">Or tap a guest, then tap an empty chair</p>
 
           <div className="seating-sidebar__section">
-            <h4>Waiting ({filteredUnassigned.length})</h4>
+            <h4>Need a chair ({filteredUnassigned.length})</h4>
             <ul className="seating-guest-list">
               {filteredUnassigned.length === 0 ? (
                 <li className="seating-guest-list__empty"><small>All seated 🎉</small></li>
@@ -359,7 +562,8 @@ function SeatingChartPage() {
                   className={`table-shape-option${tableForm.shape === s.id ? ' is-on' : ''}`}
                   onClick={() => setTableForm({ ...tableForm, shape: s.id })}
                 >
-                  {s.icon}<br />{s.label}
+                  <em>{s.icon}</em>
+                  {s.label}
                 </button>
               ))}
             </div>

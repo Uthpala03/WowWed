@@ -55,10 +55,15 @@ function ExpenseOverviewPage() {
             <tbody>
               {filtered.map((e) => (
                 <tr key={e.id}>
-                  <td>{e.name}</td>
-                  <td>{getCatName(e.categoryId)}</td>
+                  <td>
+                    <div className="guest-name-cell">
+                      <span className="dash-list-avatar">{String(e.name || 'E').charAt(0).toUpperCase()}</span>
+                      <strong>{e.name}</strong>
+                    </div>
+                  </td>
+                  <td><span className="guest-group-badge">{getCatName(e.categoryId)}</span></td>
                   <td>{e.date}</td>
-                  <td>Rs. {Number(e.amount).toLocaleString()}</td>
+                  <td><strong>Rs. {Number(e.amount).toLocaleString()}</strong></td>
                 </tr>
               ))}
             </tbody>

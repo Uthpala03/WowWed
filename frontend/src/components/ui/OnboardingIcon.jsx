@@ -95,6 +95,31 @@ const icons = {
       <path d="M11.8 10.5h0.4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.35" />
     </>
   ),
+  hindu: (
+    <>
+      <path d="M12 20V9.5" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M8.5 20h7" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M9.2 17.2h5.6" fill="none" stroke="currentColor" strokeWidth="1.15" strokeLinecap="round" />
+      <path d="M10 14.6h4" fill="none" stroke="currentColor" strokeWidth="1.15" strokeLinecap="round" />
+      <ellipse cx="12" cy="9.2" rx="2.2" ry="1.1" fill="currentColor" opacity="0.22" />
+      <ellipse cx="12" cy="9.2" rx="2.2" ry="1.1" fill="none" stroke="currentColor" strokeWidth="1.15" />
+      <path d="M12 8.2V5.6" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M12 5.2c.7-.8 1.8-.6 1.8.4 0 1.1-1.2 1.6-1.8 2.1-.6-.5-1.8-1-1.8-2.1 0-1 1.1-1.2 1.8-.4z" fill="currentColor" opacity="0.45" />
+      <circle cx="7.2" cy="12.2" r="1.1" fill="currentColor" opacity="0.28" />
+      <circle cx="16.8" cy="12.2" r="1.1" fill="currentColor" opacity="0.28" />
+    </>
+  ),
+  nikah: (
+    <>
+      <path d="M5 19h14" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M6.5 19V12.5c0-3.2 2.4-5.8 5.5-5.8s5.5 2.6 5.5 5.8V19" fill="currentColor" opacity="0.12" />
+      <path d="M6.5 19V12.5c0-3.2 2.4-5.8 5.5-5.8s5.5 2.6 5.5 5.8V19" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M12 4.2V6.7" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M15.8 5.4c1.4.4 2.3 1.6 2.1 3-.2 1.2-1.3 2-2.5 2" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M10 19v-4.2c0-.9.8-1.6 2-1.6s2 .7 2 1.6V19" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M8.2 13.6h2.2M13.6 13.6h2.2" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+    </>
+  ),
   reception: (
     <>
       <path d="M8.5 18v2.5M15.5 18v2.5" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
@@ -234,7 +259,7 @@ const icons = {
 function OnboardingIcon({ name, size = 22, className = '', detailed = false }) {
   const content = icons[name] || icons.hearts;
   const vendorIcons = ['venue', 'bridal', 'groom', 'camera', 'ring', 'floral', 'catering', 'cake'];
-  const ceremonyIcons = ['poruwa', 'church', 'dualCeremony', 'reception'];
+  const ceremonyIcons = ['poruwa', 'church', 'hindu', 'nikah', 'dualCeremony', 'reception'];
   const iconSize = detailed || vendorIcons.includes(name) || ceremonyIcons.includes(name)
     ? Math.round(size * 1.08)
     : size;

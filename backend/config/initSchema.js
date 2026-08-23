@@ -4,16 +4,48 @@ const mysql = require('mysql2/promise');
 
 const SCHEMA_FILE = path.join(__dirname, '../../docs/mysql-setup.sql');
 
-function loadSqlStatements() {
-  const sql = fs.readFileSync(SCHEMA_FILE, 'utf8');
-
+function stripSqlComments(sql) {
   return sql
     .split('\n')
     .filter((line) => !line.trim().startsWith('--'))
-    .join('\n')
-    .split(';')
-    .map((s) => s.trim())
-    .filter(Boolean);
+    .join('\n');
+}
+
+function loadSqlStatements() {
+  const sql = stripSqlComments(fs.readFileSync(SCHEMA_FILE, 'utf8'));
+  const statements = [];
+  let current = '';
+  let inSingle = false;
+
+  for (let i = 0; i < sql.length; i += 1) {
+    const ch = sql[i];
+    const next = sql[i + 1];
+
+    if (ch === "'" && inSingle && next === "'") {
+      current += "''";
+      i += 1;
+      continue;
+    }
+
+    if (ch === "'") {
+      inSingle = !inSingle;
+      current += ch;
+      continue;
+    }
+
+    if (ch === ';' && !inSingle) {
+      const statement = current.trim();
+      if (statement) statements.push(statement);
+      current = '';
+      continue;
+    }
+
+    current += ch;
+  }
+
+  const last = current.trim();
+  if (last) statements.push(last);
+  return statements;
 }
 
 function tableNameFromStatement(statement) {
@@ -26,6 +58,7 @@ async function migrateSchema(connection, database) {
   const alters = [
     'ALTER TABLE vendor_profiles ADD COLUMN portfolio_json JSON DEFAULT NULL',
     'ALTER TABLE vendor_listings ADD COLUMN portfolio_json JSON DEFAULT NULL',
+    "ALTER TABLE checklist_templates ADD COLUMN ceremony VARCHAR(30) NOT NULL DEFAULT 'all'",
   ];
   for (const sql of alters) {
     try {
@@ -86,10 +119,27 @@ async function initDatabase(options = {}) {
         log(`  + Creating table: ${tableName}`);
       }
 
-      await connection.query(statement);
+      try {
+        await connection.query(statement);
+      } catch (err) {
+        const isSeed = upper.startsWith('INSERT') || upper.startsWith('UPDATE');
+        if (!isSeed) throw err;
+        log(`  ! Skipped seed statement: ${err.message}`);
+      }
     }
 
     await migrateSchema(connection, database);
+
+    for (const statement of statements) {
+      const upper = statement.toUpperCase();
+      if (!upper.startsWith('INSERT') && !upper.startsWith('UPDATE')) continue;
+      try {
+        await connection.query(`USE \`${database}\``);
+        await connection.query(statement);
+      } catch (err) {
+        log(`  ! Skipped seed statement: ${err.message}`);
+      }
+    }
 
     const [afterRows] = await connection.query('SHOW TABLES');
     const tableNames = afterRows.map((r) => Object.values(r)[0]);

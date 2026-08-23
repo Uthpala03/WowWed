@@ -61,17 +61,60 @@ function buildDefaultTasks() {
   return tasks;
 }
 
-const defaultTasks = buildDefaultTasks();
+const defaultTasks = [];
 
-const defaultGuests = [
-  { id: 'g1', name: 'Romesh', email: '', phone: '', group: 'Family', rsvp: 'Pending', notes: '' },
-  { id: 'g2', name: 'Uthpala', email: '', phone: '', group: 'Family', rsvp: 'Accepted', notes: '' },
-  { id: 'g3', name: 'bruno', email: '', phone: '', group: 'Friends', rsvp: 'Pending', notes: '' },
-  { id: 'g4', name: 'lanka', email: '', phone: '', group: 'Friends', rsvp: 'Pending', notes: '' },
-  { id: 'g5', name: 'randiv', email: '', phone: '', group: 'VIP', rsvp: 'Accepted', notes: '' },
-];
+const defaultGuests = [];
 
-const defaultBudget = { total: 10000000, categories: [], expenses: [] };
+const defaultBudget = { total: 0, categories: [], expenses: [] };
 const defaultSeating = { tables: [], assignments: {} };
 
-module.exports = { defaultTasks, defaultGuests, defaultBudget, defaultSeating };
+const DEMO_TASK_TITLES = new Set([
+  ...taskTemplates.map((task) => task.title),
+  'Enjoy your wedding 🥳',
+  'Confirm table linens', 'Order guest book', 'Arrange parking', 'Book makeup trial',
+  'Schedule dress fitting', 'Choose groomsmen suits', 'Plan first dance song',
+  'Create playlist for reception', 'Book string quartet', 'Arrange confetti exit',
+  'Order place cards', 'Plan thank-you cards', 'Confirm hair trial date',
+  'Book pre-wedding shoot', 'Arrange welcome bags', 'Plan cocktail hour menu',
+  'Confirm ceremony readings', 'Choose flower girl basket', 'Plan ring bearer pillow',
+  'Arrange guest shuttle', 'Confirm cake tasting', 'Book dessert table',
+  'Plan kids entertainment', 'Arrange photo backdrop', 'Confirm venue setup time',
+  'Plan bridal party gifts', 'Arrange morning-of breakfast', 'Confirm tipping budget',
+  'Plan post-wedding brunch', 'Backup plan for rain',
+]);
+
+const DEMO_GUEST_NAMES = ['romesh', 'uthpala', 'bruno', 'lanka', 'randiv', 'uma', 'somapala'];
+
+function isSharedDemoGuestList(guests) {
+  if (!Array.isArray(guests) || guests.length === 0 || guests.length > 7) return false;
+  return guests.every((guest) => {
+    const name = String(guest.name || '').trim().toLowerCase();
+    const hasContact = Boolean(String(guest.email || '').trim() || String(guest.phone || '').trim());
+    return DEMO_GUEST_NAMES.includes(name) && !hasContact;
+  });
+}
+
+function isSharedDemoBudget(budget) {
+  if (!budget || typeof budget !== 'object') return false;
+  const expenses = budget.expenses || [];
+  const categories = budget.categories || [];
+  return Number(budget.total) === 10000000 && expenses.length === 0 && categories.length === 0;
+}
+
+function isSharedDemoTaskList(tasks) {
+  if (!Array.isArray(tasks) || tasks.length === 0) return false;
+  if (tasks.some((task) => task.done || String(task.notes || '').trim() || (task.assigned && task.assigned !== 'Unassigned'))) {
+    return false;
+  }
+  return tasks.every((task) => DEMO_TASK_TITLES.has(task.title));
+}
+
+module.exports = {
+  defaultTasks,
+  defaultGuests,
+  defaultBudget,
+  defaultSeating,
+  isSharedDemoGuestList,
+  isSharedDemoBudget,
+  isSharedDemoTaskList,
+};
