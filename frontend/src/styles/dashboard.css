@@ -24,6 +24,7 @@
   flex-direction: column;
   padding: 1.5rem 1rem;
   background: rgba(255, 255, 255, 0.55);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-right: 1px solid rgba(237, 228, 220, 0.8);
   position: relative;
@@ -272,6 +273,7 @@
 .dash-hero__countdown {
   text-align: center;
   background: rgba(255, 255, 255, 0.75);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border-radius: 50%;
   width: 140px;
@@ -3603,7 +3605,7 @@
 .vendor-card--clickable:hover {
   transform: translateY(-4px);
   box-shadow: 0 14px 32px rgba(92, 61, 46, 0.16);
-  border-color: color-mix(in srgb, var(--color-peach) 40%, var(--color-border));
+  border-color: #ebccbc;
 }
 
 .vendor-card__image {
@@ -4459,7 +4461,7 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--tpl-accent);
-  background: color-mix(in srgb, var(--tpl-accent) 12%, white);
+  background: var(--color-peach-light);
   border-radius: 999px;
 }
 
@@ -4470,7 +4472,7 @@
 
 .invite-template-card.is-on {
   border-color: var(--tpl-accent, var(--color-peach));
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--tpl-accent, var(--color-peach)) 25%, transparent);
+  box-shadow: 0 0 0 2px rgba(232, 168, 140, 0.25);
 }
 
 .invite-template-card__swatch { display: none; }
@@ -4813,7 +4815,7 @@
 .invite-card--border-gold-frame .invite-card__frame { margin: 1.5rem; }
 .invite-card--border-mandala .invite-card__frame { padding-top: 2.5rem; }
 .invite-card--border-church .invite-card__frame {
-  border: 1px solid color-mix(in srgb, var(--invite-accent) 30%, transparent);
+  border: 1px solid var(--invite-accent);
   border-radius: 4px;
 }
 .invite-card--border-jasmine .invite-card__frame { padding: 2rem 1.5rem; }
@@ -4957,7 +4959,7 @@
 .invite-card__rsvp {
   margin-top: 0.85rem;
   padding-top: 0.75rem;
-  border-top: 1px solid color-mix(in srgb, var(--invite-accent) 28%, transparent);
+  border-top: 1px solid var(--invite-accent);
   font-size: 0.72rem;
   line-height: 1.5;
   opacity: 0.85;
@@ -5321,7 +5323,7 @@
 
 .invite-thumb.is-on {
   border-color: var(--color-peach);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-peach) 30%, transparent);
+  box-shadow: 0 0 0 2px rgba(232, 168, 140, 0.30);
 }
 
 .invite-thumb img {
@@ -5451,6 +5453,7 @@
 }
 
 .invite-card--canvas {
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -5533,6 +5536,7 @@
 }
 
 .invite-card--canvas {
+  -webkit-user-select: none;
   user-select: none;
   flex-shrink: 0;
   background-color: #fffef9;
@@ -5763,7 +5767,7 @@
 
 .invite-wizard-template.is-on {
   border-color: var(--color-peach);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-peach) 25%, transparent);
+  box-shadow: 0 0 0 3px rgba(232, 168, 140, 0.25);
 }
 
 .invite-wizard-template img {
@@ -6253,7 +6257,7 @@
 
 .invite-canva__template.is-on {
   border-color: var(--color-peach);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-peach) 30%, transparent);
+  box-shadow: 0 0 0 2px rgba(232, 168, 140, 0.30);
 }
 
 .invite-canva__template img {
@@ -6321,7 +6325,7 @@
 .invite-canva__field input:focus {
   outline: none;
   border-color: var(--color-peach);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-peach) 20%, transparent);
+  box-shadow: 0 0 0 2px rgba(232, 168, 140, 0.20);
 }
 
 .invite-canva__more-btn {
@@ -6766,7 +6770,7 @@
 .invite-editor__field textarea:focus {
   outline: none;
   border-color: var(--color-peach);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-peach) 18%, transparent);
+  box-shadow: 0 0 0 2px rgba(232, 168, 140, 0.18);
 }
 
 .invite-editor__more {
@@ -7329,7 +7333,7 @@
 
 .invite-simple__pick.is-on {
   border-color: var(--color-peach);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-peach) 25%, transparent);
+  box-shadow: 0 0 0 3px rgba(232, 168, 140, 0.25);
 }
 
 .invite-simple__pick img {
@@ -7730,7 +7734,7 @@
 
 .invite-easy-card.is-on {
   border-color: var(--color-peach);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-peach) 22%, transparent);
+  box-shadow: 0 0 0 4px rgba(232, 168, 140, 0.22);
 }
 
 .invite-easy-card img {
@@ -7880,7 +7884,7 @@
   font-size: 1.1rem;
   background: linear-gradient(135deg, var(--color-peach), #e8956a);
   color: #fff;
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--color-peach) 40%, transparent);
+  box-shadow: 0 4px 16px rgba(232, 168, 140, 0.40);
 }
 
 .invite-easy-preview {
@@ -8004,7 +8008,7 @@
 .invite-custom-section--highlight {
   padding: 0.85rem;
   background: var(--color-white);
-  border: 1px solid color-mix(in srgb, var(--color-peach) 35%, var(--color-border));
+  border: 1px solid #ebcfc0;
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(245, 180, 160, 0.12);
 }
@@ -8073,13 +8077,13 @@
 }
 
 .invite-custom-part:hover {
-  border-color: color-mix(in srgb, var(--color-peach) 50%, var(--color-border));
+  border-color: #ebc6b4;
 }
 
 .invite-custom-part.is-on {
   border-color: var(--color-peach);
   background: var(--color-peach-light);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-peach) 25%, transparent);
+  box-shadow: 0 0 0 2px rgba(232, 168, 140, 0.25);
 }
 
 .invite-custom-part__name {
@@ -8444,7 +8448,7 @@
 .vendor-listing-field textarea:focus {
   outline: none;
   border-color: var(--color-peach);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-peach) 22%, transparent);
+  box-shadow: 0 0 0 3px rgba(232, 168, 140, 0.22);
 }
 
 .vendor-listing-field textarea {
@@ -8481,7 +8485,7 @@
 
 .vendor-listing-cat:hover {
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--color-peach) 50%, var(--color-border));
+  border-color: #ebc6b4;
 }
 
 .vendor-listing-cat em {
@@ -8499,7 +8503,7 @@
 .vendor-listing-cat.is-on {
   border-color: var(--color-peach);
   background: var(--color-peach-light);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-peach) 25%, transparent);
+  box-shadow: 0 0 0 2px rgba(232, 168, 140, 0.25);
 }
 
 .vendor-listing-cat.is-on small {
@@ -8528,14 +8532,14 @@
 }
 
 .vendor-listing-district:hover {
-  border-color: color-mix(in srgb, var(--color-peach) 50%, var(--color-border));
+  border-color: #ebc6b4;
 }
 
 .vendor-listing-district.is-on {
   border-color: var(--color-peach);
   background: var(--color-peach-light);
   color: var(--color-brown);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-peach) 25%, transparent);
+  box-shadow: 0 0 0 2px rgba(232, 168, 140, 0.25);
 }
 
 .vendor-listing-prices {
@@ -8640,6 +8644,7 @@
   color: var(--color-brown-light);
   display: -webkit-box;
   -webkit-line-clamp: 4;
+  line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -9041,6 +9046,7 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
 
@@ -9306,7 +9312,7 @@
   padding: 0.85rem;
   border-radius: 12px;
   background: linear-gradient(145deg, #fff8f3, #fff5ef);
-  border: 1px solid color-mix(in srgb, var(--color-peach) 35%, var(--color-border));
+  border: 1px solid #ebcfc0;
 }
 
 .vendor-detail__pdf-list {
