@@ -2,7 +2,7 @@ from pathlib import Path
 import math
 import pandas as pd
 
-FOLDER = Path(r"C:\Users\ASUS\Desktop\WowWed\WowWed\ml\seating")
+FOLDER = Path(__file__).resolve().parent
 SEATS_PER_TABLE = 10
 
 df = pd.read_csv(FOLDER / "seating_with_clusters.csv")

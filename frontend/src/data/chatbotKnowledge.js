@@ -684,7 +684,7 @@ export function getWelcomeMessage(coupleOrProfile) {
     ? ` I can see your wedding on ${couple.date}${couple.district ? ` in ${couple.district}` : ''}.`
     : (couple?.district ? ` I can see your wedding in ${couple.district}.` : '');
   if (names) {
-    return `Hello ${names}! I'm the WOWWED Assistant, inside WOWWED — an intelligent wedding planning and decision support system.${extra} How can I help you?`;
+    return `Hello ${names}! I'm the WowWed assistant — keyword answers from a knowledge base, not a chat AI.${extra} How can I help you?`;
   }
   return knowledge.welcome;
 }

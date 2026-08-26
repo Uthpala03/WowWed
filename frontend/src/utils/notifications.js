@@ -1,4 +1,5 @@
 import { getBudget, getCoupleBasics, getGuests, getTasks, getWeddingProfile, getBookings } from './storage';
+import { needsVendorReply } from './bookingStatus';
 
 export function buildNotifications() {
   const list = [];
@@ -35,12 +36,17 @@ export function buildNotifications() {
     }
   }
 
-  const pendingBookings = bookings.filter((b) => b.status === 'Pending').length;
+  const pendingBookings = bookings.filter((b) => needsVendorReply(b.status)).length;
   if (pendingBookings > 0) {
     list.push({ id: 'bookings', type: 'info', text: `${pendingBookings} vendor request(s) waiting for a reply`, link: '/dashboard/bookings' });
   }
 
-  const readyToHire = bookings.filter((b) => b.status === 'Accepted' || b.status === 'Updated').length;
+  const readyToHire = (bookings || []).filter((b) => (
+    b.status === 'Confirmed'
+    || b.status === 'Accepted'
+    || b.status === 'Negotiating'
+    || b.status === 'Updated'
+  )).length;
   if (readyToHire > 0) {
     list.push({ id: 'hire', type: 'warning', text: `${readyToHire} vendor(s) ready to hire — confirm to update your budget`, link: '/dashboard/bookings' });
   }

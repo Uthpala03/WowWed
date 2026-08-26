@@ -1,7 +1,7 @@
 import { getBlockStyleString } from './invitationBlockStyle';
 import { getCardSize, invitationTemplates } from '../models/InvitationTemplate';
 
-const FONT_LINK = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Great+Vibes&family=Lato:wght@400;600;700&family=Playfair+Display:wght@500;600;700&display=swap';
+const FONT_LINK = 'https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:wght@500;600;700&family=Dancing+Script:wght@500;600;700&family=Great+Vibes&family=Lato:wght@400;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Playfair+Display:wght@500;600;700&family=Tangerine:wght@400;700&display=swap';
 
 function escapeHtml(text) {
   return String(text || '')
@@ -13,7 +13,7 @@ function escapeHtml(text) {
 
 function toAbsoluteUrl(url) {
   if (!url) return '';
-  if (/^https?:\/\//i.test(url)) return url;
+  if (/^https?:\/\//i.test(url) || url.startsWith('data:')) return url;
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   if (url.startsWith('/')) return `${origin}${url}`;
   return `${origin}/${url.replace(/^\//, '')}`;
@@ -29,6 +29,14 @@ export function buildInvitationExportHtml(design) {
 
   const blocksHtml = blocks
     .map((block) => `<div style="${getBlockStyleString(block, size.width)}">${escapeHtml(block.text)}</div>`)
+    .join('\n');
+
+  const imagesHtml = (design.extraImages || [])
+    .filter((img) => img.src)
+    .map((img) => {
+      const radius = img.shape === 'round' ? '50%' : '10px';
+      return `<img src="${toAbsoluteUrl(img.src)}" alt="" style="position:absolute;left:${img.x}%;top:${img.y}%;width:${img.width}%;height:${img.height}%;transform:translate(-50%,-50%);object-fit:cover;border-radius:${radius};z-index:1;box-shadow:0 4px 16px rgba(0,0,0,0.18);" />`;
+    })
     .join('\n');
 
   const artHtml = showArt
@@ -135,6 +143,7 @@ export function buildInvitationExportHtml(design) {
   <div class="invite-export-card">
     ${artHtml}
     <div class="invite-export-layer">
+      ${imagesHtml}
       ${blocksHtml}
     </div>
   </div>

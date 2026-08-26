@@ -4,6 +4,21 @@ import { crewRoles, getCategoryMeta, getTaskDateGroups, groupTasksByMonth, group
 import { getTasks, saveTasks } from '../../utils/storage';
 import { Link } from 'react-router-dom';
 import PageHeader from '../../components/ui/PageHeader';
+import PrettySelect from '../../components/ui/PrettySelect';
+
+const TASK_ICONS = {
+  guests: 'guests',
+  suite: 'bridal',
+  vendors: 'vendors',
+  ceremony: 'ring',
+  catering: 'catering',
+  decorations: 'floral',
+  entertainment: 'sparkle',
+  logistics: 'pin',
+  budget: 'budget',
+  venue: 'venue',
+  other: 'vendors',
+};
 
 function ChecklistPage() {
   const coupleData = useOutletContext();
@@ -358,35 +373,43 @@ function ChecklistPage() {
                 placeholder="What needs to be done?"
               />
             </label>
-            <label className="dash-field">
-              <span>Status</span>
-              <select value={editing.done ? 'done' : 'todo'} onChange={(e) => setEditing({ ...editing, done: e.target.value === 'done' })}>
-                <option value="todo">To do</option>
-                <option value="done">Completed</option>
-              </select>
-            </label>
+            <div className="dash-field">
+              <PrettySelect
+                label="Status"
+                icon="checklist"
+                value={editing.done ? 'done' : 'todo'}
+                options={[
+                  { value: 'todo', label: 'To do', icon: 'checklist' },
+                  { value: 'done', label: 'Completed', icon: 'check' },
+                ]}
+                onChange={(value) => setEditing({ ...editing, done: value === 'done' })}
+              />
+            </div>
             <label className="dash-field">
               <span>Due date</span>
               <input type="date" value={editing.dueDate} onChange={(e) => setEditing({ ...editing, dueDate: e.target.value })} />
             </label>
-            <label className="dash-field">
-              <span>Category</span>
-              <select value={editing.category} onChange={(e) => setEditing({ ...editing, category: e.target.value })}>
-                {taskCategories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.icon} {c.label}</option>
-                ))}
-              </select>
-            </label>
-            <label className="dash-field">
-              <span>Assign to</span>
-              <select
+            <div className="dash-field">
+              <PrettySelect
+                label="Category"
+                icon="vendors"
+                value={editing.category}
+                options={taskCategories.map((c) => ({ value: c.id, label: c.label, icon: TASK_ICONS[c.id] || 'vendors' }))}
+                onChange={(category) => setEditing({ ...editing, category })}
+              />
+            </div>
+            <div className="dash-field">
+              <PrettySelect
+                label="Assign to"
+                icon="crew"
                 value={editing.assigned}
-                onChange={(e) => setEditing({ ...editing, assigned: e.target.value === 'Unassign' ? 'Unassigned' : e.target.value })}
-              >
-                <option value="Unassigned">Unassigned</option>
-                {crewRoles.map((r) => <option key={r} value={r}>{r}</option>)}
-              </select>
-            </label>
+                options={[
+                  { value: 'Unassigned', label: 'Unassigned', icon: 'crew' },
+                  ...crewRoles.map((r) => ({ value: r, label: r, icon: 'crew' })),
+                ]}
+                onChange={(assigned) => setEditing({ ...editing, assigned: assigned === 'Unassign' ? 'Unassigned' : assigned })}
+              />
+            </div>
             <label className="dash-field">
               <span>Notes</span>
               <textarea rows={3} placeholder="Add reminders or details..." value={editing.notes || ''} onChange={(e) => setEditing({ ...editing, notes: e.target.value })} />

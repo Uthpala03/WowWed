@@ -42,6 +42,12 @@ function Hero() {
               <li><span>Book hair and makeup artist</span><small>Suit and Dress · Feb 14</small></li>
             </ul>
           </div>
+          <div className="landing-card landing-card--readiness">
+            <span>Readiness score</span>
+            <strong>72%</strong>
+            <div className="landing-card__meter"><i style={{ width: '72%' }} /></div>
+            <small>On track · Tasks · RSVPs · Budget</small>
+          </div>
           <div className="landing-card landing-card--guests">
             <span>Total Headcount</span>
             <strong>102</strong>

@@ -135,12 +135,21 @@ export const districts = [
   'Ratnapura',
   'Trincomalee',
   'Vavuniya',
-];
+].sort((a, b) => a.localeCompare(b, 'en'));
+
+export function locationSelectOptions({ emptyLabel = '', extra } = {}) {
+  const names = extra && !districts.includes(extra)
+    ? [...districts, extra].sort((a, b) => a.localeCompare(b, 'en'))
+    : districts;
+  const options = names.map((district) => ({ value: district, label: district, icon: 'pin' }));
+  if (!emptyLabel) return options;
+  return [{ value: '', label: emptyLabel, icon: 'pin' }, ...options];
+}
 
 export const weddingScales = [
-  { value: 'standard', label: 'Standard' },
-  { value: 'premium', label: 'Premium' },
-  { value: 'luxury', label: 'Luxury' },
+  { value: 'budget', label: 'Budget · simple' },
+  { value: 'standard', label: 'Standard · typical' },
+  { value: 'premium', label: 'Premium · grand' },
 ];
 
 

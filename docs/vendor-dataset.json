@@ -11836,7 +11836,9 @@
         }
       ],
       "portfolio": {
-        "images": [],
+        "images": [
+          "/uploads/vendors/vw-162/cover.jpg"
+        ],
         "quotations": [
           {
             "id": "vw-162-pkg",
@@ -12974,7 +12976,9 @@
         }
       ],
       "portfolio": {
-        "images": [],
+        "images": [
+          "/uploads/vendors/vw-179/cover.jpg"
+        ],
         "quotations": [
           {
             "id": "vw-179-pkg",

@@ -1,4 +1,4 @@
-import { invitationTemplates } from './InvitationTemplate';
+import { formatInviteDate, invitationTemplates } from './InvitationTemplate';
 import { InvitationTextBlock } from './InvitationTextBlock';
 import { buildDefaultBlocks, getBlockTextForField } from './invitationLayouts';
 
@@ -26,7 +26,7 @@ export class InvitationCanvas {
       x,
       y,
       fontId: 'serif',
-      fontSize: 10,
+      fontSize: 20,
       color: template?.text || '#2c2416',
       align: 'center',
       width: 70,
@@ -42,11 +42,26 @@ export class InvitationCanvas {
     block.y = Math.max(2, Math.min(98, y));
   }
 
+  moveAll(dx, dy) {
+    this.blocks.forEach((block) => {
+      block.x = Math.max(2, Math.min(98, block.x + dx));
+      block.y = Math.max(2, Math.min(98, block.y + dy));
+    });
+  }
+
   updateBlock(id, props) {
     const block = this.getBlock(id);
     if (!block) return;
     Object.assign(block, props);
     if (props.fieldKey === null) block.fieldKey = null;
+  }
+
+  updateAllStyles(props) {
+    const style = {};
+    ['fontId', 'fontSize', 'color', 'align', 'uppercase', 'italic', 'bold', 'letterSpacing', 'lineHeight'].forEach((key) => {
+      if (props[key] !== undefined) style[key] = props[key];
+    });
+    this.blocks.forEach((block) => Object.assign(block, style));
   }
 
   removeBlock(id) {
@@ -57,7 +72,7 @@ export class InvitationCanvas {
     const src = this.getBlock(id);
     if (!src) return null;
     const copy = src.clone();
-    copy.id = undefined;
+    copy.id = `block-${Date.now()}`;
     copy.x = Math.min(95, src.x + 3);
     copy.y = Math.min(95, src.y + 3);
     copy.fieldKey = null;
@@ -69,15 +84,38 @@ export class InvitationCanvas {
     const template = invitationTemplates.getById(design.template);
     const accent = design.accentColor || template.accent;
     const text = design.textColor || template.text;
+    const name1 = design.partnerOne?.trim() || 'Your name';
+    const name2 = design.partnerTwo?.trim() || 'Their name';
     const presets = {
-      heading: { text: 'Heading', fontId: 'elegant', fontSize: 22, color: accent, y: 40 },
-      subheading: { text: 'Subheading', fontId: 'classic', fontSize: 12, color: text, y: 48, uppercase: true },
-      body: { text: 'Add your text here', fontId: 'serif', fontSize: 9, color: text, y: 56 },
+      heading: { text: 'Wedding Invitation', fontId: 'classic', fontSize: 20, color: accent, y: 18, uppercase: true, lineHeight: 1.2 },
+      names: { text: `${name1}  &  ${name2}`, fontId: 'elegant', fontSize: 20, color: accent, y: 36, lineHeight: 1.15 },
+      date: { text: design.weddingDate ? formatInviteDate(design.weddingDate) : 'Saturday · Date to be announced', fontId: 'classic', fontSize: 20, color: text, y: 58, uppercase: true, lineHeight: 1.25 },
+      quote: { text: 'Two hearts, two families, one beautiful beginning', fontId: 'script', fontSize: 20, color: accent, y: 48, italic: true, lineHeight: 1.3 },
+      venue: { text: design.venue?.trim() || 'Venue name', fontId: 'serif', fontSize: 20, color: accent, y: 68, lineHeight: 1.25 },
+      rsvp: { text: 'Kindly RSVP', fontId: 'sans', fontSize: 20, color: text, y: 82, uppercase: true, lineHeight: 1.25 },
+      subheading: { text: 'Together with their families', fontId: 'classic', fontSize: 20, color: text, y: 26, uppercase: true, lineHeight: 1.25 },
+      body: { text: 'Add your text here', fontId: 'serif', fontSize: 20, color: text, y: 56, lineHeight: 1.25 },
     };
     const p = presets[preset] || presets.body;
-    const block = new InvitationTextBlock({ ...p, x: 50, width: 75, align: 'center' });
+    const block = new InvitationTextBlock({ ...p, x: 50, width: 78, align: 'center' });
     this.blocks.push(block);
     return block;
+  }
+
+  bringForward(id) {
+    const i = this.blocks.findIndex((b) => b.id === id);
+    if (i < 0 || i === this.blocks.length - 1) return;
+    const [block] = this.blocks.splice(i, 1);
+    this.blocks.splice(i + 1, 0, block);
+    block.zIndex = (block.zIndex || 2) + 1;
+  }
+
+  sendBack(id) {
+    const i = this.blocks.findIndex((b) => b.id === id);
+    if (i <= 0) return;
+    const [block] = this.blocks.splice(i, 1);
+    this.blocks.splice(i - 1, 0, block);
+    block.zIndex = Math.max(1, (block.zIndex || 2) - 1);
   }
 
   /** Sync linked blocks from form fields without moving them. */

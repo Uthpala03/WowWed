@@ -108,7 +108,7 @@ router.get('/', authRequired, async (req, res) => {
       try {
         const { applyHiredVendorToBudget } = require('../utils/budgetHire');
         const hiredRows = await query(
-          "SELECT * FROM bookings WHERE couple_user_id = :userId AND status IN ('Hired', 'Confirmed')",
+          "SELECT * FROM bookings WHERE couple_user_id = :userId AND status IN ('Paid', 'Hired')",
           { userId },
         );
         for (const row of hiredRows) {

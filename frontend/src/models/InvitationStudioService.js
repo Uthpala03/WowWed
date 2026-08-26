@@ -43,8 +43,16 @@ export class InvitationStudioService {
     return InvitationStudioService.updateBlocks(design, (c) => c.moveBlock(id, x, y));
   }
 
+  static moveAllBlocks(design, dx, dy) {
+    return InvitationStudioService.updateBlocks(design, (c) => c.moveAll(dx, dy));
+  }
+
   static editBlock(design, id, props) {
     return InvitationStudioService.updateBlocks(design, (c) => c.updateBlock(id, props));
+  }
+
+  static editAllStyles(design, props) {
+    return InvitationStudioService.updateBlocks(design, (c) => c.updateAllStyles(props));
   }
 
   static updateBlockText(design, id, text) {
@@ -60,6 +68,60 @@ export class InvitationStudioService {
       design: new InvitationDesign({ ...design.toJSON(), textBlocks: canvas.toJSON() }),
       newBlockId: block.id,
     };
+  }
+
+  static addPreset(design, preset) {
+    const canvas = InvitationCanvas.fromDesign(design);
+    const block = canvas.addPresetBlock(preset, design);
+    return {
+      design: new InvitationDesign({ ...design.toJSON(), textBlocks: canvas.toJSON() }),
+      newBlockId: block.id,
+    };
+  }
+
+  static bringForward(design, id) {
+    return InvitationStudioService.updateBlocks(design, (c) => c.bringForward(id));
+  }
+
+  static sendBack(design, id) {
+    return InvitationStudioService.updateBlocks(design, (c) => c.sendBack(id));
+  }
+
+  static addImage(design, src) {
+    const images = [...(design.extraImages || [])];
+    const image = {
+      id: `img-${Date.now()}`,
+      src,
+      x: 50,
+      y: 20,
+      width: 32,
+      height: 24,
+      shape: 'round',
+    };
+    images.push(image);
+    return {
+      design: new InvitationDesign({ ...design.toJSON(), extraImages: images }),
+      imageId: image.id,
+    };
+  }
+
+  static moveImage(design, id, x, y) {
+    const images = (design.extraImages || []).map((img) => (
+      img.id === id ? { ...img, x, y } : img
+    ));
+    return new InvitationDesign({ ...design.toJSON(), extraImages: images });
+  }
+
+  static updateImage(design, id, props) {
+    const images = (design.extraImages || []).map((img) => (
+      img.id === id ? { ...img, ...props } : img
+    ));
+    return new InvitationDesign({ ...design.toJSON(), extraImages: images });
+  }
+
+  static removeImage(design, id) {
+    const images = (design.extraImages || []).filter((img) => img.id !== id);
+    return new InvitationDesign({ ...design.toJSON(), extraImages: images });
   }
 
   static duplicateBlock(design, id) {

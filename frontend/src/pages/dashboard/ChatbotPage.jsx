@@ -118,7 +118,7 @@ function ChatbotPage() {
 
   return (
     <div className="dash-page">
-      <PageHeader moduleId="assistant" tagline="Your wedding planning assistant">
+      <PageHeader moduleId="assistant" tagline="Offline chatbot">
         {messages.length > 1 && (
           <button type="button" className="dash-btn dash-btn--ghost" onClick={resetChat}>
             Start over
@@ -181,7 +181,7 @@ function ChatbotPage() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Message the Assistant…"
+            placeholder="Ask about guests, budget, or vendors…"
             aria-label="Your message"
             autoComplete="off"
           />

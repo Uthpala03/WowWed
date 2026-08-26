@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { guestGroups, normalizeGuestGroup, rsvpStatuses } from '../../data/dashboardData';
 import { getGuests, getSeating, saveGuests, saveSeating } from '../../utils/storage';
 import PageHeader from '../../components/ui/PageHeader';
+import PrettySelect from '../../components/ui/PrettySelect';
 
 const emptyGuest = { name: '', email: '', phone: '', group: 'No Group', rsvp: 'Pending', age: '', notes: '', avoid: '' };
 const PAGE_SIZES = [25, 50, 100, 250];
@@ -496,14 +497,27 @@ function GuestListPage() {
           <span aria-hidden="true">🔍</span>
           <input type="search" placeholder="Search by name, email, or phone..." value={search} onChange={(e) => handleSearchChange(e.target.value)} />
         </div>
-        <select className="guest-filter-select" value={groupFilter} onChange={(e) => handleGroupFilterChange(e.target.value)} aria-label="Filter by group">
-          <option>All Groups</option>
-          {guestGroups.map((g) => <option key={g}>{g}</option>)}
-        </select>
-        <select value={rsvpFilter} onChange={(e) => handleRsvpFilterChange(e.target.value)} aria-label="Filter by RSVP">
-          <option>All Statuses</option>
-          {rsvpStatuses.map((s) => <option key={s}>{RSVP_LABELS[s]?.label || s}</option>)}
-        </select>
+        <PrettySelect
+          label="Group"
+          icon="guests"
+          className="guest-filter-select"
+          value={groupFilter}
+          options={[
+            { value: 'All Groups', label: 'All Groups', icon: 'guests' },
+            ...guestGroups.map((g) => ({ value: g, label: g, icon: 'guests' })),
+          ]}
+          onChange={handleGroupFilterChange}
+        />
+        <PrettySelect
+          label="RSVP"
+          icon="hearts"
+          value={rsvpFilter}
+          options={[
+            { value: 'All Statuses', label: 'All statuses', icon: 'hearts' },
+            ...rsvpStatuses.map((s) => ({ value: s, label: RSVP_LABELS[s]?.label || s, icon: 'hearts' })),
+          ]}
+          onChange={handleRsvpFilterChange}
+        />
         {hasActiveFilters && <button type="button" className="guest-clear-filters" onClick={clearFilters}>Clear</button>}
       </div>
 
@@ -530,19 +544,19 @@ function GuestListPage() {
           <button type="button" className="guest-rsvp-btn guest-rsvp-btn--accepted" onClick={() => bulkUpdateRsvp(selectedIdList, 'Accepted')}>Mark coming</button>
           <button type="button" className="guest-rsvp-btn guest-rsvp-btn--rejected" onClick={() => bulkUpdateRsvp(selectedIdList, 'Rejected')}>Mark not coming</button>
           <button type="button" className="guest-rsvp-btn guest-rsvp-btn--pending" onClick={() => bulkUpdateRsvp(selectedIdList, 'Pending')}>Mark waiting</button>
-          <select
-            defaultValue=""
-            onChange={(e) => {
-              if (e.target.value) {
-                bulkUpdateGroup(selectedIdList, e.target.value);
-                e.target.value = '';
-              }
+          <PrettySelect
+            label="Move"
+            icon="guests"
+            value=""
+            placeholder="Move to group…"
+            options={[
+              { value: '', label: 'Move to group…', icon: 'guests' },
+              ...guestGroups.map((g) => ({ value: g, label: g, icon: 'guests' })),
+            ]}
+            onChange={(value) => {
+              if (value) bulkUpdateGroup(selectedIdList, value);
             }}
-            aria-label="Move selected to group"
-          >
-            <option value="">Move to group…</option>
-            {guestGroups.map((g) => <option key={g} value={g}>{g}</option>)}
-          </select>
+          />
           <button type="button" className="guest-action-btn guest-action-btn--danger" onClick={() => setBulkDeleteConfirm(true)}>Delete selected</button>
           <button type="button" className="guest-clear-filters" onClick={clearSelection}>Clear selection</button>
         </div>
@@ -600,9 +614,13 @@ function GuestListPage() {
               ))}
             </ul>
             <div className="guest-pagination">
-              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} aria-label="Rows per page">
-                {PAGE_SIZES.map((size) => <option key={size} value={size}>{size} per page</option>)}
-              </select>
+              <PrettySelect
+                label="Rows"
+                icon="guests"
+                value={pageSize}
+                options={PAGE_SIZES.map((size) => ({ value: size, label: `${size} per page`, icon: 'guests' }))}
+                onChange={(value) => { setPageSize(Number(value)); setPage(1); }}
+              />
               <div className="guest-pagination__nav">
                 <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>← Prev</button>
                 <span>Page {safePage} of {totalPages}</span>
@@ -628,18 +646,24 @@ function GuestListPage() {
                 placeholder={'Romesh Perera\nUthpala Silva\nBruno Fernando\n...'}
               />
             </label>
-            <label className="dash-field">
-              <span>Default group</span>
-              <select value={bulkForm.group} onChange={(e) => setBulkForm({ ...bulkForm, group: e.target.value })}>
-                {guestGroups.map((g) => <option key={g}>{g}</option>)}
-              </select>
-            </label>
-            <label className="dash-field">
-              <span>Default RSVP</span>
-              <select value={bulkForm.rsvp} onChange={(e) => setBulkForm({ ...bulkForm, rsvp: e.target.value })}>
-                {rsvpStatuses.map((s) => <option key={s} value={s}>{RSVP_LABELS[s]?.label || s}</option>)}
-              </select>
-            </label>
+            <div className="dash-field">
+              <PrettySelect
+                label="Default group"
+                icon="guests"
+                value={bulkForm.group}
+                options={guestGroups.map((g) => ({ value: g, label: g, icon: 'guests' }))}
+                onChange={(group) => setBulkForm({ ...bulkForm, group })}
+              />
+            </div>
+            <div className="dash-field">
+              <PrettySelect
+                label="Default RSVP"
+                icon="hearts"
+                value={bulkForm.rsvp}
+                options={rsvpStatuses.map((s) => ({ value: s, label: RSVP_LABELS[s]?.label || s, icon: 'hearts' }))}
+                onChange={(rsvp) => setBulkForm({ ...bulkForm, rsvp })}
+              />
+            </div>
             <div className="dash-panel__actions">
               <button type="button" className="dash-btn dash-btn--ghost" onClick={() => setBulkAddOpen(false)}>Cancel</button>
               <button type="submit" className="dash-btn dash-btn--primary">Add all guests</button>
@@ -655,16 +679,24 @@ function GuestListPage() {
             <label className="dash-field"><span>Full name *</span><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
             <label className="dash-field"><span>Phone</span><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></label>
             <label className="dash-field"><span>Email</span><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
-            <label className="dash-field"><span>Group</span>
-              <select value={form.group} onChange={(e) => setForm({ ...form, group: e.target.value })}>
-                {guestGroups.map((grp) => <option key={grp}>{grp}</option>)}
-              </select>
-            </label>
-            <label className="dash-field"><span>RSVP status</span>
-              <select value={form.rsvp} onChange={(e) => setForm({ ...form, rsvp: e.target.value })}>
-                {rsvpStatuses.map((s) => <option key={s} value={s}>{RSVP_LABELS[s]?.label || s}</option>)}
-              </select>
-            </label>
+            <div className="dash-field">
+              <PrettySelect
+                label="Group"
+                icon="guests"
+                value={form.group}
+                options={guestGroups.map((grp) => ({ value: grp, label: grp, icon: 'guests' }))}
+                onChange={(group) => setForm({ ...form, group })}
+              />
+            </div>
+            <div className="dash-field">
+              <PrettySelect
+                label="RSVP status"
+                icon="hearts"
+                value={form.rsvp}
+                options={rsvpStatuses.map((s) => ({ value: s, label: RSVP_LABELS[s]?.label || s, icon: 'hearts' }))}
+                onChange={(rsvp) => setForm({ ...form, rsvp })}
+              />
+            </div>
             <label className="dash-field">
               <span>Age</span>
               <input type="number" min="1" max="120" value={form.age || ''} onChange={(e) => setForm({ ...form, age: e.target.value })} placeholder="e.g. 8 or 72" />

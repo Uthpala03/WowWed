@@ -1,4 +1,5 @@
 import { api, setToken } from '../services/api';
+import { isPaid } from './bookingStatus';
 
 const ONBOARDING_DRAFT_KEY = 'wowwed_onboarding_draft';
 
@@ -401,7 +402,7 @@ export async function updateBookingStatus(id, status, extra = {}) {
   if (cache.user) {
     const { booking } = await api.updateBooking(id, { status, ...extra });
     cache.bookings = cache.bookings.map((item) => (item.id === id ? booking : item));
-    if (booking.status === 'Hired' || booking.status === 'Paid') {
+    if (isPaid(booking.status)) {
       try {
         const data = await api.getAllData();
         cache.budget = data.budget || cache.budget;

@@ -1,17 +1,35 @@
 import { api } from '../services/api';
+import { districts } from '../data/formOptions';
 
 export const MODEL_ACCURACY = {
   r2: 0.9066,
   percent: '90.66%',
+  mae: 759387,
+  rmse: 1241231,
 };
 
-export const COST_DISTRICTS = [
-  'Colombo', 'Gampaha', 'Kalutara', 'Kandy', 'Matale', 'Nuwara Eliya',
-  'Galle', 'Matara', 'Hambantota', 'Kurunegala', 'Puttalam',
-  'Anuradhapura', 'Polonnaruwa', 'Batticaloa', 'Ampara', 'Trincomalee',
-  'Jaffna', 'Kilinochchi', 'Mannar', 'Mullaitivu', 'Vavuniya',
-  'Badulla', 'Monaragala', 'Ratnapura', 'Kegalle',
-];
+export const MODEL_INFO = {
+  id: 'ML-1',
+  module: 'M06',
+  name: 'Wedding Cost Prediction',
+  type: 'Supervised Learning',
+  algorithm: 'Random Forest Regression',
+  trees: 200,
+  why: 'Estimates a total from guests, district, ceremony, scale, and season.',
+  dataset: 'Sri Lankan wedding records',
+  output: 'Estimated total wedding cost in LKR plus a 95% confidence interval',
+  file: 'RandomForestRegression.pkl',
+  linked: 'Budget Management (M05)',
+  featureImportance: [
+    { key: 'scale', label: 'Wedding scale', weight: 70.7 },
+    { key: 'guests', label: 'Guest count', weight: 24.7 },
+    { key: 'district', label: 'Venue district', weight: 2.0 },
+    { key: 'season', label: 'Season', weight: 1.4 },
+    { key: 'ceremony', label: 'Ceremony type', weight: 1.1 },
+  ],
+};
+
+export const COST_DISTRICTS = [...districts];
 
 export const COST_CEREMONIES = [
   { value: 'Poruwa', label: 'Poruwa ceremony' },
@@ -22,9 +40,9 @@ export const COST_CEREMONIES = [
 ];
 
 export const COST_SCALES = [
-  { value: 'budget', label: 'Budget', hint: 'Simple packages' },
-  { value: 'standard', label: 'Standard', hint: 'Most couples' },
-  { value: 'premium', label: 'Premium', hint: 'Larger celebration' },
+  { value: 'budget', label: 'Budget', hint: 'Simple' },
+  { value: 'standard', label: 'Standard', hint: 'Typical' },
+  { value: 'premium', label: 'Premium', hint: 'Grand' },
 ];
 
 const PEAK_MONTHS = [0, 3, 6, 7, 11];
@@ -53,12 +71,10 @@ export function predictionFormFromProfile(profile, extras = {}) {
   else if (ceremony.includes('poruwa')) ceremonyType = 'Poruwa';
 
   const savedBudget = Number(profile?.budget) || Number(extras.budgetTotal) || 0;
-  let scale = String(profile?.scale || '').toLowerCase();
+  let scale = String(profile?.scale || extras.scale || '').toLowerCase();
   if (scale === 'luxury') scale = 'premium';
-  if (savedBudget) {
-    scale = scaleFromBudget(savedBudget);
-  } else if (!['budget', 'standard', 'premium'].includes(scale)) {
-    scale = 'standard';
+  if (!['budget', 'standard', 'premium'].includes(scale)) {
+    scale = savedBudget ? scaleFromBudget(savedBudget) : 'standard';
   }
 
   const rawDistrict = profile?.district || extras.district || 'Colombo';
@@ -89,7 +105,7 @@ export async function predictWeddingCost(form) {
   };
 
   let lastError = 'The cost model is starting. Please try again in a moment.';
-  for (let attempt = 0; attempt < 4; attempt += 1) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       const result = await api.predictCost(payload);
       if (result?.estimate) {
@@ -99,10 +115,11 @@ export async function predictWeddingCost(form) {
           metrics: result.metrics || MODEL_ACCURACY,
         };
       }
+      lastError = result?.error || lastError;
     } catch (err) {
       lastError = err.message || lastError;
     }
-    await sleep(700);
+    if (attempt === 0) await sleep(600);
   }
 
   throw new Error(lastError);

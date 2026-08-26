@@ -3,9 +3,9 @@ import {
   awaitingCouple,
   displayStatus,
   isPaid,
-  needsVendorReply,
   statusTone,
   vendorCanRespond,
+  vendorNeedsDecision,
 } from '../../utils/bookingStatus';
 
 function initials(name) {
@@ -19,14 +19,24 @@ function initials(name) {
 }
 
 function VendorRequestCard({ booking, busyId, onRespond }) {
-  const [offerOpen, setOfferOpen] = useState(false);
+  const [panel, setPanel] = useState('');
   const [form, setForm] = useState({
     amount: String(booking.amount || ''),
     vendorNote: booking.vendorNote || '',
   });
+  const busy = busyId === booking.id;
+  const showActions = vendorNeedsDecision(booking.status) || vendorCanRespond(booking.status);
+
+  const openPanel = (name) => {
+    setPanel((current) => (current === name ? '' : name));
+    setForm({
+      amount: String(booking.amount || ''),
+      vendorNote: booking.vendorNote || '',
+    });
+  };
 
   return (
-    <article className={`vendor-request${needsVendorReply(booking.status) ? ' vendor-request--new' : ''}`}>
+    <article className={`vendor-request${vendorNeedsDecision(booking.status) ? ' vendor-request--new' : ''}`}>
       <div className="vendor-request__top">
         <span className="vendor-inbox__avatar">{initials(booking.coupleName)}</span>
         <div>
@@ -37,40 +47,86 @@ function VendorRequestCard({ booking, busyId, onRespond }) {
       </div>
       <p className="vendor-request__amount">Rs. {Number(booking.amount || 0).toLocaleString()}</p>
       {booking.message ? <p className="vendor-request__note"><span>Couple</span> {booking.message}</p> : null}
+      {booking.coupleNote ? <p className="vendor-request__note"><span>Couple reply</span> {booking.coupleNote}</p> : null}
       {booking.vendorNote ? <p className="vendor-request__note vendor-request__note--you"><span>You</span> {booking.vendorNote}</p> : null}
 
       {isPaid(booking.status) && (
-        <p className="vendor-request__hint">Paid — this amount is in the couple’s wedding budget and counts as earnings.</p>
+        <p className="vendor-request__hint">Booked — this amount is in the couple’s budget and counts as earnings.</p>
       )}
-      {awaitingCouple(booking.status) && (
-        <p className="vendor-request__hint">Waiting for the couple to confirm hire.</p>
+      {awaitingCouple(booking.status) && !vendorNeedsDecision(booking.status) && (
+        <p className="vendor-request__hint">Waiting for the couple to confirm the booking.</p>
+      )}
+      {vendorNeedsDecision(booking.status) && (
+        <p className="vendor-request__hint">Accept, reply, reject, or send a new offer.</p>
       )}
 
-      {vendorCanRespond(booking.status) && (
+      {showActions && !isPaid(booking.status) && booking.status !== 'Rejected' && booking.status !== 'Cancelled' && (
         <div className="vendor-request__actions">
-          {needsVendorReply(booking.status) && (
-            <>
-              <button type="button" className="dash-btn dash-btn--primary" disabled={busyId === booking.id} onClick={() => onRespond(booking.id, 'Confirmed')}>Accept</button>
-              <button type="button" className="dash-btn dash-btn--outline" disabled={busyId === booking.id} onClick={() => onRespond(booking.id, 'Rejected')}>Decline</button>
-            </>
-          )}
+          <button
+            type="button"
+            className="dash-btn dash-btn--primary"
+            disabled={busy}
+            onClick={() => onRespond(booking.id, 'Confirmed')}
+          >
+            Accept
+          </button>
           <button
             type="button"
             className="dash-btn dash-btn--white"
-            onClick={() => {
-              setOfferOpen((open) => !open);
-              setForm({
-                amount: String(booking.amount || ''),
-                vendorNote: booking.vendorNote || '',
-              });
-            }}
+            disabled={busy}
+            onClick={() => openPanel('reply')}
           >
-            Negotiate
+            {panel === 'reply' ? 'Hide reply' : 'Reply'}
+          </button>
+          <button
+            type="button"
+            className="dash-btn dash-btn--outline"
+            disabled={busy}
+            onClick={() => onRespond(booking.id, 'Rejected')}
+          >
+            Reject
+          </button>
+          <button
+            type="button"
+            className="dash-btn dash-btn--white"
+            disabled={busy}
+            onClick={() => openPanel('negotiate')}
+          >
+            {panel === 'negotiate' ? 'Hide offer' : 'Negotiate'}
           </button>
         </div>
       )}
 
-      {offerOpen && (
+      {panel === 'reply' && (
+        <form
+          className="request-update"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onRespond(booking.id, 'Negotiating', {
+              amount: booking.amount,
+              vendorNote: form.vendorNote,
+            });
+            setPanel('');
+          }}
+        >
+          <label className="dash-field">
+            <span>Reply to the couple</span>
+            <textarea
+              rows={3}
+              required
+              value={form.vendorNote}
+              onChange={(e) => setForm({ ...form, vendorNote: e.target.value })}
+              placeholder="Answer their question or confirm details…"
+            />
+          </label>
+          <div className="dash-panel__actions">
+            <button type="button" className="dash-btn dash-btn--ghost" onClick={() => setPanel('')}>Close</button>
+            <button type="submit" className="dash-btn dash-btn--primary" disabled={busy}>Send reply</button>
+          </div>
+        </form>
+      )}
+
+      {panel === 'negotiate' && (
         <form
           className="request-update"
           onSubmit={(e) => {
@@ -79,20 +135,20 @@ function VendorRequestCard({ booking, busyId, onRespond }) {
               amount: Number(form.amount) || booking.amount,
               vendorNote: form.vendorNote,
             });
-            setOfferOpen(false);
+            setPanel('');
           }}
         >
           <label className="dash-field">
-            <span>Counter-offer amount (LKR)</span>
-            <input type="number" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+            <span>Your offer (LKR)</span>
+            <input type="number" min="0" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
           </label>
           <label className="dash-field">
             <span>Note to the couple</span>
             <textarea rows={3} value={form.vendorNote} onChange={(e) => setForm({ ...form, vendorNote: e.target.value })} placeholder="Availability, package change, or extra cost…" />
           </label>
           <div className="dash-panel__actions">
-            <button type="button" className="dash-btn dash-btn--ghost" onClick={() => setOfferOpen(false)}>Cancel</button>
-            <button type="submit" className="dash-btn dash-btn--primary" disabled={busyId === booking.id}>Send counter-offer</button>
+            <button type="button" className="dash-btn dash-btn--ghost" onClick={() => setPanel('')}>Close</button>
+            <button type="submit" className="dash-btn dash-btn--primary" disabled={busy}>Send offer</button>
           </div>
         </form>
       )}

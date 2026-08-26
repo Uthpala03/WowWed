@@ -4,7 +4,7 @@ import {
   awaitingCouple,
   bookingDateKey,
   isPaid,
-  needsVendorReply,
+  vendorNeedsDecision,
 } from '../../utils/bookingStatus';
 import PageHeader from '../../components/ui/PageHeader';
 import BookingCalendar from '../../components/vendor/BookingCalendar';
@@ -18,8 +18,8 @@ const TABS = [
 ];
 
 function inTab(booking, tab) {
-  if (tab === 'needs') return needsVendorReply(booking.status);
-  if (tab === 'waiting') return awaitingCouple(booking.status);
+  if (tab === 'needs') return vendorNeedsDecision(booking.status);
+  if (tab === 'waiting') return awaitingCouple(booking.status) && !vendorNeedsDecision(booking.status);
   if (tab === 'hired') return isPaid(booking.status);
   return true;
 }
@@ -48,8 +48,8 @@ function VendorBookingsPage() {
   }, []);
 
   const counts = useMemo(() => ({
-    needs: bookings.filter((b) => needsVendorReply(b.status)).length,
-    waiting: bookings.filter((b) => awaitingCouple(b.status)).length,
+    needs: bookings.filter((b) => vendorNeedsDecision(b.status)).length,
+    waiting: bookings.filter((b) => awaitingCouple(b.status) && !vendorNeedsDecision(b.status)).length,
     hired: bookings.filter((b) => isPaid(b.status)).length,
     all: bookings.length,
   }), [bookings]);
@@ -83,7 +83,7 @@ function VendorBookingsPage() {
 
       {counts.needs > 0 && (
         <div className="dash-alert dash-alert--success vendor-request-alert">
-          <p>{counts.needs} request{counts.needs === 1 ? '' : 's'} waiting for Accept, Decline, or Negotiate.</p>
+          <p>{counts.needs} request{counts.needs === 1 ? '' : 's'} waiting for Accept, Reply, Reject, or Negotiate.</p>
         </div>
       )}
 
@@ -112,7 +112,7 @@ function VendorBookingsPage() {
               ? 'When a couple chooses your listing, their request lands here so you can accept, reject, or negotiate.'
               : selectedDate
                 ? 'No bookings on this date. Pick another day on the calendar, or clear the date filter.'
-                : 'Try another tab — new couple replies will show up automatically.'}
+                : 'Try another tab — couple replies and new requests show up automatically.'}
           </p>
         </div>
       ) : (

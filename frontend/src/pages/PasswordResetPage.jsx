@@ -14,6 +14,10 @@ function PasswordResetPage() {
 
   const submit = async (e) => {
     e.preventDefault();
+    if (!email.trim()) {
+      setError('Please enter the email on your WowWed account.');
+      return;
+    }
     if (password.length < 6) {
       setError('Password must be at least 6 characters.');
       return;

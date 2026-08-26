@@ -6,11 +6,16 @@ export function canonicalizeStatus(status) {
 }
 
 export function displayStatus(status) {
-  return canonicalizeStatus(status) || status || '';
+  const value = canonicalizeStatus(status);
+  if (value === 'Countered') return 'Couple reply';
+  if (value === 'Confirmed') return 'Accepted';
+  if (value === 'Paid') return 'Booked';
+  if (value === 'Negotiating') return 'Counter-offer';
+  return value || status || '';
 }
 
 export function isPaid(status) {
-  return status === 'Paid' || status === 'Hired';
+  return canonicalizeStatus(status) === 'Paid';
 }
 
 export function isConfirmedHold(status) {
@@ -22,7 +27,12 @@ export function isNegotiating(status) {
 }
 
 export function needsVendorReply(status) {
-  return status === 'Pending';
+  const value = canonicalizeStatus(status);
+  return value === 'Pending' || value === 'Countered';
+}
+
+export function vendorNeedsDecision(status) {
+  return needsVendorReply(status) || isNegotiating(status);
 }
 
 export function awaitingCouple(status) {
@@ -30,15 +40,28 @@ export function awaitingCouple(status) {
 }
 
 export function occupiesDate(status) {
-  return isPaid(status) || isConfirmedHold(status) || isNegotiating(status);
+  return isPaid(status) || isConfirmedHold(status) || isNegotiating(status) || canonicalizeStatus(status) === 'Countered';
 }
 
 export function vendorCanRespond(status) {
-  return ['Pending', 'Confirmed', 'Accepted', 'Negotiating', 'Updated'].includes(status);
+  return ['Pending', 'Confirmed', 'Accepted', 'Negotiating', 'Updated', 'Countered'].includes(status);
 }
 
 export function coupleCanHire(status) {
   return awaitingCouple(status);
+}
+
+export function coupleCanAcceptOffer(status) {
+  return isNegotiating(status);
+}
+
+export function coupleCanReply(status) {
+  return vendorCanRespond(status);
+}
+
+export function coupleCanCancel(status) {
+  const value = canonicalizeStatus(status);
+  return value && !isPaid(value) && value !== 'Rejected' && value !== 'Cancelled';
 }
 
 export function statusTone(status) {
@@ -51,7 +74,7 @@ export function statusTone(status) {
 export function calendarKind(status) {
   if (isPaid(status)) return 'paid';
   if (isConfirmedHold(status)) return 'confirmed';
-  if (isNegotiating(status)) return 'negotiate';
+  if (isNegotiating(status) || canonicalizeStatus(status) === 'Countered') return 'negotiate';
   if (status === 'Pending') return 'pending';
   return '';
 }

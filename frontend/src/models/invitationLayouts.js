@@ -1,44 +1,10 @@
 import { invitationTemplates } from './InvitationTemplate';
 import { InvitationTextBlock, resetBlockCounter } from './InvitationTextBlock';
 
-function parsePct(str) {
-  return parseFloat(String(str || '').replace('%', '')) || 0;
-}
-
-function getTextZone(template) {
-  const inset = template.contentInset || { top: '12%', bottom: '28%', left: '10%', right: '10%' };
-  const top = parsePct(inset.top);
-  const bottom = parsePct(inset.bottom);
-  const left = parsePct(inset.left);
-  const right = parsePct(inset.right);
-  return {
-    x: 50,
-    width: Math.max(68, 100 - left - right),
-    yStart: top + 0.5,
-    yEnd: 100 - bottom - 1,
-  };
-}
-
-function yPos(zone, ratio) {
-  return zone.yStart + (zone.yEnd - zone.yStart) * ratio;
-}
-
-function fmtDateLong(dateStr) {
-  if (!dateStr) return '';
-  try {
-    const d = new Date(`${dateStr}T12:00:00`);
-    const day = d.getDate();
-    const suffix = [1, 21, 31].includes(day) ? 'ST' : [2, 22].includes(day) ? 'ND' : [3, 23].includes(day) ? 'RD' : 'TH';
-    return `${d.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()} ${day}${suffix} ${d.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()} ${d.getFullYear()}`;
-  } catch {
-    return dateStr;
-  }
-}
-
 export function fmtNames(design) {
   const a = design.partnerOne?.trim();
   const b = design.partnerTwo?.trim();
-  if (a && b) return `${a} & ${b}`;
+  if (a && b) return `${a}  &  ${b}`;
   return a || b || '';
 }
 
@@ -63,39 +29,52 @@ export function fmtVenueAddress(design) {
 export function fmtTime(design) {
   const from = design.weddingTime?.trim();
   const to = design.weddingEndTime?.trim();
-  if (from && to) return `FROM ${from} TO ${to}`;
-  if (from) return `AT ${from}`;
+  if (from && to) return `${from}  –  ${to}`;
+  if (from) return from;
   return '';
 }
 
-const INTRO_LINE = 'WE JOYFULLY INVITE YOU TO CELEBRATE THE MARRIAGE OF';
-const QUOTE_LINE = '♥  TWO HEARTS, TWO FAMILIES, ONE BEAUTIFUL BEGINNING  ♥';
-const FOOTER_LINE = 'YOUR PRESENCE WILL MAKE OUR SPECIAL DAY EVEN MORE MEMORABLE';
+function fmtDateLong(dateStr) {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(`${dateStr}T12:00:00`);
+    return d.toLocaleDateString('en-US', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  } catch {
+    return dateStr;
+  }
+}
 
 export function needsLayoutRefresh(textBlocks) {
   if (!textBlocks?.length) return true;
-  const required = ['intro', 'quote', 'footer', 'venue-label', 'partnerOne', 'partnerTwo', 'amp'];
   const ids = new Set(textBlocks.map((b) => b.id));
-  if (required.some((id) => !ids.has(id))) return true;
-  return textBlocks.some((b) => b.id === 'names' || b.text === 'Your message here');
+  if (!ids.has('names')) return true;
+  if (ids.has('amp') || ids.has('intro') || ids.has('quote') || ids.has('footer') || ids.has('venue-label')) {
+    return true;
+  }
+  return false;
 }
 
-/** Full professional wedding invitation layout (like real printed cards). */
+/** Compact printed-card layout — names stay readable and off the couple art. */
 export function buildDefaultBlocks(design, templateId) {
   resetBlockCounter();
   const template = invitationTemplates.getById(templateId);
   const accent = design.accentColor || template.accent;
   const text = design.textColor || template.text;
   const nameFont = template.font || 'elegant';
-  const zone = getTextZone(template);
+  const artLayout = template.layout === 'art';
   const d = design;
 
   const blocks = [];
   const push = (props) => {
     if (!props.text?.trim()) return;
     blocks.push(new InvitationTextBlock({
-      x: zone.x,
-      width: zone.width,
+      x: 50,
+      width: 78,
       align: 'center',
       color: text,
       ...props,
@@ -104,8 +83,7 @@ export function buildDefaultBlocks(design, templateId) {
 
   const title = d.culturalTitle || template.culturalTitle || 'Wedding Invitation';
   const tagline = d.tagline?.trim() || 'Together with their families';
-  const name1 = d.partnerOne?.trim() || 'Partner 1';
-  const name2 = d.partnerTwo?.trim() || 'Partner 2';
+  const names = fmtNames(d) || `${d.partnerOne?.trim() || 'Partner 1'}  &  ${d.partnerTwo?.trim() || 'Partner 2'}`;
   const parent1 = fmtParentOne(d);
   const parent2 = fmtParentTwo(d);
   const date = fmtDateLong(d.weddingDate);
@@ -113,86 +91,90 @@ export function buildDefaultBlocks(design, templateId) {
   const venueName = fmtVenueName(d);
   const venueAddr = fmtVenueAddress(d);
 
-  push({
-    id: 'cultural', fieldKey: 'culturalTitle', text: title,
-    y: yPos(zone, 0.03), fontId: 'classic', fontSize: 9.5, color: accent,
-  });
-  push({
-    id: 'intro', text: INTRO_LINE,
-    y: yPos(zone, 0.08), fontId: 'sans', fontSize: 5.2, uppercase: true,
-  });
+  if (artLayout) {
+    push({
+      id: 'names', fieldKey: 'names', text: names,
+      y: 68, fontId: nameFont, fontSize: 20, color: accent, width: 84, lineHeight: 1.15,
+    });
+    if (date) {
+      push({
+        id: 'date', fieldKey: 'weddingDate', text: date,
+        y: 76, fontId: 'classic', fontSize: 8, uppercase: true, width: 80,
+      });
+    }
+    if (time) {
+      push({
+        id: 'time', fieldKey: 'weddingTime', text: time,
+        y: 81, fontId: 'sans', fontSize: 7, uppercase: true,
+      });
+    }
+    if (venueName) {
+      push({
+        id: 'venue', fieldKey: 'venue', text: venueName,
+        y: 86, fontId: 'classic', fontSize: 9, color: accent,
+      });
+    }
+    return blocks;
+  }
+
+  const showTitle = title && title !== names;
+  if (showTitle) {
+    push({
+      id: 'cultural', fieldKey: 'culturalTitle', text: title,
+      y: 22, fontId: 'classic', fontSize: 8.5, color: accent, uppercase: true, letterSpacing: 0.12, width: 86,
+    });
+  }
   push({
     id: 'tagline', fieldKey: 'tagline', text: tagline,
-    y: yPos(zone, 0.12), fontId: 'sans', fontSize: 5.5, uppercase: true,
+    y: showTitle ? 27 : 22, fontId: 'sans', fontSize: 5.8, uppercase: true, letterSpacing: 0.12, width: 86,
   });
   push({
-    id: 'partnerOne', fieldKey: 'partnerOne', text: name1,
-    y: yPos(zone, 0.18), fontId: nameFont, fontSize: 22, color: accent,
-  });
-  push({
-    id: 'amp', text: '&',
-    y: yPos(zone, 0.24), fontId: 'classic', fontSize: 14, color: accent,
-  });
-  push({
-    id: 'partnerTwo', fieldKey: 'partnerTwo', text: name2,
-    y: yPos(zone, 0.29), fontId: nameFont, fontSize: 22, color: accent,
+    id: 'names', fieldKey: 'names', text: names,
+      y: showTitle ? 34 : 30, fontId: nameFont, fontSize: 20, color: accent, width: 88, lineHeight: 1.15,
   });
   if (parent1) {
     push({
       id: 'parentOne', fieldKey: 'parentOneFamily', text: parent1,
-      y: yPos(zone, 0.35), fontId: 'serif', fontSize: 6.2, italic: true,
+      y: 40, fontId: 'serif', fontSize: 6, italic: true, width: 80,
     });
   }
   if (parent2) {
     push({
       id: 'parentTwo', fieldKey: 'parentTwoFamily', text: parent2,
-      y: yPos(zone, 0.39), fontId: 'serif', fontSize: 6.2, italic: true,
+      y: parent1 ? 43.5 : 40, fontId: 'serif', fontSize: 6, italic: true, width: 80,
     });
   }
-  push({
-    id: 'quote', text: QUOTE_LINE,
-    y: yPos(zone, 0.44), fontId: 'sans', fontSize: 5, color: accent, uppercase: true,
-  });
+  const afterParents = parent1 && parent2 ? 48 : parent1 || parent2 ? 44.5 : 41.5;
   if (date) {
     push({
       id: 'date', fieldKey: 'weddingDate', text: date,
-      y: yPos(zone, 0.52), fontId: 'classic', fontSize: 8, uppercase: true,
+      y: afterParents, fontId: 'classic', fontSize: 8.2, uppercase: true, width: 86,
     });
   }
   if (time) {
     push({
       id: 'time', fieldKey: 'weddingTime', text: time,
-      y: yPos(zone, 0.58), fontId: 'sans', fontSize: 7, uppercase: true,
-    });
-  }
-  if (venueName || venueAddr) {
-    push({
-      id: 'venue-label', text: '—  VENUE  —',
-      y: yPos(zone, 0.64), fontId: 'sans', fontSize: 6, color: accent, uppercase: true,
+      y: afterParents + 4.6, fontId: 'sans', fontSize: 7.2, uppercase: true, width: 80,
     });
   }
   if (venueName) {
     push({
       id: 'venue', fieldKey: 'venue', text: venueName,
-      y: yPos(zone, 0.69), fontId: 'classic', fontSize: 9.5, color: accent,
+      y: afterParents + (time ? 9.6 : 5), fontId: 'classic', fontSize: 10, color: accent, width: 80,
     });
   }
   if (venueAddr) {
     push({
       id: 'address', fieldKey: 'venueAddress', text: venueAddr,
-      y: yPos(zone, 0.74), fontId: 'serif', fontSize: 7,
+      y: afterParents + (time ? 13.8 : 9.2), fontId: 'serif', fontSize: 6.5, width: 80,
     });
   }
   if (d.rsvpContact?.trim()) {
     push({
       id: 'rsvp', fieldKey: 'rsvpContact', text: `RSVP  ·  ${d.rsvpContact.trim()}`,
-      y: yPos(zone, 0.80), fontId: 'sans', fontSize: 5.5, uppercase: true,
+      y: 88, fontId: 'sans', fontSize: 6, uppercase: true,
     });
   }
-  push({
-    id: 'footer', text: FOOTER_LINE,
-    y: yPos(zone, 0.88), fontId: 'sans', fontSize: 4.8, uppercase: true,
-  });
 
   return blocks;
 }

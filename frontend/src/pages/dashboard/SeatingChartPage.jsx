@@ -4,7 +4,9 @@ import TableVisual from '../../components/seating/TableVisual';
 import { guestGroups, tableShapes } from '../../data/dashboardData';
 import { SeatingChart, Table, tableSuites } from '../../models/Seating';
 import { getGuests, getSeating, saveSeating } from '../../utils/storage';
+import { api } from '../../services/api';
 import PageHeader from '../../components/ui/PageHeader';
+import PrettySelect from '../../components/ui/PrettySelect';
 
 const emptyTableForm = {
   name: '',
@@ -191,33 +193,27 @@ function SeatingChartPage() {
     showToast('Smart seating running...');
     const workTables = tablesForComing();
     try {
-      const res = await fetch('http://127.0.0.1:8000/optimize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          guests: guests.map((g) => ({
-            id: g.id,
-            name: g.name,
-            email: g.email || '',
-            phone: g.phone || '',
-            group: g.group || '',
-            notes: g.notes || '',
-            rsvp: g.rsvp || '',
-            avoid: g.avoid || '',
-            age: g.age || '',
-          })),
-          tables: workTables.map((t) => ({
-            id: t.id,
-            name: t.name,
-            seats: t.seats,
-            shape: t.shape,
-            suite: t.suite,
-            priority: t.priority,
-          })),
-        }),
+      const data = await api.optimizeSeating({
+        guests: guests.map((g) => ({
+          id: g.id,
+          name: g.name,
+          email: g.email || '',
+          phone: g.phone || '',
+          group: g.group || '',
+          notes: g.notes || '',
+          rsvp: g.rsvp || '',
+          avoid: g.avoid || '',
+          age: g.age || '',
+        })),
+        tables: workTables.map((t) => ({
+          id: t.id,
+          name: t.name,
+          seats: t.seats,
+          shape: t.shape,
+          suite: t.suite,
+          priority: t.priority,
+        })),
       });
-      if (!res.ok) throw new Error('API error');
-      const data = await res.json();
 
       const used = new Set();
       const matchGuest = (row) => {
@@ -419,18 +415,19 @@ function SeatingChartPage() {
                             onSeatClick={handleSeatClick}
                           />
 
-                          <label className="seating-simple-select" onClick={(e) => e.stopPropagation()}>
-                            <span>Seat with group:</span>
-                            <select
+                          <div className="seating-simple-select" onClick={(e) => e.stopPropagation()}>
+                            <PrettySelect
+                              label="Seat with group"
+                              icon="guests"
                               value={currentGroup}
-                              onChange={(e) => seatTableWithGroup(table.id, e.target.value)}
-                            >
-                              <option value="">Choose…</option>
-                              {seatGroups.map((g) => (
-                                <option key={g} value={g}>{g} ({groupCounts[g] || 0} waiting)</option>
-                              ))}
-                            </select>
-                          </label>
+                              placeholder="Choose…"
+                              options={[
+                                { value: '', label: 'Choose…', icon: 'guests' },
+                                ...seatGroups.map((g) => ({ value: g, label: `${g} (${groupCounts[g] || 0} waiting)`, icon: 'guests' })),
+                              ]}
+                              onChange={(value) => seatTableWithGroup(table.id, value)}
+                            />
+                          </div>
 
                           {fill.filled > 0 && (
                             <button type="button" className="seating-clear-link" onClick={(e) => { e.stopPropagation(); clearTable(table.id); }}>
@@ -450,12 +447,16 @@ function SeatingChartPage() {
         <aside className="seating-sidebar dash-card">
           <h3>Guests</h3>
           <input placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
-          <select value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)}>
-            <option>All</option>
-            {seatGroups.map((g) => (
-              <option key={g} value={g}>{g} ({groupCounts[g] || 0})</option>
-            ))}
-          </select>
+          <PrettySelect
+            label="Guest group"
+            icon="guests"
+            value={groupFilter}
+            options={[
+              { value: 'All', label: 'All', icon: 'guests' },
+              ...seatGroups.map((g) => ({ value: g, label: `${g} (${groupCounts[g] || 0})`, icon: 'guests' })),
+            ]}
+            onChange={setGroupFilter}
+          />
           <p className="seating-sidebar__tip">Or tap a guest, then tap an empty chair</p>
 
           <div className="seating-sidebar__section">
@@ -518,23 +519,29 @@ function SeatingChartPage() {
               <input value={tableForm.name} onChange={(e) => setTableForm({ ...tableForm, name: e.target.value })} placeholder="1" />
             </label>
 
-            <label className="dash-field">
-              <span>Area (suite)</span>
-              <select value={tableForm.suite} onChange={(e) => setTableForm({ ...tableForm, suite: e.target.value })}>
-                {tableSuites.map((s) => (
-                  <option key={s.id} value={s.id}>{s.icon} {s.label}</option>
-                ))}
-              </select>
-            </label>
+            <div className="dash-field">
+              <PrettySelect
+                label="Area (suite)"
+                icon="venue"
+                value={tableForm.suite}
+                options={tableSuites.map((s) => ({ value: s.id, label: s.label, icon: 'venue' }))}
+                onChange={(suite) => setTableForm({ ...tableForm, suite })}
+              />
+            </div>
 
-            <label className="dash-field">
-              <span>Priority (1 = best seats)</span>
-              <select value={tableForm.priority} onChange={(e) => setTableForm({ ...tableForm, priority: Number(e.target.value) })}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                  <option key={n} value={n}>{n}{n === 1 ? ' — highest' : n === 10 ? ' — lowest' : ''}</option>
-                ))}
-              </select>
-            </label>
+            <div className="dash-field">
+              <PrettySelect
+                label="Priority"
+                icon="sparkle"
+                value={tableForm.priority}
+                options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({
+                  value: n,
+                  label: `${n}${n === 1 ? ' — highest' : n === 10 ? ' — lowest' : ''}`,
+                  icon: 'sparkle',
+                }))}
+                onChange={(priority) => setTableForm({ ...tableForm, priority: Number(priority) })}
+              />
+            </div>
 
             <label className="dash-field">
               <span>Chairs</span>
@@ -545,13 +552,18 @@ function SeatingChartPage() {
               </div>
             </label>
 
-            <label className="dash-field">
-              <span>Default group (optional)</span>
-              <select value={tableForm.guestGroup} onChange={(e) => setTableForm({ ...tableForm, guestGroup: e.target.value })}>
-                <option value="">None</option>
-                {seatGroups.map((g) => <option key={g} value={g}>{g}</option>)}
-              </select>
-            </label>
+            <div className="dash-field">
+              <PrettySelect
+                label="Default group (optional)"
+                icon="guests"
+                value={tableForm.guestGroup}
+                options={[
+                  { value: '', label: 'None', icon: 'guests' },
+                  ...seatGroups.map((g) => ({ value: g, label: g, icon: 'guests' })),
+                ]}
+                onChange={(guestGroup) => setTableForm({ ...tableForm, guestGroup })}
+              />
+            </div>
 
             <span className="dash-field"><span>Shape</span></span>
             <div className="table-shape-grid">

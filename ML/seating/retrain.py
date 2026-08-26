@@ -16,7 +16,7 @@ from guest_features import (
     relationship_and_priority,
 )
 
-FOLDER = Path(r"C:\Users\ASUS\Desktop\WowWed\WowWed\ml\seating")
+FOLDER = Path(__file__).resolve().parent
 EXPORT = FOLDER / "wowwed-guests-export.csv"
 DATASET = FOLDER / "seating_dataset.csv"
 

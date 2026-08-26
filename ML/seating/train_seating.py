@@ -7,8 +7,9 @@ from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
 
-DATA = Path(r"C:\Users\ASUS\Desktop\WowWed\WowWed\ml\seating\seating_dataset.csv")
-OUT = Path(r"C:\Users\ASUS\Desktop\WowWed\WowWed\ml\seating")
+FOLDER = Path(__file__).resolve().parent
+DATA = FOLDER / "seating_dataset.csv"
+OUT = FOLDER
 OUT.mkdir(parents=True, exist_ok=True)
 
 df = pd.read_csv(DATA)

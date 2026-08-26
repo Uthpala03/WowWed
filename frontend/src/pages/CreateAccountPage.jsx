@@ -73,8 +73,8 @@ function CreateAccountPage() {
 
   return (
     <OnboardingLayout
-      step={2}
-      totalSteps={onboarding?.role === 'vendor' ? 2 : 3}
+      step={3}
+      totalSteps={3}
       variant={onboarding?.role === 'vendor' ? 'vendor' : 'couple'}
       backTo={backRoute}
       backLabel="← Back"

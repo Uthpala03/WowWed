@@ -20,32 +20,43 @@ METRICS = {
     "accuracy": "90.66%",
 }
 
+# The pickle only knows 6 venue districts (from training). Map the other 19 by
+# similar cost band, not by dumping east/north into the cheapest bucket (Kurunegala).
+# Trained cost order: Colombo > Kandy > Galle > Gampaha > Kalutara > Kurunegala.
 DISTRICT_MAP = {
+    # Western
     "colombo": "Colombo",
     "gampaha": "Gampaha",
     "kalutara": "Kalutara",
+    # Central / hill
     "kandy": "Kandy",
     "matale": "Kandy",
     "nuwara eliya": "Kandy",
     "badulla": "Kandy",
-    "monaragala": "Kandy",
+    # Southern coast
     "galle": "Galle",
     "matara": "Galle",
     "hambantota": "Galle",
-    "kurunegala": "Kurunegala",
-    "puttalam": "Kurunegala",
-    "anuradhapura": "Kurunegala",
-    "polonnaruwa": "Kurunegala",
-    "batticaloa": "Kurunegala",
-    "ampara": "Kurunegala",
-    "trincomalee": "Kurunegala",
-    "jaffna": "Kurunegala",
+    # Eastern coast (coastal venues, not inland Kurunegala)
+    "batticaloa": "Galle",
+    "trincomalee": "Galle",
+    "ampara": "Kalutara",
+    # Northern
+    "jaffna": "Kandy",
+    "vavuniya": "Kalutara",
     "kilinochchi": "Kurunegala",
     "mannar": "Kurunegala",
     "mullaitivu": "Kurunegala",
-    "vavuniya": "Kurunegala",
-    "ratnapura": "Gampaha",
+    # North Central (cultural triangle)
+    "anuradhapura": "Kandy",
+    "polonnaruwa": "Kandy",
+    # North Western
+    "kurunegala": "Kurunegala",
+    "puttalam": "Kalutara",
+    # Sabaragamuwa / Uva
     "kegalle": "Gampaha",
+    "ratnapura": "Kandy",
+    "monaragala": "Kalutara",
 }
 
 CEREMONY_MAP = {
@@ -94,11 +105,19 @@ class PredictIn(BaseModel):
     model_config = {"extra": "ignore"}
 
 
+def district_key(value):
+    return " ".join(str(value or "").strip().lower().replace("-", " ").replace("_", " ").split())
+
+
 def map_district(value):
-    key = str(value or "").strip().lower()
-    if saved and key.title() in list(saved["le_district"].classes_):
+    key = district_key(value)
+    trained = list(saved["le_district"].classes_) if saved else []
+    titled = str(value or "").strip().title()
+    if titled in trained:
+        return titled
+    if key.title() in trained:
         return key.title()
-    return DISTRICT_MAP.get(key, "Colombo")
+    return DISTRICT_MAP.get(key, "Gampaha")
 
 
 def map_ceremony(value):
@@ -160,7 +179,8 @@ def predict(body: PredictIn):
         raise HTTPException(status_code=503, detail="RandomForestRegression.pkl is missing. Train the model first.")
 
     guests = max(50, min(800, int(body.guestCount or 150)))
-    district = map_district(body.district)
+    requested_district = str(body.district or "").strip()
+    district = map_district(requested_district)
     ceremony = map_ceremony(body.ceremonyType)
     scale = map_scale(body.scale)
     if body.seasonal is not None:
@@ -184,7 +204,8 @@ def predict(body: PredictIn):
         "metrics": METRICS,
         "factors": {
             "guests": guests,
-            "district": district,
+            "district": requested_district or district,
+            "modelDistrict": district,
             "ceremonyType": ceremony,
             "scale": scale,
             "seasonal": "Peak season" if seasonal else "Regular season",

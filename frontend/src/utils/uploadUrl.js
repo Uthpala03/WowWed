@@ -1,4 +1,6 @@
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5002';
+import { API_BASE_URL } from '../config/urls';
+
+const API_BASE = API_BASE_URL;
 
 /** Resolve vendor PDF/image upload paths from the API server. */
 export function resolveUploadUrl(url) {

@@ -4,19 +4,20 @@ import { vendorNav } from '../../data/dashboardData';
 import { getBookings, getVendorProfile, hydrateUserData, refreshBookings } from '../../utils/storage';
 import { formatVendorCategories } from '../../utils/vendorMeta';
 import { resolveUploadUrl } from '../../utils/uploadUrl';
-import { needsVendorReply } from '../../utils/bookingStatus';
+import { vendorNeedsDecision } from '../../utils/bookingStatus';
 import { useAuth } from '../../context/AuthContext';
 import { vendorOnboarding } from '../../models/OnboardingPath';
 import { useInboxNotifications } from '../../hooks/useInboxNotifications';
 import AppIcon from '../ui/AppIcon';
 import NotificationsPanel from '../dashboard/NotificationsPanel';
+import Footer from '../layout/Footer';
 import '../../styles/dashboard.css';
 
 function VendorLayout() {
   const navigate = useNavigate();
   const { user, loading, logout } = useAuth();
   const [profile, setProfile] = useState(() => getVendorProfile());
-  const [pendingCount, setPendingCount] = useState(() => (getBookings() || []).filter((b) => needsVendorReply(b.status)).length);
+  const [pendingCount, setPendingCount] = useState(() => (getBookings() || []).filter((b) => vendorNeedsDecision(b.status)).length);
   const [notifOpen, setNotifOpen] = useState(false);
   const inbox = useInboxNotifications(8000);
 
@@ -25,11 +26,11 @@ function VendorLayout() {
     hydrateUserData()
       .then(() => {
         setProfile(getVendorProfile());
-        setPendingCount((getBookings() || []).filter((b) => needsVendorReply(b.status)).length);
+        setPendingCount((getBookings() || []).filter((b) => vendorNeedsDecision(b.status)).length);
       })
       .catch(() => {});
     const sync = () => {
-      setPendingCount((getBookings() || []).filter((b) => needsVendorReply(b.status)).length);
+      setPendingCount((getBookings() || []).filter((b) => vendorNeedsDecision(b.status)).length);
     };
     const poll = setInterval(() => {
       refreshBookings().then(sync).catch(() => {});
@@ -110,7 +111,16 @@ function VendorLayout() {
           <button type="button" className="dash-sidebar__link dash-sidebar__link--sub dash-sidebar__link--btn" onClick={() => { logout(); navigate('/'); }}>Log out</button>
         </div>
       </aside>
-      <div className="dash-main"><Outlet key={user.id} /></div>
+      <div className="dash-main">
+        <Outlet key={user.id} />
+        <Footer
+          compact
+          links={[
+            { to: '/', label: 'Home' },
+            { to: '/vendor/profile', label: 'Profile' },
+          ]}
+        />
+      </div>
     </div>
   );
 }

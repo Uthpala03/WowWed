@@ -19,7 +19,7 @@ from guest_features import (
     relationship_and_priority,
 )
 
-FOLDER = Path(r"C:\Users\ASUS\Desktop\WowWed\WowWed\ml\seating")
+FOLDER = Path(__file__).resolve().parent
 SEATS_PER_TABLE = 10
 COMING = {"accepted", "coming", "yes", "y"}
 

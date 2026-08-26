@@ -45,8 +45,48 @@ function PdfCard({ href, title, subtitle }) {
   );
 }
 
+function quoteKey(q, index) {
+  return String(q?.id || `${q?.title || 'package'}-${index}`);
+}
+
+export function VendorPackageList({ quotes, selectedId, onSelect }) {
+  if (!quotes?.length) return null;
+  return (
+    <div className="vendor-detail__packages" role="listbox" aria-label="Packages">
+      {quotes.map((q, index) => {
+        const id = quoteKey(q, index);
+        const selected = String(selectedId) === id;
+        return (
+          <article key={id} className={`vendor-detail__package${selected ? ' is-selected' : ''}`}>
+            <button
+              type="button"
+              role="option"
+              aria-selected={selected}
+              className="vendor-detail__package-btn"
+              onClick={() => onSelect(q, id)}
+            >
+              <div className="vendor-detail__package-top">
+                <strong>{q.title?.trim() || 'Package'}</strong>
+                <em>{formatQuotePrice(q.price)}</em>
+              </div>
+              {q.details?.trim() && <p>{q.details}</p>}
+              <span className="vendor-detail__package-pick">{selected ? 'Selected' : 'Select this package'}</span>
+            </button>
+            {quoteHasPdf(q) && (
+              <a href={quotePdfHref(q)} target="_blank" rel="noopener noreferrer" className="vendor-detail__pdf">
+                📄 View package PDF
+              </a>
+            )}
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
 function VendorDetailModal({ vendor, onClose, onRequestBooking, existingBooking }) {
   const [activeImage, setActiveImage] = useState(0);
+  const [pickedId, setPickedId] = useState('');
   if (!vendor) return null;
 
   const images = vendor.portfolioImages || [];
@@ -173,23 +213,13 @@ function VendorDetailModal({ vendor, onClose, onRequestBooking, existingBooking 
 
           {quotes.length > 0 ? (
             <section className="vendor-detail__section">
-              <h3>Packages &amp; pricing</h3>
-              <div className="vendor-detail__packages">
-                {quotes.map((q) => (
-                  <article key={q.id} className="vendor-detail__package">
-                    <div className="vendor-detail__package-top">
-                      <strong>{q.title?.trim() || 'Package'}</strong>
-                      <em>{formatQuotePrice(q.price)}</em>
-                    </div>
-                    {q.details?.trim() && <p>{q.details}</p>}
-                    {quoteHasPdf(q) && (
-                      <a href={quotePdfHref(q)} target="_blank" rel="noopener noreferrer" className="vendor-detail__pdf">
-                        📄 View package PDF
-                      </a>
-                    )}
-                  </article>
-                ))}
-              </div>
+              <h3>Choose a package</h3>
+              <p className="vendor-detail__hint">Select the package you want, then send a booking request.</p>
+              <VendorPackageList
+                quotes={quotes}
+                selectedId={pickedId || quoteKey(quotes[0], 0)}
+                onSelect={(quote, id) => setPickedId(id)}
+              />
             </section>
           ) : !hasAnyPdf && (
             <section className="vendor-detail__section">
@@ -206,8 +236,16 @@ function VendorDetailModal({ vendor, onClose, onRequestBooking, existingBooking 
               Request {existingBooking.status === 'Pending' ? 'sent' : displayStatus(existingBooking.status)} — open Requests
             </Link>
           ) : (
-            <button type="button" className="dash-btn dash-btn--primary" onClick={() => onRequestBooking(vendor)}>
-              Send booking request →
+            <button
+              type="button"
+              className="dash-btn dash-btn--primary"
+              onClick={() => {
+                const selectedId = pickedId || (quotes[0] ? quoteKey(quotes[0], 0) : '');
+                const quote = quotes.find((q, index) => quoteKey(q, index) === selectedId) || quotes[0];
+                onRequestBooking(vendor, quote);
+              }}
+            >
+              {quotes.length ? 'Continue with this package →' : 'Send booking request →'}
             </button>
           )}
         </div>

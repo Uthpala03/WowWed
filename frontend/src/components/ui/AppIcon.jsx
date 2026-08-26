@@ -15,6 +15,7 @@ const paths = {
   readiness: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1 5h2v6h-2V7zm0 8h2v2h-2v-2z',
   calendar: 'M7 4V2h2v2h6V2h2v2h3v16H4V4h3zm-1 4v10h12V8H6z',
   edit: 'M4 18h2l10-10-2-2L4 16v2zm13-11 2 2 1-1a1 1 0 0 0 0-1.4l-.6-.6a1 1 0 0 0-1.4 0l-1 1z',
+  trash: 'M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v8h-2V9zm4 0h2v8h-2V9zM6 7h12l-1 14H7L6 7z',
 };
 
 function AppIcon({ name, size = 20, className = '' }) {

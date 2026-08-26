@@ -1,28 +1,31 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
-import { addReview, getBookings, loadReviews, updateBookingStatus } from '../../utils/storage';
+import { addReview, getBookings, loadReviews, refreshBookings, updateBookingStatus } from '../../utils/storage';
 import { coupleCanHire, displayStatus, isPaid, needsVendorReply, statusTone } from '../../utils/bookingStatus';
 import PageHeader from '../../components/ui/PageHeader';
-
-const STATUS_COPY = {
-  Pending: 'Waiting for the vendor to reply',
-  Confirmed: 'Vendor accepted — confirm hire to add this to your budget',
-  Accepted: 'Vendor accepted — confirm hire to add this to your budget',
-  Negotiating: 'Vendor sent a counter-offer — review and confirm hire',
-  Updated: 'Vendor sent a counter-offer — review and confirm hire',
-  Rejected: 'Vendor declined this request',
-  Paid: 'Paid — this amount is now in your budget. Leave a review after the event.',
-  Hired: 'Paid — this amount is now in your budget. Leave a review after the event.',
-  Cancelled: 'You cancelled this request',
-};
+import PrettySelect from '../../components/ui/PrettySelect';
+import CoupleRequestCard from '../../components/vendor/CoupleRequestCard';
 
 function CoupleBookingsPage() {
   const coupleData = useOutletContext();
   const [busyId, setBusyId] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [reviews, setReviews] = useState([]);
   const [reviewForm, setReviewForm] = useState({ bookingId: '', rating: 5, comment: '' });
-  const bookings = coupleData?.bookings || getBookings();
+  const [bookings, setBookings] = useState(() => coupleData?.bookings || getBookings() || []);
+
+  useEffect(() => {
+    setBookings(coupleData?.bookings || getBookings() || []);
+  }, [coupleData]);
+
+  useEffect(() => {
+    let alive = true;
+    refreshBookings()
+      .then((rows) => { if (alive) setBookings(rows || []); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     loadReviews().then(setReviews).catch(() => setReviews([]));
@@ -37,11 +40,18 @@ function CoupleBookingsPage() {
     other: bookings.filter((b) => !coupleCanHire(b.status) && !needsVendorReply(b.status) && !isPaid(b.status)),
   }), [bookings]);
 
-  const act = async (id, status) => {
+  const respond = async (id, status, extra = {}) => {
     setError('');
+    setNotice('');
     setBusyId(id);
     try {
-      await updateBookingStatus(id, status);
+      await updateBookingStatus(id, status, extra);
+      const next = await refreshBookings().catch(() => getBookings());
+      setBookings(next || []);
+      if (status === 'Paid') setNotice('Booking confirmed and added to your budget.');
+      else if (status === 'Confirmed') setNotice('You accepted this offer. Confirm the booking when you are ready.');
+      else if (status === 'Countered') setNotice('Your reply was sent to the vendor.');
+      else if (status === 'Cancelled') setNotice('This booking was cancelled.');
     } catch (err) {
       setError(err.message || 'Could not update this request.');
     } finally {
@@ -65,60 +75,26 @@ function CoupleBookingsPage() {
   };
 
   const renderCard = (booking) => (
-    <article key={booking.id} className="request-card">
-      <div className="request-card__top">
-        <div>
-          <strong>{booking.vendorName}</strong>
-          <small>{booking.category || 'Wedding vendor'} · {booking.date || 'Date TBC'}</small>
-        </div>
-        <span className={`rsvp-badge rsvp-badge--${statusTone(booking.status)}`}>{displayStatus(booking.status)}</span>
-      </div>
-      <p className="request-card__amount">Rs. {Number(booking.amount || 0).toLocaleString()}</p>
-      <p className="request-card__copy">{STATUS_COPY[booking.status] || booking.status}</p>
-      {booking.message ? <p className="request-card__note">Your message: {booking.message}</p> : null}
-      {booking.vendorNote ? <p className="request-card__note request-card__note--vendor">Vendor note: {booking.vendorNote}</p> : null}
-
-      <div className="request-card__actions">
-        {coupleCanHire(booking.status) && (
-          <button
-            type="button"
-            className="dash-btn dash-btn--primary"
-            disabled={busyId === booking.id}
-            onClick={() => act(booking.id, 'Paid')}
-          >
-            {busyId === booking.id ? 'Confirming…' : 'Confirm hire — add to budget'}
-          </button>
-        )}
-        {needsVendorReply(booking.status) && (
-          <button
-            type="button"
-            className="dash-btn dash-btn--outline"
-            disabled={busyId === booking.id}
-            onClick={() => act(booking.id, 'Cancelled')}
-          >
-            Cancel request
-          </button>
-        )}
-        {isPaid(booking.status) && (
-          <Link to="/dashboard/budget" className="dash-btn dash-btn--white">View in budget</Link>
-        )}
-      </div>
-
+    <div key={booking.id}>
+      <CoupleRequestCard booking={booking} busyId={busyId} onRespond={respond} />
       {isPaid(booking.status) && !reviewedIds.has(booking.id) && (
         reviewForm.bookingId === booking.id ? (
           <form className="review-form" onSubmit={submitReview}>
-            <label className="dash-field">
-              <span>Star rating</span>
-              <select value={reviewForm.rating} onChange={(e) => setReviewForm({ ...reviewForm, rating: Number(e.target.value) })}>
-                {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{n} star{n === 1 ? '' : 's'}</option>)}
-              </select>
-            </label>
+            <div className="dash-field">
+              <PrettySelect
+                label="Star rating"
+                icon="sparkle"
+                value={reviewForm.rating}
+                options={[5, 4, 3, 2, 1].map((n) => ({ value: n, label: `${n} star${n === 1 ? '' : 's'}`, icon: 'sparkle' }))}
+                onChange={(rating) => setReviewForm({ ...reviewForm, rating: Number(rating) })}
+              />
+            </div>
             <label className="dash-field">
               <span>Review</span>
               <textarea rows={3} value={reviewForm.comment} onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })} placeholder="How was this vendor?" />
             </label>
             <div className="dash-panel__actions">
-              <button type="button" className="dash-btn dash-btn--ghost" onClick={() => setReviewForm({ bookingId: '', rating: 5, comment: '' })}>Cancel</button>
+              <button type="button" className="dash-btn dash-btn--ghost" onClick={() => setReviewForm({ bookingId: '', rating: 5, comment: '' })}>Close</button>
               <button type="submit" className="dash-btn dash-btn--primary" disabled={busyId === booking.id}>Submit review</button>
             </div>
           </form>
@@ -135,7 +111,7 @@ function CoupleBookingsPage() {
       {reviewedIds.has(booking.id) && (
         <p className="request-card__copy">You rated this vendor. Thank you.</p>
       )}
-    </article>
+    </div>
   );
 
   return (
@@ -143,9 +119,10 @@ function CoupleBookingsPage() {
       <PageHeader
         moduleId="bookings"
         title="Vendor requests"
-        tagline="Vendors are notified when you send a request. After they accept or negotiate, confirm hire to update your budget."
+        tagline="Confirm a booking, cancel, accept a counter-offer, or send a negotiation reply to the vendor."
       />
       {error && <div className="dash-alert dash-alert--danger"><p>{error}</p></div>}
+      {notice && <div className="dash-alert dash-alert--success"><p>{notice}</p></div>}
 
       {bookings.length === 0 ? (
         <div className="dash-card dash-empty">
@@ -154,6 +131,19 @@ function CoupleBookingsPage() {
         </div>
       ) : (
         <>
+          <section className="dash-card">
+            <h2>All chosen vendors</h2>
+            <p className="request-card__copy">Every vendor you requested stays here while you add more.</p>
+            <ul className="request-roster">
+              {bookings.map((booking) => (
+                <li key={`roster-${booking.id}`}>
+                  <strong>{booking.vendorName}</strong>
+                  <span>{booking.category || 'Vendor'}</span>
+                  <span className={`rsvp-badge rsvp-badge--${statusTone(booking.status)}`}>{displayStatus(booking.status)}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
           {grouped.action.length > 0 && (
             <section className="dash-card">
               <h2>Ready to hire</h2>
@@ -168,7 +158,7 @@ function CoupleBookingsPage() {
           )}
           {grouped.hired.length > 0 && (
             <section className="dash-card">
-              <h2>Paid vendors</h2>
+              <h2>Already booked</h2>
               {grouped.hired.map(renderCard)}
             </section>
           )}

@@ -1,6 +1,6 @@
 import { useOutletContext } from 'react-router-dom';
 import { getBudget, getGuests, getSeating, getTasks, getWeddingProfile } from '../../utils/storage';
-import { getReadinessStatus } from '../../utils/notifications';
+import { computeReadiness } from '../../utils/readiness';
 import PageHeader from '../../components/ui/PageHeader';
 
 function AnalyticsPage() {
@@ -10,16 +10,10 @@ function AnalyticsPage() {
   const guests = coupleData?.guests || getGuests() || [];
   const budget = coupleData?.budget || getBudget();
   const seatingQuality = (coupleData?.seating || getSeating() || {}).mlQuality;
-  const done = tasks.filter((t) => t.done).length;
-  const accepted = guests.filter((g) => g.rsvp === 'Accepted').length;
   const rejected = guests.filter((g) => g.rsvp === 'Rejected').length;
   const pending = guests.filter((g) => g.rsvp === 'Pending').length;
   const spent = (budget?.expenses || []).reduce((s, e) => s + Number(e.amount || 0), 0);
-  const taskPct = Math.round((done / Math.max(tasks.length, 1)) * 100);
-  const guestPct = guests.length ? Math.round((accepted / guests.length) * 100) : 0;
-  const budgetPct = budget?.total ? Math.round((spent / budget.total) * 100) : 0;
-  const readiness = Math.round(taskPct * 0.4 + guestPct * 0.35 + budgetPct * 0.25);
-  const status = getReadinessStatus(readiness);
+  const { score: readiness, taskPct, guestPct, budgetPct, done, accepted, status } = computeReadiness({ tasks, guests, budget });
 
   const rsvpTotal = Math.max(guests.length, 1);
   const categories = budget?.categories || [];
@@ -73,9 +67,15 @@ function AnalyticsPage() {
         <section className="dash-card">
           <h2>Readiness score</h2>
           <p className="analytics-formula">Tasks 40% + RSVP 35% + Budget 25%</p>
-          <div className={`readiness-meter ${status.className}`}>
-            <div style={{ width: `${readiness}%` }} />
-          </div>
+          <div
+            className={`readiness-meter ${status.className}`}
+            style={{ '--ready': `${readiness}%` }}
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={readiness}
+            aria-label="Wedding readiness score"
+          />
           <p>{profile?.partnerOne} & {profile?.partnerTwo}</p>
         </section>
 

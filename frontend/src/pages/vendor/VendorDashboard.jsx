@@ -3,19 +3,9 @@ import { Link } from 'react-router-dom';
 import { getBookings, getVendorProfile, loadReviews, refreshBookings, updateBookingStatus } from '../../utils/storage';
 import { formatVendorCategories, formatVendorDistricts } from '../../utils/vendorMeta';
 import { resolveUploadUrl } from '../../utils/uploadUrl';
-import { awaitingCouple, displayStatus, isPaid, needsVendorReply, statusTone } from '../../utils/bookingStatus';
+import { awaitingCouple, displayStatus, isPaid, vendorNeedsDecision } from '../../utils/bookingStatus';
 import { useAuth } from '../../context/AuthContext';
 import VendorRequestCard from '../../components/vendor/VendorRequestCard';
-
-function initials(name) {
-  return String(name || 'C')
-    .split(/[&\s]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase();
-}
 
 function VendorDashboard() {
   const { user } = useAuth();
@@ -43,11 +33,11 @@ function VendorDashboard() {
   }, []);
 
   const hired = bookings.filter((b) => isPaid(b.status));
-  const pending = bookings.filter((b) => needsVendorReply(b.status));
-  const waiting = bookings.filter((b) => awaitingCouple(b.status));
+  const pending = bookings.filter((b) => vendorNeedsDecision(b.status));
+  const waiting = bookings.filter((b) => awaitingCouple(b.status) && !vendorNeedsDecision(b.status));
   const earnings = hired.reduce((sum, b) => sum + Number(b.amount || 0), 0);
   const upcoming = [...bookings]
-    .filter((b) => (isPaid(b.status) || awaitingCouple(b.status)) && b.date)
+    .filter((b) => (isPaid(b.status) || awaitingCouple(b.status) || vendorNeedsDecision(b.status)) && b.date)
     .sort((a, b) => String(a.date).localeCompare(String(b.date)))
     .slice(0, 4);
   const cover = profile?.portfolioImages?.[0];
@@ -130,8 +120,8 @@ function VendorDashboard() {
         <section className={`dash-card vendor-inbox${pending.length ? ' vendor-inbox--alert' : ''}`}>
           <div className="vendor-inbox__head">
             <div>
-              <h2>{pending.length ? `New requests (${pending.length})` : 'Incoming requests'}</h2>
-              <p>{pending.length ? 'Accept, decline, or send a counter-offer.' : 'Couple requests land here first.'}</p>
+              <h2>{pending.length ? `Incoming requests (${pending.length})` : 'Incoming requests'}</h2>
+              <p>{pending.length ? 'Accept, reply, reject, or negotiate.' : 'Couple requests land here first.'}</p>
             </div>
             <Link to="/vendor/bookings" className="dash-btn dash-btn--ghost">Calendar</Link>
           </div>
@@ -143,10 +133,10 @@ function VendorDashboard() {
               <span className="vendor-empty__mark">💌</span>
               <div>
                 <strong>No requests yet</strong>
-                <p>When a couple books you, the request appears here with Accept, Decline, and Negotiate.</p>
+                <p>When a couple books you, the request appears here with Accept, Reply, Reject, and Negotiate.</p>
               </div>
             </div>
-          ) : pending.length > 0 ? (
+          ) : (
             <div className="vendor-request-grid vendor-request-grid--home">
               {actionList.map((booking) => (
                 <VendorRequestCard
@@ -157,19 +147,6 @@ function VendorDashboard() {
                 />
               ))}
             </div>
-          ) : (
-            <ul className="vendor-inbox__list">
-              {actionList.map((b) => (
-                <li key={b.id} className="vendor-inbox__item">
-                  <span className="vendor-inbox__avatar">{initials(b.coupleName)}</span>
-                  <div className="vendor-inbox__copy">
-                    <strong>{b.coupleName || 'Couple'}</strong>
-                    <small>{b.date || 'Date TBC'} · Rs. {Number(b.amount || 0).toLocaleString()}</small>
-                  </div>
-                  <span className={`rsvp-badge rsvp-badge--${statusTone(b.status)}`}>{displayStatus(b.status)}</span>
-                </li>
-              ))}
-            </ul>
           )}
         </section>
 
@@ -178,7 +155,7 @@ function VendorDashboard() {
             <h2>Next step</h2>
             {nextAction ? (
               <p className="vendor-side__copy">
-                {needsVendorReply(nextAction.status)
+                {vendorNeedsDecision(nextAction.status)
                   ? `Reply to ${nextAction.coupleName || 'the couple'} (${nextAction.date || 'date TBC'}).`
                   : isPaid(nextAction.status)
                     ? `${nextAction.coupleName || 'A couple'} hired you for Rs. ${Number(nextAction.amount || 0).toLocaleString()}.`

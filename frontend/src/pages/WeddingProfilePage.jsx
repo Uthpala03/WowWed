@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import FormLayout from '../components/layout/FormLayout';
 import OnboardingLayout from '../components/layout/OnboardingLayout';
 import Button from '../components/ui/Button';
-import { ceremonyTypes, districts, normalizeCeremonyType, weddingScales } from '../data/formOptions';
+import { locationSelectOptions, normalizeCeremonyType, onboardingCeremonyTypes, weddingScales } from '../data/formOptions';
+import PrettySelect from '../components/ui/PrettySelect';
 import { useAuth } from '../context/AuthContext';
 import { coupleOnboarding } from '../models/OnboardingPath';
 import {
@@ -31,7 +32,7 @@ function emptyProfileFromSaved(saved, onboarding) {
     ceremonyType: normalizeCeremonyType(saved?.ceremonyType || onboarding?.ceremonyType),
     guestCount: String(saved?.guestCount || '150'),
     budget: saved?.budget ? String(saved.budget) : '',
-    scale: saved?.scale || 'standard',
+    scale: saved?.scale === 'luxury' ? 'premium' : (saved?.scale || 'standard'),
     venueType: saved?.venueType || onboarding?.venueType || '',
     planningStage: saved?.planningStage || onboarding?.planningStage || '',
   };
@@ -67,7 +68,8 @@ function WeddingProfilePage() {
   }, [loading, user?.id]);
 
   const update = (field) => (event) => {
-    setForm((current) => ({ ...current, [field]: event.target.value }));
+    const value = event?.target ? event.target.value : event;
+    setForm((current) => ({ ...current, [field]: value }));
   };
 
   const handleSubmit = async (event) => {
@@ -136,46 +138,46 @@ function WeddingProfilePage() {
       </div>
 
       <div className="form__row">
-        <label className="form__field">
-          <span>Wedding location</span>
-          <select value={form.district} onChange={update('district')}>
-            <option value="">Select district</option>
-            {form.district && !districts.includes(form.district) && (
-              <option value={form.district}>{form.district}</option>
-            )}
-            {districts.map((district) => (
-              <option key={district} value={district}>{district}</option>
-            ))}
-          </select>
-        </label>
+        <div className="form__field">
+          <PrettySelect
+            label="Wedding location"
+            icon="pin"
+            value={form.district}
+            placeholder="Select district"
+            options={locationSelectOptions({ emptyLabel: 'Select district', extra: form.district })}
+            onChange={update('district')}
+          />
+        </div>
         <label className="form__field">
           <span>Wedding date</span>
           <input type="date" value={form.weddingDate} onChange={update('weddingDate')} />
         </label>
       </div>
 
-      <label className="form__field">
-        <span>Ceremony type</span>
-        <select value={form.ceremonyType} onChange={update('ceremonyType')}>
-          {ceremonyTypes.map((type) => (
-            <option key={type} value={type}>{type}</option>
-          ))}
-        </select>
-      </label>
+      <div className="form__field">
+        <PrettySelect
+          label="Ceremony type"
+          icon="poruwa"
+          value={form.ceremonyType}
+          options={onboardingCeremonyTypes.map((type) => ({ value: type.label, label: type.label, icon: type.icon }))}
+          onChange={update('ceremonyType')}
+        />
+      </div>
 
       <div className="form__row">
         <label className="form__field">
           <span>Expected guests</span>
           <input type="number" min="1" value={form.guestCount} onChange={update('guestCount')} />
         </label>
-        <label className="form__field">
-          <span>Wedding scale</span>
-          <select value={form.scale} onChange={update('scale')}>
-            {weddingScales.map((scale) => (
-              <option key={scale.value} value={scale.value}>{scale.label}</option>
-            ))}
-          </select>
-        </label>
+        <div className="form__field">
+          <PrettySelect
+            label="Wedding scale"
+            icon="budget"
+            value={form.scale}
+            options={weddingScales.map((scale) => ({ value: scale.value, label: scale.label, icon: 'budget' }))}
+            onChange={update('scale')}
+          />
+        </div>
       </div>
 
       <label className="form__field">

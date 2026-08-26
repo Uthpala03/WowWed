@@ -8,6 +8,7 @@ import { coupleOnboarding } from '../../models/OnboardingPath';
 import { useInboxNotifications } from '../../hooks/useInboxNotifications';
 import AppIcon from '../ui/AppIcon';
 import NotificationsPanel from './NotificationsPanel';
+import Footer from '../layout/Footer';
 import '../../styles/dashboard.css';
 
 function DashboardLayout() {
@@ -138,7 +139,10 @@ function DashboardLayout() {
           <button type="button" className="dash-sidebar__link dash-sidebar__link--sub dash-sidebar__link--btn" onClick={() => { logout(); navigate('/'); }}>Log out</button>
         </div>
       </aside>
-      <div className="dash-main"><Outlet key={user.id} context={coupleData} /></div>
+      <div className="dash-main">
+        <Outlet key={user.id} context={coupleData} />
+        <Footer compact />
+      </div>
     </div>
   );
 }

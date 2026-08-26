@@ -3,8 +3,9 @@ from pathlib import Path
 import pandas as pd
 from guest_features import add_ml_columns, relationship_and_priority
 
-path = Path(r"C:\Users\ASUS\Desktop\WowWed\WowWed\ml\seating\wowwed-guests-export.csv")
-out_path = Path(r"C:\Users\ASUS\Desktop\WowWed\WowWed\ml\seating\seating_dataset.csv")
+FOLDER = Path(__file__).resolve().parent
+path = FOLDER / "wowwed-guests-export.csv"
+out_path = FOLDER / "seating_dataset.csv"
 
 with path.open("r", encoding="utf-8-sig", newline="") as f:
     guests = list(csv.DictReader(f))

@@ -11,13 +11,16 @@ export class InvitationTextBlock {
     y = 50,
     fontId = 'serif',
     color = '#2c2416',
-    fontSize = 14,
+    fontSize = 20,
     align = 'center',
     width = 80,
     fieldKey = null,
     uppercase = false,
     italic = false,
     bold = false,
+    zIndex = 2,
+    letterSpacing = null,
+    lineHeight = 1.25,
   }) {
     this.id = id || `block-${++blockCounter}`;
     this.text = text;
@@ -31,6 +34,10 @@ export class InvitationTextBlock {
     this.fieldKey = fieldKey;
     this.uppercase = uppercase;
     this.italic = italic;
+    this.bold = !!bold;
+    this.zIndex = zIndex;
+    this.letterSpacing = letterSpacing;
+    this.lineHeight = lineHeight ?? 1.25;
   }
 
   getFontFamily() {
@@ -57,6 +64,9 @@ export class InvitationTextBlock {
       uppercase: this.uppercase,
       italic: this.italic,
       bold: this.bold,
+      zIndex: this.zIndex,
+      letterSpacing: this.letterSpacing,
+      lineHeight: this.lineHeight,
     };
   }
 }

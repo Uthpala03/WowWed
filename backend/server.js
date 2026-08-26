@@ -19,7 +19,8 @@ app.use(express.json({ limit: '15mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/', (req, res) => {
-  res.json({ message: 'WowWed API is running!', appUrl: 'http://localhost:3001' });
+  const appUrl = process.env.APP_URL || `http://localhost:${process.env.FRONTEND_PORT || 3001}`;
+  res.json({ message: 'WowWed API is running!', appUrl });
 });
 
 app.get('/api/health', async (req, res) => {
@@ -66,7 +67,12 @@ async function start() {
 
 function startMlApi(label, folder, port, missingHint) {
   const dir = path.join(__dirname, '..', 'ML', folder);
-  const child = spawn('python', ['-m', 'uvicorn', 'api:app', '--port', String(port)], {
+  const child = spawn('python', [
+    '-m', 'uvicorn', 'api:app',
+    '--host', process.env.ML_HOST || '127.0.0.1',
+    '--port', String(port),
+    '--reload',
+  ], {
     cwd: dir,
     windowsHide: true,
   });
@@ -82,11 +88,13 @@ function startMlApi(label, folder, port, missingHint) {
 }
 
 function startSeatingApi() {
-  startMlApi('Smart seating', 'seating', 8000, 'Auto-seat will use the built-in fallback.');
+  const port = Number(process.env.SEATING_ML_PORT || 8000);
+  startMlApi('Smart seating', 'seating', port, 'Auto-seat will use the built-in fallback.');
 }
 
 function startCostApi() {
-  startMlApi('Cost prediction', 'cost', 8001, 'The Budget page will use the built-in estimate.');
+  const port = Number(process.env.COST_ML_PORT || 8001);
+  startMlApi('Cost prediction', 'cost', port, 'The Budget page will use the built-in estimate.');
 }
 
 start();

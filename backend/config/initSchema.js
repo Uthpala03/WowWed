@@ -66,6 +66,17 @@ async function migrateSchema(connection, database, log = console.log) {
     'ALTER TABLE bookings ADD COLUMN couple_note TEXT DEFAULT NULL',
     'ALTER TABLE bookings ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
     'ALTER TABLE bookings MODIFY COLUMN status VARCHAR(30) DEFAULT \'Pending\'',
+    'ALTER TABLE vendor_demo_logins ADD COLUMN district VARCHAR(50) DEFAULT NULL AFTER city',
+    'ALTER TABLE vendor_demo_logins ADD COLUMN price_range VARCHAR(50) DEFAULT NULL AFTER district',
+    'ALTER TABLE vendor_demo_logins ADD COLUMN description TEXT DEFAULT NULL AFTER price_range',
+    'ALTER TABLE vendor_demo_logins ADD COLUMN packages TEXT DEFAULT NULL AFTER description',
+    'ALTER TABLE vendor_demo_logins ADD COLUMN locations TEXT DEFAULT NULL AFTER packages',
+    'ALTER TABLE vendor_demo_logins ADD COLUMN phone VARCHAR(50) DEFAULT NULL AFTER locations',
+    'ALTER TABLE vendor_demo_logins ADD COLUMN website VARCHAR(255) DEFAULT NULL AFTER phone',
+    'ALTER TABLE vendor_demo_logins ADD COLUMN address VARCHAR(255) DEFAULT NULL AFTER website',
+    'ALTER TABLE vendor_demo_logins ADD COLUMN owner_email VARCHAR(100) DEFAULT NULL AFTER address',
+    'ALTER TABLE vendor_demo_logins ADD COLUMN rating DECIMAL(2, 1) DEFAULT NULL AFTER owner_email',
+    'ALTER TABLE vendor_demo_logins ADD COLUMN spotlight TINYINT(1) DEFAULT 0 AFTER rating',
   ];
   for (const sql of alters) {
     try {

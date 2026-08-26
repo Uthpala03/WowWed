@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5002';
+import { API_BASE_URL } from '../config/urls';
 
 function getToken() {
   return localStorage.getItem('wowwed_token');
@@ -65,4 +65,5 @@ export const api = {
   markAllNotificationsRead: () => fetchApi('/api/notifications/read-all', { method: 'PUT' }),
 
   predictCost: (payload) => fetchApi('/api/ml/cost', { method: 'POST', body: JSON.stringify(payload) }),
+  optimizeSeating: (payload) => fetchApi('/api/ml/seating', { method: 'POST', body: JSON.stringify(payload) }),
 };

@@ -7,6 +7,7 @@ const {
   canonicalizeStatus,
   isPaid,
   coupleCanHire,
+  coupleCanCancel,
 } = require('../utils/bookingStatus');
 
 const router = express.Router();
@@ -36,7 +37,7 @@ function bookingFromRow(row) {
     message: row.message || '',
     vendorNote: row.vendor_note || '',
     coupleNote: row.couple_note || '',
-    status: row.status,
+    status: canonicalizeStatus(row.status) || row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -64,7 +65,7 @@ async function findBusyBookings(listingId, date, excludeId = '') {
      FROM bookings
      WHERE vendor_listing_id = :listingId
        AND booking_date = :date
-       AND status IN ('Confirmed', 'Accepted', 'Paid', 'Hired', 'Negotiating', 'Updated')
+       AND status IN ('Confirmed', 'Accepted', 'Paid', 'Hired', 'Negotiating', 'Updated', 'Countered')
        ${excludeId ? 'AND id != :excludeId' : ''}`;
   const params = excludeId ? { listingId, date, excludeId } : { listingId, date };
   return query(sql, params);
@@ -268,13 +269,17 @@ router.put('/:id', authRequired, async (req, res) => {
           : 'sent a counter-offer on your request';
       await createNotification({
         userId: existing.coupleUserId,
-        type: nextStatus === 'Rejected' ? 'warning' : 'info',
-        title: `${existing.vendorName} ${statusText}`,
+        type: nextStatus === 'Rejected' ? 'warning' : nextStatus === 'Confirmed' ? 'warning' : 'info',
+        title: nextStatus === 'Confirmed'
+          ? `${existing.vendorName} accepted — ready to hire`
+          : `${existing.vendorName} ${statusText}`,
         message: vendorNote
           ? vendorNote
           : nextStatus === 'Negotiating'
-            ? `Updated quote: Rs. ${Number(nextAmount || 0).toLocaleString()}`
-            : `Status is now ${nextStatus}.`,
+            ? `Updated quote: Rs. ${Number(nextAmount || 0).toLocaleString()}. Confirm when you are ready to hire.`
+            : nextStatus === 'Confirmed'
+              ? 'Confirm the booking to add it to your budget.'
+              : `${existing.vendorName} ${statusText}.`,
         link: '/dashboard/bookings',
         bookingId: id,
       });
@@ -293,7 +298,7 @@ router.put('/:id', authRequired, async (req, res) => {
 
       if (nextStatus === 'Paid') {
         if (!coupleCanHire(existing.status)) {
-          res.status(400).json({ error: 'You can confirm hire after the vendor accepts or sends a counter-offer.' });
+          res.status(400).json({ error: 'You can confirm this booking after the vendor accepts or sends a counter-offer.' });
           return;
         }
         await query(
@@ -307,14 +312,62 @@ router.put('/:id', authRequired, async (req, res) => {
             userId: hired.vendorUserId,
             type: 'info',
             title: 'Couple confirmed your booking',
-            message: `${hired.coupleName || 'The couple'} hired ${hired.vendorName} for Rs. ${Number(hired.amount || 0).toLocaleString()}.`,
+            message: `${hired.coupleName || 'The couple'} booked ${hired.vendorName} for Rs. ${Number(hired.amount || 0).toLocaleString()}.`,
+            link: '/vendor/bookings',
+            bookingId: id,
+          });
+        }
+      } else if (nextStatus === 'Confirmed') {
+        if (canonicalizeStatus(existing.status) !== 'Negotiating' && canonicalizeStatus(existing.status) !== 'Confirmed') {
+          res.status(400).json({ error: 'You can accept this offer after the vendor sends a counter-offer.' });
+          return;
+        }
+        await query(
+          'UPDATE bookings SET status = :status, couple_note = :coupleNote WHERE id = :id AND couple_user_id = :userId',
+          { id, status: 'Confirmed', coupleNote, userId: req.user.id },
+        );
+        if (existing.vendorUserId) {
+          await createNotification({
+            userId: existing.vendorUserId,
+            type: 'info',
+            title: 'Couple accepted your offer',
+            message: `${existing.coupleName || 'The couple'} accepted Rs. ${Number(existing.amount || 0).toLocaleString()} for ${existing.vendorName}.`,
+            link: '/vendor/bookings',
+            bookingId: id,
+          });
+        }
+      } else if (nextStatus === 'Countered') {
+        if (isPaid(existing.status) || existing.status === 'Rejected' || existing.status === 'Cancelled') {
+          res.status(400).json({ error: 'This booking can no longer be negotiated.' });
+          return;
+        }
+        await query(
+          `UPDATE bookings
+           SET status = :status, amount = :amount, couple_note = :coupleNote
+           WHERE id = :id AND couple_user_id = :userId`,
+          {
+            id,
+            status: 'Countered',
+            amount: nextAmount,
+            coupleNote,
+            userId: req.user.id,
+          },
+        );
+        if (existing.vendorUserId) {
+          await createNotification({
+            userId: existing.vendorUserId,
+            type: 'info',
+            title: 'Couple sent a negotiation reply',
+            message: coupleNote
+              ? coupleNote
+              : `${existing.coupleName || 'The couple'} offered Rs. ${Number(nextAmount || 0).toLocaleString()} for ${existing.vendorName}.`,
             link: '/vendor/bookings',
             bookingId: id,
           });
         }
       } else if (nextStatus === 'Cancelled') {
-        if (isPaid(existing.status) || canonicalizeStatus(existing.status) === 'Confirmed') {
-          res.status(400).json({ error: 'Confirmed or paid bookings cannot be cancelled here.' });
+        if (!coupleCanCancel(existing.status)) {
+          res.status(400).json({ error: 'Paid bookings cannot be cancelled here.' });
           return;
         }
         await query(
@@ -325,14 +378,14 @@ router.put('/:id', authRequired, async (req, res) => {
           await createNotification({
             userId: existing.vendorUserId,
             type: 'warning',
-            title: 'Request cancelled',
-            message: `${existing.coupleName || 'A couple'} cancelled their request for ${existing.vendorName}.`,
+            title: 'Booking cancelled',
+            message: `${existing.coupleName || 'A couple'} cancelled ${existing.vendorName}.`,
             link: '/vendor/bookings',
             bookingId: id,
           });
         }
       } else {
-        res.status(400).json({ error: 'Couples can hire or cancel a request.' });
+        res.status(400).json({ error: 'You can confirm, cancel, accept an offer, or send a negotiation reply.' });
         return;
       }
     }

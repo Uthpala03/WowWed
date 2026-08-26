@@ -40,8 +40,8 @@ export const aboutContent = new AboutContent({
     }),
     new AboutHighlight({
       icon: 'assistant',
-      title: 'Offline assistant',
-      text: 'Get Poruwa tips, budget advice, and planning help without an internet API.',
+      title: 'Keyword assistant',
+      text: 'Answers from a WowWed knowledge base — not a chat AI.',
     }),
     new AboutHighlight({
       icon: 'reports',

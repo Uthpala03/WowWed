@@ -22,6 +22,34 @@ function toUser(row) {
   };
 }
 
+async function findUserForLogin(identifier) {
+  const raw = String(identifier || '').trim();
+  if (!raw) return null;
+  const lower = raw.toLowerCase();
+
+  let rows = await query('SELECT * FROM users WHERE email = :email', { email: lower });
+  if (rows.length) return rows[0];
+
+  const username = lower.includes('@') ? lower.split('@')[0] : lower;
+  const demoEmail = lower.includes('@') ? lower : `${username}@vendors.wowwed.lk`;
+  const demo = await query(
+    `SELECT user_id FROM vendor_demo_logins
+     WHERE listing_id = :key OR username = :key OR email = :demoEmail
+     LIMIT 1`,
+    { key: username, demoEmail },
+  );
+  if (demo[0]?.user_id) {
+    rows = await query('SELECT * FROM users WHERE id = :id', { id: demo[0].user_id });
+    if (rows.length) return rows[0];
+  }
+
+  if (!lower.includes('@')) {
+    rows = await query('SELECT * FROM users WHERE email = :email', { email: demoEmail });
+    if (rows.length) return rows[0];
+  }
+  return null;
+}
+
 function signToken(user) {
   return jwt.sign(
     { id: user.id, email: user.email, role: user.role },
@@ -111,17 +139,11 @@ router.post('/login', async (req, res) => {
       return;
     }
 
-    let normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail.includes('@')) {
-      normalizedEmail = `${normalizedEmail}@vendors.wowwed.lk`;
-    }
-    const rows = await query('SELECT * FROM users WHERE email = :email', { email: normalizedEmail });
-    if (!rows.length) {
+    const row = await findUserForLogin(email);
+    if (!row) {
       res.status(401).json({ error: 'Email not found. Check your details or create an account.' });
       return;
     }
-
-    const row = rows[0];
     const valid = await bcrypt.compare(password, row.password_hash);
     if (!valid) {
       res.status(401).json({ error: 'Incorrect password. Try again or reset your password.' });

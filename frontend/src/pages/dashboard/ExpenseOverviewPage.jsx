@@ -1,12 +1,26 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getBudget } from '../../utils/storage';
 
 const chipColors = ['#e8a88c', '#6b9e78', '#7a9eb8', '#c96a5a', '#d4b85c', '#5c6d8a', '#b8a0c8', '#8a7268'];
 
+function readBudget() {
+  const stored = getBudget() || {};
+  return {
+    expenses: stored.expenses || [],
+    categories: stored.categories || [],
+  };
+}
+
 function ExpenseOverviewPage() {
-  const budget = getBudget() || { expenses: [], categories: [] };
+  const [budget, setBudget] = useState(readBudget);
   const [catFilter, setCatFilter] = useState('all');
+
+  useEffect(() => {
+    const sync = () => setBudget(readBudget());
+    window.addEventListener('wowwed-data-changed', sync);
+    return () => window.removeEventListener('wowwed-data-changed', sync);
+  }, []);
 
   const total = budget.expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
   const getCatName = (id) => budget.categories.find((c) => c.id === id)?.name || 'Uncategorized';

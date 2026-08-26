@@ -14,7 +14,7 @@ export class InvitationTemplate {
     this.border = 'photo';
     this.category = config.category;
     this.culture = config.culture;
-    this.layout = 'photo-center';
+    this.layout = config.layout || 'frame';
     this.culturalTitle = config.culturalTitle || cultureDefaults.culturalTitle;
     this.defaultTagline = cultureDefaults.defaultTagline;
     this.defaultMessage = cultureDefaults.defaultMessage;
@@ -112,11 +112,15 @@ export const fontOptions = [
   { id: 'classic', label: 'Cormorant Classic', family: "'Cormorant Garamond', Georgia, serif", sample: 'Aa' },
   { id: 'elegant', label: 'Great Vibes Script', family: "'Great Vibes', 'Brush Script MT', cursive", sample: 'Aa', namesOnly: true },
   { id: 'sans', label: 'Lato Modern', family: "'Lato', system-ui, sans-serif", sample: 'Aa' },
+  { id: 'cinzel', label: 'Cinzel Formal', family: "'Cinzel', Georgia, serif", sample: 'Aa' },
+  { id: 'script', label: 'Dancing Script', family: "'Dancing Script', cursive", sample: 'Aa', namesOnly: true },
+  { id: 'tangerine', label: 'Tangerine Script', family: "'Tangerine', cursive", sample: 'Aa', namesOnly: true },
+  { id: 'baskerville', label: 'Libre Baskerville', family: "'Libre Baskerville', Georgia, serif", sample: 'Aa' },
 ];
 
 export const accentPresets = [
   '#b8860b', '#c9a227', '#d4af37', '#8b4557', '#5a7247', '#8e6e73', '#c0392b',
-  '#2d5a3d', '#6b8f71', '#a67c52', '#9a7209', '#5c3d2e',
+  '#2d5a3d', '#6b8f71', '#a67c52', '#9a7209', '#5c3d2e', '#fffef9', '#f4ead6',
 ];
 
 export const defaultInvitation = {
@@ -146,6 +150,7 @@ export const defaultInvitation = {
   showDecorations: true,
   showCoupleArt: false,
   textBlocks: [],
+  extraImages: [],
 };
 
 export function applyTemplateDefaults(design, templateId) {
@@ -176,6 +181,7 @@ export function invitationFromProfile(profile, saved) {
     message: base.message || template.defaultMessage,
     ceremonyNote: base.ceremonyNote || template.defaultCeremonyNote,
     showCoupleArt: false,
+    extraImages: Array.isArray(base.extraImages) ? base.extraImages : [],
   };
   if (!profile) return merged;
   return {

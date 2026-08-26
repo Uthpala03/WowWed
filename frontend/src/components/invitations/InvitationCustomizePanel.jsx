@@ -2,21 +2,15 @@ import { accentPresets, cardSizeOptions, fontOptions } from '../../models/Invita
 
 const BLOCK_LABELS = {
   cultural: 'Title',
-  intro: 'Intro line',
   tagline: 'Tagline',
-  partnerOne: 'First name',
-  partnerTwo: 'Second name',
-  amp: '& symbol',
+  names: 'Names',
   parentOne: 'Parents (1)',
   parentTwo: 'Parents (2)',
-  quote: 'Quote',
   date: 'Date',
   time: 'Time',
-  'venue-label': 'Venue label',
-  venue: 'Venue name',
+  venue: 'Venue',
   address: 'Address',
   rsvp: 'RSVP',
-  footer: 'Footer message',
 };
 
 function blockLabel(block) {
@@ -39,83 +33,120 @@ function ToggleBtn({ active, onClick, children, title }) {
 
 function InvitationCustomizePanel({
   textBlocks = [],
+  extraImages = [],
   selectedBlockId,
+  selectedImageId,
   cardSize,
+  editAll = false,
   onSelectBlock,
+  onSelectImage,
   onEditBlock,
   onEditBlockText,
   onAddText,
+  onAddPreset,
   onDuplicate,
   onDelete,
+  onBringForward,
+  onSendBack,
   onResetLayout,
   onCardSize,
+  onUpdateImage,
+  onDeleteImage,
 }) {
-  const selectedBlock = selectedBlockId
-    ? textBlocks.find((b) => b.id === selectedBlockId)
-    : null;
-
   const sortedBlocks = [...textBlocks]
     .filter((b) => b.text?.trim())
     .sort((a, b) => a.y - b.y);
 
-  const fontSize = selectedBlock?.fontSize || 10;
+  const selectedBlock = selectedBlockId
+    ? textBlocks.find((b) => b.id === selectedBlockId)
+    : null;
+  const styleBlock = selectedBlock || sortedBlocks[0] || null;
+  const selectedImage = selectedImageId
+    ? extraImages.find((img) => img.id === selectedImageId)
+    : null;
+
+  const fontSize = styleBlock?.fontSize || 20;
+  const lineHeight = styleBlock?.lineHeight != null ? Number(styleBlock.lineHeight) : 1.25;
+  const styleId = styleBlock?.id || null;
 
   const bumpSize = (delta) => {
-    const next = Math.max(4, Math.min(40, fontSize + delta));
-    onEditBlock(selectedBlock.id, { fontSize: next });
+    if (!styleId) return;
+    const next = Math.max(8, Math.min(48, fontSize + delta));
+    onEditBlock(styleId, { fontSize: next });
   };
 
   const toggleProp = (prop) => {
-    onEditBlock(selectedBlock.id, { [prop]: !selectedBlock[prop] });
+    if (!styleId) return;
+    onEditBlock(styleId, { [prop]: !styleBlock[prop] });
   };
+
+  const showStyles = !!styleBlock && (editAll || !!selectedBlock);
 
   return (
     <aside className="invite-custom-panel">
       <div className="invite-custom-panel__head">
-        <span className="invite-custom-panel__icon">🎨</span>
         <div>
-          <h3 className="invite-custom-panel__title">Customize</h3>
-          <p className="invite-custom-panel__sub">Pick text, then style it</p>
+          <h3 className="invite-custom-panel__title">{editAll ? 'Edit all lines' : 'Edit one line'}</h3>
+          <p className="invite-custom-panel__sub">
+            {editAll ? 'Font, size, color and spacing apply to every line' : 'Select a line, then style only that one'}
+          </p>
         </div>
       </div>
 
       <section className="invite-custom-section">
-        <h4 className="invite-custom-section__label">
-          <span>①</span> Choose text to edit
-        </h4>
+        <h4 className="invite-custom-section__label">On this card</h4>
         <div className="invite-custom-parts">
           {sortedBlocks.map((block) => (
             <button
               key={block.id}
               type="button"
-              className={`invite-custom-part${selectedBlockId === block.id ? ' is-on' : ''}`}
-              onClick={() => onSelectBlock(block.id)}
+              className={`invite-custom-part${(!editAll && selectedBlockId === block.id) || editAll ? ' is-on' : ''}`}
+              onClick={() => {
+                onSelectImage?.(null);
+                onSelectBlock(block.id);
+              }}
             >
               <span className="invite-custom-part__name">{blockLabel(block)}</span>
               <span className="invite-custom-part__preview">{block.text}</span>
             </button>
           ))}
+          {extraImages.map((img, i) => (
+            <button
+              key={img.id}
+              type="button"
+              className={`invite-custom-part${selectedImageId === img.id ? ' is-on' : ''}`}
+              onClick={() => {
+                onSelectBlock(null);
+                onSelectImage?.(img.id);
+              }}
+            >
+              <span className="invite-custom-part__name">Photo {i + 1}</span>
+              <span className="invite-custom-part__preview">Tap to resize or remove</span>
+            </button>
+          ))}
         </div>
-        {!sortedBlocks.length && (
-          <p className="invite-custom-empty">Your card text will appear here.</p>
+        {!sortedBlocks.length && !extraImages.length && (
+          <p className="invite-custom-empty">Your card text will appear here. Add text or a photo to start designing.</p>
         )}
       </section>
 
-      {selectedBlock ? (
+      {showStyles ? (
         <>
           <section className="invite-custom-section invite-custom-section--highlight">
             <h4 className="invite-custom-section__label">
-              <span>②</span> Edit &amp; style — {blockLabel(selectedBlock)}
+              {editAll ? 'All details' : blockLabel(styleBlock)}
             </h4>
 
-            <label className="invite-custom-field">
-              <span>Words</span>
-              <textarea
-                rows={2}
-                value={selectedBlock.text}
-                onChange={(e) => onEditBlockText(selectedBlock.id, e.target.value)}
-              />
-            </label>
+            {!editAll && (
+              <label className="invite-custom-field">
+                <span>Words</span>
+                <textarea
+                  rows={2}
+                  value={styleBlock.text}
+                  onChange={(e) => onEditBlockText(styleBlock.id, e.target.value)}
+                />
+              </label>
+            )}
 
             <div className="invite-custom-field">
               <span>Font style</span>
@@ -124,9 +155,9 @@ function InvitationCustomizePanel({
                   <button
                     key={f.id}
                     type="button"
-                    className={`invite-custom-font${selectedBlock.fontId === f.id ? ' is-on' : ''}`}
+                    className={`invite-custom-font${styleBlock.fontId === f.id ? ' is-on' : ''}`}
                     style={{ fontFamily: f.family }}
-                    onClick={() => onEditBlock(selectedBlock.id, { fontId: f.id })}
+                    onClick={() => onEditBlock(styleId, { fontId: f.id })}
                   >
                     <em>{f.sample}</em>
                     <small>{f.label.split(' ')[0]}</small>
@@ -141,14 +172,43 @@ function InvitationCustomizePanel({
                 <button type="button" onClick={() => bumpSize(-1)} aria-label="Smaller">A−</button>
                 <input
                   type="range"
-                  min={4}
-                  max={40}
-                  step={0.5}
+                  min={8}
+                  max={48}
+                  step={1}
                   value={fontSize}
-                  onChange={(e) => onEditBlock(selectedBlock.id, { fontSize: Number(e.target.value) })}
+                  onChange={(e) => onEditBlock(styleId, { fontSize: Number(e.target.value) })}
                 />
                 <button type="button" onClick={() => bumpSize(1)} aria-label="Larger">A+</button>
-                <strong>{Math.round(fontSize * 10) / 10}</strong>
+                <strong>{Math.round(fontSize)}</strong>
+              </div>
+            </div>
+
+            <div className="invite-custom-field">
+              <span>Line space</span>
+              <div className="invite-custom-size">
+                <button
+                  type="button"
+                  onClick={() => onEditBlock(styleId, { lineHeight: Math.max(0.9, Number((lineHeight - 0.05).toFixed(2))) })}
+                  aria-label="Tighter lines"
+                >
+                  −
+                </button>
+                <input
+                  type="range"
+                  min={0.9}
+                  max={2.2}
+                  step={0.05}
+                  value={lineHeight}
+                  onChange={(e) => onEditBlock(styleId, { lineHeight: Number(e.target.value) })}
+                />
+                <button
+                  type="button"
+                  onClick={() => onEditBlock(styleId, { lineHeight: Math.min(2.2, Number((lineHeight + 0.05).toFixed(2))) })}
+                  aria-label="More line space"
+                >
+                  +
+                </button>
+                <strong>{lineHeight.toFixed(2)}</strong>
               </div>
             </div>
 
@@ -159,25 +219,47 @@ function InvitationCustomizePanel({
                   <button
                     key={color}
                     type="button"
-                    className={`invite-custom-color${selectedBlock.color === color ? ' is-on' : ''}`}
+                    className={`invite-custom-color${styleBlock.color === color ? ' is-on' : ''}`}
                     style={{ background: color }}
                     aria-label={`Color ${color}`}
-                    onClick={() => onEditBlock(selectedBlock.id, { color })}
+                    onClick={() => onEditBlock(styleId, { color })}
                   />
                 ))}
+                <label className="invite-custom-color-pick" title="Custom color">
+                  <input
+                    type="color"
+                    value={styleBlock.color || '#2c2416'}
+                    onChange={(e) => onEditBlock(styleId, { color: e.target.value })}
+                    aria-label="Pick a custom color"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="invite-custom-field">
+              <span>Letter spacing</span>
+              <div className="invite-custom-size">
+                <input
+                  type="range"
+                  min={-0.04}
+                  max={0.35}
+                  step={0.01}
+                  value={styleBlock.letterSpacing ?? (styleBlock.uppercase ? 0.08 : 0)}
+                  onChange={(e) => onEditBlock(styleId, { letterSpacing: Number(e.target.value) })}
+                />
               </div>
             </div>
 
             <div className="invite-custom-field">
               <span>Look</span>
               <div className="invite-custom-toggles">
-                <ToggleBtn active={selectedBlock.bold} onClick={() => toggleProp('bold')} title="Bold">
+                <ToggleBtn active={styleBlock.bold} onClick={() => toggleProp('bold')} title="Bold">
                   <strong>B</strong>
                 </ToggleBtn>
-                <ToggleBtn active={selectedBlock.italic} onClick={() => toggleProp('italic')} title="Italic">
+                <ToggleBtn active={styleBlock.italic} onClick={() => toggleProp('italic')} title="Italic">
                   <em>I</em>
                 </ToggleBtn>
-                <ToggleBtn active={selectedBlock.uppercase} onClick={() => toggleProp('uppercase')} title="All caps">
+                <ToggleBtn active={styleBlock.uppercase} onClick={() => toggleProp('uppercase')} title="All caps">
                   AA
                 </ToggleBtn>
               </div>
@@ -193,8 +275,8 @@ function InvitationCustomizePanel({
                 ].map((a) => (
                   <ToggleBtn
                     key={a.id}
-                    active={(selectedBlock.align || 'center') === a.id}
-                    onClick={() => onEditBlock(selectedBlock.id, { align: a.id })}
+                    active={(styleBlock.align || 'center') === a.id}
+                    onClick={() => onEditBlock(styleId, { align: a.id })}
                     title={a.title}
                   >
                     {a.label}
@@ -203,22 +285,71 @@ function InvitationCustomizePanel({
               </div>
             </div>
 
-            <div className="invite-custom-actions">
-              <button type="button" className="invite-custom-action" onClick={() => onDuplicate(selectedBlock.id)}>
-                📋 Copy
-              </button>
-              <button type="button" className="invite-custom-action invite-custom-action--danger" onClick={() => onDelete(selectedBlock.id)}>
-                🗑 Remove
-              </button>
-            </div>
+            {!editAll && (
+              <div className="invite-custom-actions">
+                <button type="button" className="invite-custom-action" onClick={() => onBringForward?.(styleBlock.id)}>
+                  ↑ Front
+                </button>
+                <button type="button" className="invite-custom-action" onClick={() => onSendBack?.(styleBlock.id)}>
+                  ↓ Back
+                </button>
+                <button type="button" className="invite-custom-action" onClick={() => onDuplicate(styleBlock.id)}>
+                  Copy
+                </button>
+                <button type="button" className="invite-custom-action invite-custom-action--danger" onClick={() => onDelete(styleBlock.id)}>
+                  Remove
+                </button>
+              </div>
+            )}
           </section>
         </>
-      ) : (
-        <section className="invite-custom-section invite-custom-section--tip">
-          <p>
-            <strong>Move text:</strong> Select a line, then drag it on the card — or grab the ⠿ Drag pill above the text.
-          </p>
+      ) : selectedImage ? (
+        <section className="invite-custom-section invite-custom-section--highlight">
+          <h4 className="invite-custom-section__label">Photo</h4>
+          <div className="invite-custom-field">
+            <span>Shape</span>
+            <div className="invite-custom-toggles">
+              <ToggleBtn
+                active={selectedImage.shape !== 'rect'}
+                onClick={() => onUpdateImage?.(selectedImage.id, { shape: 'round' })}
+                title="Round"
+              >
+                ○
+              </ToggleBtn>
+              <ToggleBtn
+                active={selectedImage.shape === 'rect'}
+                onClick={() => onUpdateImage?.(selectedImage.id, { shape: 'rect' })}
+                title="Rectangle"
+              >
+                ▭
+              </ToggleBtn>
+            </div>
+          </div>
+          <div className="invite-custom-field">
+            <span>Size</span>
+            <div className="invite-custom-size">
+              <input
+                type="range"
+                min={14}
+                max={70}
+                step={1}
+                value={selectedImage.width}
+                onChange={(e) => {
+                  const width = Number(e.target.value);
+                  const height = selectedImage.shape === 'round' ? width * 0.75 : selectedImage.height;
+                  onUpdateImage?.(selectedImage.id, { width, height });
+                }}
+              />
+            </div>
+          </div>
+          <div className="invite-custom-actions">
+            <button type="button" className="invite-custom-action invite-custom-action--danger" onClick={() => onDeleteImage?.(selectedImage.id)}>
+              Remove photo
+            </button>
+          </div>
         </section>
+      ) : (
+        <p className="invite-custom-empty">Tap a line on the card or pick one above.</p>
       )}
 
       <section className="invite-custom-section">

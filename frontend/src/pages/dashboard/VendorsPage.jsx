@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
-import { vendorCategories } from '../../data/dashboardData';
+import { locationSelectOptions, vendorCategoryOptions } from '../../data/formOptions';
 import {
   addBooking,
   getAvailability,
@@ -23,7 +23,8 @@ import { bookingForVendor, parseVendorPriceBounds, recommendSmartVendors } from 
 import { displayStatus } from '../../utils/bookingStatus';
 import PageHeader from '../../components/ui/PageHeader';
 import VendorCard from '../../components/vendor/VendorCard';
-import VendorDetailModal from '../../components/vendor/VendorDetailModal';
+import VendorDetailModal, { VendorPackageList } from '../../components/vendor/VendorDetailModal';
+import VendorFilterSelect from '../../components/vendor/VendorFilterSelect';
 
 const PRICE_BANDS = [
   { id: 'any', label: 'Any price' },
@@ -32,6 +33,26 @@ const PRICE_BANDS = [
   { id: '500to1m', label: 'Rs. 500k – 1M', min: 500000, max: 1000000 },
   { id: 'over1m', label: 'Rs. 1M+', min: 1000000 },
 ];
+
+const CATEGORY_OPTIONS = [
+  { value: 'All Categories', label: 'All Categories', icon: 'vendors' },
+  ...vendorCategoryOptions.map((opt) => ({ value: opt.label, label: opt.label, icon: opt.icon })),
+];
+
+const LOCATION_OPTIONS = locationSelectOptions({ emptyLabel: 'All districts' });
+
+function quotePriceValue(price) {
+  const n = Number(String(price || '').replace(/,/g, ''));
+  return n || '';
+}
+
+function usableQuotes(quotations = []) {
+  return quotations.filter((q) => q?.title?.trim() || q?.price || q?.details?.trim() || q?.pdfUrl || q?.pdfData);
+}
+
+function quoteKey(q, index) {
+  return String(q?.id || `${q?.title || 'package'}-${index}`);
+}
 
 function vendorFitsPriceBand(vendor, band) {
   if (!band || band.id === 'any') return true;
@@ -57,55 +78,86 @@ function VendorsPage() {
   const [compareOpen, setCompareOpen] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [bookingVendor, setBookingVendor] = useState(null);
-  const [bookForm, setBookForm] = useState({ date: '', amount: '', message: '', packageTitle: '' });
+  const [bookForm, setBookForm] = useState({ date: '', amount: '', message: '', packageTitle: '', packageId: '' });
   const [availability, setAvailability] = useState(null);
   const [listVersion, setListVersion] = useState(0);
   const [sentNotice, setSentNotice] = useState('');
   const [sendError, setSendError] = useState('');
   const [sending, setSending] = useState(false);
+  const [recommendOn, setRecommendOn] = useState(false);
+  const [recommendError, setRecommendError] = useState('');
 
   useEffect(() => {
-    refreshVendorListings().then(() => setListVersion((v) => v + 1));
-    refreshBookings().catch(() => {});
+    Promise.all([refreshVendorListings(), refreshBookings()])
+      .then(() => setListVersion((v) => v + 1))
+      .catch(() => {});
   }, []);
 
   const allVendors = useMemo(() => getVendorListings(), [listVersion]);
   const bookings = coupleData?.bookings || getBookings() || [];
 
   const requested = useMemo(() => {
-    const active = bookings.filter((b) => !['Cancelled'].includes(b.status));
-    return allVendors
-      .map((vendor) => ({ vendor, booking: bookingForVendor(active, vendor) }))
-      .filter((row) => row.booking);
+    const active = (bookings || []).filter((b) => !['Cancelled', 'Rejected'].includes(b.status));
+    const rows = [];
+    const seenVendors = new Set();
+    const usedBookingIds = new Set();
+
+    active.forEach((booking) => {
+      const vendor = allVendors.find((item) => bookingForVendor([booking], item));
+      if (!vendor || seenVendors.has(vendor.id)) return;
+      seenVendors.add(vendor.id);
+      usedBookingIds.add(booking.id);
+      rows.push({ vendor, booking });
+    });
+
+    active.forEach((booking) => {
+      if (usedBookingIds.has(booking.id)) return;
+      rows.push({
+        vendor: {
+          id: booking.vendorListingId || booking.id,
+          name: booking.vendorName,
+          category: booking.category,
+          categories: booking.category ? [booking.category] : [],
+          city: '',
+          district: '',
+          districts: [],
+          priceRange: String(booking.amount || ''),
+          quotations: [],
+          portfolioImages: [],
+        },
+        booking,
+      });
+    });
+
+    return rows;
   }, [allVendors, bookings]);
 
-  const requestedIds = useMemo(() => requested.map((row) => row.vendor.id), [requested]);
-
   const smart = useMemo(
-    () => recommendSmartVendors(allVendors, profile, { limit: 8, excludeIds: requestedIds }),
-    [allVendors, profile, requestedIds],
+    () => recommendSmartVendors(allVendors, profile, { limit: 24, perCategory: 3 }),
+    [allVendors, profile],
   );
 
   const priceBand = PRICE_BANDS.find((item) => item.id === priceBandId) || PRICE_BANDS[0];
-  const filtersActive = Boolean(search || city || category !== 'All Categories' || priceBandId !== 'any' || minRating);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    const requestedSet = new Set(requestedIds);
-    return allVendors.filter((v) => {
-      if (requestedSet.has(v.id) && !filtersActive) return false;
-      const matchCat = vendorMatchesCategory(v, category);
-      const matchCity = vendorMatchesDistrict(v, city);
-      const matchPrice = vendorFitsPriceBand(v, priceBand);
-      const matchRating = !minRating || Number(v.rating || 0) >= minRating;
+    const matchesVendorFilters = (vendor) => {
+      const matchCat = vendorMatchesCategory(vendor, category);
+      const matchCity = recommendOn || vendorMatchesDistrict(vendor, city);
+      const matchPrice = vendorFitsPriceBand(vendor, priceBand);
+      const matchRating = !minRating || Number(vendor.rating || 0) >= minRating;
       const matchSearch = !q || (
-        v.name.toLowerCase().includes(q)
-        || locationSearchText(v).includes(q)
-        || (v.description || '').toLowerCase().includes(q)
+        vendor.name.toLowerCase().includes(q)
+        || locationSearchText(vendor).includes(q)
+        || (vendor.description || '').toLowerCase().includes(q)
       );
       return matchCat && matchCity && matchPrice && matchRating && matchSearch;
-    });
-  }, [allVendors, category, city, search, requestedIds, priceBand, minRating, filtersActive]);
+    };
+    if (recommendOn) {
+      return smart.matches.map((row) => row.vendor).filter(matchesVendorFilters);
+    }
+    return allVendors.filter(matchesVendorFilters);
+  }, [allVendors, category, city, search, priceBand, minRating, recommendOn, smart.matches]);
 
   const compareVendors = useMemo(
     () => compareIds.map((id) => allVendors.find((vendor) => vendor.id === id)).filter(Boolean),
@@ -138,7 +190,7 @@ function VendorsPage() {
     return () => { alive = false; };
   }, [bookingVendor, bookForm.date]);
 
-  const openBooking = (vendor) => {
+  const openBooking = (vendor, quote) => {
     const existing = bookingForVendor(bookings, vendor);
     if (existing && !['Rejected', 'Cancelled'].includes(existing.status)) {
       setSelectedVendor(vendor);
@@ -146,12 +198,15 @@ function VendorsPage() {
     }
     setSelectedVendor(null);
     setBookingVendor(vendor);
-    const firstPrice = vendor.quotations?.[0]?.price;
+    const quotes = usableQuotes(vendor.quotations || []);
+    const chosen = quote || quotes[0];
+    const chosenIndex = Math.max(0, quotes.findIndex((q) => q === chosen || (chosen?.id && q.id === chosen.id)));
     setBookForm({
       date: profile?.weddingDate || '',
-      amount: firstPrice ? String(firstPrice) : '',
+      amount: chosen ? String(quotePriceValue(chosen.price) || '') : '',
       message: '',
-      packageTitle: vendor.quotations?.[0]?.title || '',
+      packageTitle: chosen?.title || '',
+      packageId: chosen ? quoteKey(chosen, chosenIndex) : '',
     });
   };
 
@@ -165,6 +220,10 @@ function VendorsPage() {
     const existing = bookingForVendor(bookings, bookingVendor);
     if (existing && !['Rejected', 'Cancelled'].includes(existing.status)) {
       setSendError('You already sent a request to this vendor. Open Requests to track it.');
+      return;
+    }
+    if (usableQuotes(bookingVendor.quotations || []).length > 0 && !bookForm.packageTitle && !bookForm.packageId) {
+      setSendError('Please select a package.');
       return;
     }
     if (availability && availability.available === false) {
@@ -189,7 +248,7 @@ function VendorsPage() {
         createdAt: new Date().toISOString(),
       });
       setBookingVendor(null);
-      setBookForm({ date: '', amount: '', message: '', packageTitle: '' });
+      setBookForm({ date: '', amount: '', message: '', packageTitle: '', packageId: '' });
       setSentNotice(`${bookingVendor.name} has been notified. Track the reply under Requests.`);
     } catch (err) {
       setSendError(err.message || 'Could not send this request.');
@@ -200,28 +259,87 @@ function VendorsPage() {
 
   const selectedBooking = bookingForVendor(bookings, selectedVendor);
 
+  const canRecommend = Boolean(profile?.district || profile?.ceremonyType || Number(profile?.budget) > 0);
+  const toggleRecommend = () => {
+    if (recommendOn) {
+      setRecommendOn(false);
+      setRecommendError('');
+      return;
+    }
+    if (!canRecommend) {
+      setRecommendError('Add your district, budget, and wedding type in your wedding profile first.');
+      return;
+    }
+    setRecommendError('');
+    setRecommendOn(true);
+  };
+
+  const recommendSummary = [
+    profile?.district,
+    profile?.ceremonyType,
+    Number(profile?.budget) > 0 ? `Rs. ${Number(profile.budget).toLocaleString()}` : '',
+  ].filter(Boolean).join(' · ');
+
+  const listTitle = recommendOn
+    ? 'Matched to your wedding'
+    : (category !== 'All Categories' ? category : 'All vendors');
+  const listSubtitle = recommendOn
+    ? `Rule-based match — district, budget, and wedding type${recommendSummary ? ` · ${recommendSummary}` : ''}`
+    : `${filtered.length} listing${filtered.length === 1 ? '' : 's'}${city ? ` in ${city}` : ' in the catalogue'}`;
+
   return (
     <div className="dash-page vendors-page">
       <PageHeader moduleId="vendors" title="Find Your Perfect Wedding Vendors" className="vendors-hero" />
       <div className="vendor-search-bar vendor-search-bar--standalone">
-        <select value={category} onChange={(e) => setCategory(e.target.value)}>
-          {vendorCategories.map((c) => <option key={c}>{c}</option>)}
-        </select>
-        <input placeholder="Search by city or branch" value={city} onChange={(e) => setCity(e.target.value)} />
+        <VendorFilterSelect
+          label="Category"
+          value={category}
+          options={CATEGORY_OPTIONS}
+          onChange={setCategory}
+        />
+        <VendorFilterSelect
+          label="Location"
+          value={city}
+          options={LOCATION_OPTIONS}
+          onChange={setCity}
+          placeholder="All districts"
+        />
         <input placeholder="Search vendors, places…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <button
+          type="button"
+          className={`vendor-search-bar__recommend${recommendOn ? ' is-on' : ''}`}
+          onClick={toggleRecommend}
+        >
+          {recommendOn ? 'Matched' : 'Match'}
+        </button>
       </div>
       <div className="vendor-filter-row">
-        <select value={priceBandId} onChange={(e) => setPriceBandId(e.target.value)} aria-label="Price range">
-          {PRICE_BANDS.map((band) => <option key={band.id} value={band.id}>{band.label}</option>)}
-        </select>
-        <select value={minRating} onChange={(e) => setMinRating(Number(e.target.value))} aria-label="Minimum rating">
-          <option value={0}>Any rating</option>
-          <option value={4}>★ 4.0 and up</option>
-          <option value={4.5}>★ 4.5 and up</option>
-          <option value={4.8}>★ 4.8 and up</option>
-        </select>
+        <VendorFilterSelect
+          label="Price"
+          icon="budget"
+          value={priceBandId}
+          options={PRICE_BANDS.map((band) => ({ value: band.id, label: band.label, icon: 'budget' }))}
+          onChange={setPriceBandId}
+        />
+        <VendorFilterSelect
+          label="Rating"
+          icon="sparkle"
+          value={minRating}
+          options={[
+            { value: 0, label: 'Any rating', icon: 'sparkle' },
+            { value: 4, label: '4.0 and up', icon: 'sparkle' },
+            { value: 4.5, label: '4.5 and up', icon: 'sparkle' },
+            { value: 4.8, label: '4.8 and up', icon: 'sparkle' },
+          ]}
+          onChange={(value) => setMinRating(Number(value))}
+        />
         <p>{filtered.length} matching listing{filtered.length === 1 ? '' : 's'} · Add 2–3 to compare side by side</p>
       </div>
+      {recommendError && (
+        <p className="vendor-recommend-note vendor-recommend-note--error">
+          {recommendError} <Link to="/wedding-profile">Open wedding profile</Link>
+        </p>
+      )}
 
       {sentNotice && (
         <div className="dash-alert dash-alert--success vendor-request-alert">
@@ -236,8 +354,8 @@ function VendorsPage() {
           <div className="vendor-board__head">
             <div>
               <p className="vendor-board__kicker">Your vendors</p>
-              <h2>Already requested</h2>
-              <p>You already sent a booking request to {requested.length} vendor{requested.length === 1 ? '' : 's'}.</p>
+              <h2>Your chosen vendors</h2>
+              <p>These stay here while you pick more vendors. Open Requests to hire or track replies.</p>
             </div>
             <Link to="/dashboard/bookings" className="dash-btn dash-btn--white">Manage requests</Link>
           </div>
@@ -258,73 +376,38 @@ function VendorsPage() {
         </section>
       )}
 
-      <section className="vendor-board vendor-board--smart">
-        <div className="vendor-board__head">
+      <section className="vendors-section">
+        <div className="vendor-board__head vendor-board__head--plain vendor-results-head">
           <div>
-            <p className="vendor-board__kicker">M09 Smart Vendor Recommendation</p>
-            <h2>Matched to your wedding</h2>
-            <p>
-              Rule-based ranking using budget, district, and wedding type.
-              {profile?.district ? ` ${profile.district}` : ''}
-              {profile?.ceremonyType ? ` · ${profile.ceremonyType}` : ''}
-              {smart.budget ? ` · Rs. ${Number(smart.budget).toLocaleString()}` : ''}
-            </p>
-          </div>
-          <div className="vendor-smart-keys">
-            <span className={`vendor-smart-key${profile?.district ? ' is-on' : ''}`}>District</span>
-            <span className={`vendor-smart-key${smart.budget ? ' is-on' : ''}`}>Budget</span>
-            <span className={`vendor-smart-key${profile?.ceremonyType ? ' is-on' : ''}`}>Wedding type</span>
+            {category !== 'All Categories' && !recommendOn && (
+              <p className="vendor-results-kicker">Category</p>
+            )}
+            <h2>{listTitle}</h2>
+            <p>{listSubtitle}</p>
           </div>
         </div>
-        {smart.matches.length === 0 ? (
+        {filtered.length === 0 ? (
           <p className="vendor-board__empty">
-            No vendors currently match all three of your district, budget, and wedding type.
-            Browse the full list below, or update your wedding profile.
+            {recommendOn
+              ? 'No vendors matched your district, budget, and wedding type. Click Match to show the full list.'
+              : 'No listings match these filters.'}
           </p>
         ) : (
           <div className="vendor-grid">
-            {smart.matches.map((row, index) => (
+            {filtered.map((vendor) => (
               <VendorCard
-                key={`smart-${row.vendor.id}`}
-                vendor={row.vendor}
-                rank={index + 1}
-                booking={bookingForVendor(bookings, row.vendor)}
-                matchChips={[
-                  row.districtOk ? 'District' : null,
-                  row.budgetOk ? 'Budget' : null,
-                  row.weddingTypeOk ? 'Wedding type' : null,
-                ].filter(Boolean)}
+                key={vendor.id}
+                vendor={vendor}
+                booking={bookingForVendor(bookings, vendor)}
+                ctaLabel={bookingForVendor(bookings, vendor) ? 'View request' : 'View details'}
                 onOpen={setSelectedVendor}
-                comparing={compareIds.includes(row.vendor.id)}
+                comparing={compareIds.includes(vendor.id)}
                 compareDisabled={compareIds.length >= 3}
                 onToggleCompare={toggleCompare}
               />
             ))}
           </div>
         )}
-      </section>
-
-      <section className="vendors-section">
-        <div className="vendor-board__head vendor-board__head--plain">
-          <div>
-            <h2>All vendors</h2>
-            <p>{filtered.length} listing{filtered.length === 1 ? '' : 's'} in the catalogue</p>
-          </div>
-        </div>
-        <div className="vendor-grid">
-          {filtered.map((vendor) => (
-            <VendorCard
-              key={vendor.id}
-              vendor={vendor}
-              booking={bookingForVendor(bookings, vendor)}
-              ctaLabel={bookingForVendor(bookings, vendor) ? 'View request' : 'View details'}
-              onOpen={setSelectedVendor}
-              comparing={compareIds.includes(vendor.id)}
-              compareDisabled={compareIds.length >= 3}
-              onToggleCompare={toggleCompare}
-            />
-          ))}
-        </div>
       </section>
 
       {selectedVendor && (
@@ -344,25 +427,22 @@ function VendorsPage() {
             <p className="vendor-booking-panel__sub">{formatVendorCategories(bookingVendor)} · {formatVendorDistricts(bookingVendor)}</p>
             {sendError && <p className="form__error">{sendError}</p>}
 
-            {bookingVendor.quotations?.length > 0 && (
-              <label className="dash-field">
+            {usableQuotes(bookingVendor.quotations || []).length > 0 && (
+              <div className="dash-field">
                 <span>Package</span>
-                <select
-                  value={bookForm.packageTitle}
-                  onChange={(e) => {
-                    const quote = bookingVendor.quotations.find((q) => q.title === e.target.value);
+                <VendorPackageList
+                  quotes={usableQuotes(bookingVendor.quotations || [])}
+                  selectedId={bookForm.packageId}
+                  onSelect={(quote, id) => {
                     setBookForm({
                       ...bookForm,
-                      packageTitle: e.target.value,
-                      amount: quote?.price ? String(quote.price) : bookForm.amount,
+                      packageId: id,
+                      packageTitle: quote.title || '',
+                      amount: String(quotePriceValue(quote.price) || bookForm.amount),
                     });
                   }}
-                >
-                  {bookingVendor.quotations.map((q) => (
-                    <option key={q.id || q.title} value={q.title}>{q.title} {q.price ? `· Rs. ${Number(String(q.price).replace(/,/g, '') || 0).toLocaleString()}` : ''}</option>
-                  ))}
-                </select>
-              </label>
+                />
+              </div>
             )}
 
             <label className="dash-field">

@@ -1,16 +1,20 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import InvitationCanvasEditor from './InvitationCanvasEditor';
 import InvitationCustomizePanel from './InvitationCustomizePanel';
+import InvitationEditorToolbar from './InvitationEditorToolbar';
 import { InvitationDesign } from '../../models/InvitationDesign';
 import { InvitationStudioService } from '../../models/InvitationStudioService';
 import { cultureOptions, invitationTemplates } from '../../models/InvitationTemplate';
 import { getInvitation } from '../../utils/storage';
+import { readImageAsDataUrl } from '../../utils/invitationImage';
 
 const STEPS = [
   { n: 1, label: 'Pick design' },
   { n: 2, label: 'Your details' },
   { n: 3, label: 'Customize' },
 ];
+
+const BLANK_ID = 'template-blank';
 
 function StepDots({ step }) {
   return (
@@ -27,16 +31,35 @@ function StepDots({ step }) {
 
 function InvitationSimpleStudio({ profile }) {
   const canvasRef = useRef(null);
+  const photoInputRef = useRef(null);
   const [design, setDesign] = useState(() => InvitationDesign.load(profile, getInvitation()));
   const [step, setStep] = useState(1);
   const [culture, setCulture] = useState('all');
+  const [query, setQuery] = useState('');
   const [showMore, setShowMore] = useState(false);
   const [selectedBlockId, setSelectedBlockId] = useState(null);
+  const [selectedImageId, setSelectedImageId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [moveTogether, setMoveTogether] = useState(false);
+  const [photoError, setPhotoError] = useState('');
 
   const form = design.toJSON();
-  const templates = invitationTemplates.getByCulture(culture);
   const canContinue = form.partnerOne?.trim() && form.partnerTwo?.trim() && form.weddingDate;
+
+  const templates = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return invitationTemplates.getByCulture(culture).filter((t) => {
+      if (t.id === BLANK_ID) return false;
+      if (!q) return true;
+      return [t.name, t.description, t.culture, t.category]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [culture, query]);
+
+  const blankTemplate = invitationTemplates.getById(BLANK_ID);
 
   useEffect(() => {
     setDesign(InvitationDesign.load(profile, getInvitation()));
@@ -59,32 +82,73 @@ function InvitationSimpleStudio({ profile }) {
 
   const goToPreview = () => {
     setSelectedBlockId(null);
+    setSelectedImageId(null);
     setDesign((d) => InvitationStudioService.rebuildLayout(d));
     setStep(3);
   };
 
   const handleEditBlock = (id, props) => {
-    if (id === null) {
+    if (id === null && !moveTogether) {
       setSelectedBlockId(null);
+      return;
+    }
+    if (moveTogether) {
+      setDesign((d) => InvitationStudioService.editAllStyles(d, props));
       return;
     }
     setDesign((d) => InvitationStudioService.editBlock(d, id, props));
   };
 
   const handleMoveBlock = (id, x, y) => {
-    setDesign((d) => InvitationStudioService.moveBlock(d, id, x, y));
+    setDesign((d) => {
+      if (moveTogether) {
+        const src = (d.textBlocks || []).find((b) => b.id === id);
+        if (!src) return d;
+        return InvitationStudioService.moveAllBlocks(d, x - src.x, y - src.y);
+      }
+      return InvitationStudioService.moveBlock(d, id, x, y);
+    });
   };
 
   const handleEditBlockText = (id, text) => {
     setDesign((d) => InvitationStudioService.updateBlockText(d, id, text));
   };
 
-  const handleTextChange = handleEditBlockText;
-
   const handleAddText = () => {
     const { design: next, newBlockId } = InvitationStudioService.addBlock(design);
     setDesign(next);
+    setSelectedImageId(null);
     if (newBlockId) setSelectedBlockId(newBlockId);
+  };
+
+  const handleAddPreset = (preset) => {
+    const { design: next, newBlockId } = InvitationStudioService.addPreset(design, preset === 'text' ? 'body' : preset);
+    setDesign(next);
+    setSelectedImageId(null);
+    if (newBlockId) setSelectedBlockId(newBlockId);
+  };
+
+  const handleTool = (toolId) => {
+    const blocks = design.textBlocks || [];
+    const pick = (...ids) => blocks.find((b) => ids.includes(b.id) && b.text?.trim());
+
+    const existing = {
+      heading: pick('cultural', 'tagline'),
+      names: pick('names', 'partnerOne', 'partnerTwo'),
+      date: pick('date', 'time'),
+      quote: pick('tagline', 'cultural'),
+      text: pick('names', 'cultural', 'tagline', 'date') || blocks.find((b) => b.text?.trim()),
+    }[toolId];
+
+    if (existing) {
+      setMoveTogether(false);
+      setSelectedImageId(null);
+      setSelectedBlockId(existing.id);
+      return;
+    }
+
+    if (toolId === 'text') handleAddText();
+    else handleAddPreset(toolId);
   };
 
   const handleDuplicate = (id) => {
@@ -104,7 +168,24 @@ function InvitationSimpleStudio({ profile }) {
 
   const resetLayout = () => {
     setSelectedBlockId(null);
+    setSelectedImageId(null);
     setDesign((d) => InvitationStudioService.rebuildLayout(d));
+  };
+
+  const handlePhotoFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setPhotoError('');
+    try {
+      const src = await readImageAsDataUrl(file);
+      const { design: next, imageId } = InvitationStudioService.addImage(design, src);
+      setDesign(next);
+      setSelectedBlockId(null);
+      setSelectedImageId(imageId);
+    } catch (err) {
+      setPhotoError(err.message || 'Could not add that photo.');
+    }
   };
 
   const download = async () => {
@@ -119,17 +200,29 @@ function InvitationSimpleStudio({ profile }) {
 
   return (
     <div className={`dash-page invite-easy-page${step === 3 ? ' invite-easy-page--customize' : ''}`}>
-      <div className="invite-easy-hero">
-        <h1 className="invite-easy-hero__title">Create your invitation</h1>
-        <p className="invite-easy-hero__sub">3 easy steps — no design skills needed</p>
-      </div>
+      {step !== 3 && (
+        <div className="invite-easy-hero">
+          <h1 className="invite-easy-hero__title">Create your invitation</h1>
+          <p className="invite-easy-hero__sub">Pick a design, add names, then style the card</p>
+        </div>
+      )}
 
       <StepDots step={step} />
 
       {step === 1 && (
         <div className="invite-easy-panel">
           <h2 className="invite-easy-panel__title">Which style do you love?</h2>
-          <p className="invite-easy-panel__sub">Tap a design to select it</p>
+          <p className="invite-easy-panel__sub">Tap a design — {templates.length + 1} cards</p>
+
+          <label className="invite-easy-search">
+            <span className="invite-easy-search__icon" aria-hidden>⌕</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search gold, nikkah, floral, blank…"
+              aria-label="Search invitation designs"
+            />
+          </label>
 
           <div className="invite-easy-filters">
             {cultureOptions.map((c) => (
@@ -145,6 +238,18 @@ function InvitationSimpleStudio({ profile }) {
           </div>
 
           <div className="invite-easy-grid">
+            {blankTemplate && (!query.trim() || 'blank canvas design yourself'.includes(query.trim().toLowerCase())) && (
+              <button
+                type="button"
+                className={`invite-easy-card invite-easy-card--blank${form.template === blankTemplate.id ? ' is-on' : ''}`}
+                onClick={() => pickTemplate(blankTemplate.id)}
+              >
+                <img src={blankTemplate.decorImage} alt={blankTemplate.name} />
+                <span>{blankTemplate.name}</span>
+                <small>Design it yourself</small>
+                {form.template === blankTemplate.id && <em className="invite-easy-card__badge">Selected</em>}
+              </button>
+            )}
             {templates.map((t) => (
               <button
                 key={t.id}
@@ -154,10 +259,15 @@ function InvitationSimpleStudio({ profile }) {
               >
                 <img src={t.decorImage} alt={t.name} />
                 <span>{t.name}</span>
+                <small>{t.culture}</small>
                 {form.template === t.id && <em className="invite-easy-card__badge">Selected</em>}
               </button>
             ))}
           </div>
+
+          {!templates.length && (
+            <p className="invite-easy-note">No designs match that search — try “gold” or “sinhala”.</p>
+          )}
 
           <button type="button" className="invite-easy-btn invite-easy-btn--primary invite-easy-btn--wide" onClick={() => setStep(2)}>
             Next — add your details →
@@ -168,8 +278,8 @@ function InvitationSimpleStudio({ profile }) {
       {step === 2 && (
         <div className="invite-easy-panel invite-easy-panel--details">
           <div className="invite-easy-details-form">
-            <h2 className="invite-easy-panel__title">Tell us about your day</h2>
-            <p className="invite-easy-panel__sub">We&apos;ll add all the details to your card — just like a real invitation</p>
+            <h2 className="invite-easy-panel__title">Your details</h2>
+            <p className="invite-easy-panel__sub">Names and date go on the card</p>
 
             {profile && (
               <button type="button" className="invite-easy-profile" onClick={useProfile}>
@@ -237,7 +347,7 @@ function InvitationSimpleStudio({ profile }) {
                 disabled={!canContinue}
                 onClick={goToPreview}
               >
-                See my invitation →
+                Design my invitation →
               </button>
             </div>
           </div>
@@ -253,52 +363,90 @@ function InvitationSimpleStudio({ profile }) {
 
       {step === 3 && (
         <div className="invite-easy-panel invite-easy-panel--customize">
-          <div className="invite-easy-customize-header">
-            <h2 className="invite-easy-panel__title">Make it yours ✨</h2>
-            <p className="invite-easy-panel__sub">Pick text on the right · Drag on the card · Download when ready</p>
-          </div>
+          <div className="invite-easy-customize-layout invite-easy-customize-layout--studio">
+            <InvitationEditorToolbar
+              photoInputRef={photoInputRef}
+              moveTogether={moveTogether}
+              onMoveTogether={(on) => {
+                setMoveTogether(on);
+                if (on) {
+                  setSelectedImageId(null);
+                  const first = (design.textBlocks || []).find((b) => b.text?.trim());
+                  if (first) setSelectedBlockId(first.id);
+                }
+              }}
+              onTool={handleTool}
+            />
 
-          <div className="invite-easy-customize-layout">
             <div className="invite-easy-customize-canvas">
               <div className="invite-easy-preview invite-easy-preview--edit" ref={canvasRef}>
                 <InvitationCanvasEditor
                   design={form}
                   editable
-                  minimal
                   selectedBlockId={selectedBlockId}
+                  selectedImageId={selectedImageId}
                   onSelectBlock={setSelectedBlockId}
+                  onSelectImage={setSelectedImageId}
                   onMoveBlock={handleMoveBlock}
-                  onTextChange={handleTextChange}
+                  onMoveImage={(id, x, y) => setDesign((d) => InvitationStudioService.moveImage(d, id, x, y))}
+                  onTextChange={handleEditBlockText}
+                  moveTogether={moveTogether}
                 />
               </div>
               <p className="invite-easy-customize-hint">
-                Click text to select · <strong>Drag anywhere</strong> to move · Double-click to edit on card
+                {moveTogether
+                  ? 'All is on — drag any line to move everything · style changes every line'
+                  : 'Drag one line to move it · or tap All to move and style everything'}
               </p>
+              {photoError && <p className="invite-easy-note">{photoError}</p>}
             </div>
 
             <InvitationCustomizePanel
               textBlocks={form.textBlocks || []}
+              extraImages={form.extraImages || []}
               selectedBlockId={selectedBlockId}
+              selectedImageId={selectedImageId}
               cardSize={form.cardSize}
-              onSelectBlock={setSelectedBlockId}
+              editAll={moveTogether}
+              onSelectBlock={(id) => {
+                setMoveTogether(false);
+                setSelectedBlockId(id);
+              }}
+              onSelectImage={setSelectedImageId}
               onEditBlock={handleEditBlock}
               onEditBlockText={handleEditBlockText}
               onAddText={handleAddText}
+              onAddPreset={handleAddPreset}
               onDuplicate={handleDuplicate}
               onDelete={handleDelete}
+              onBringForward={(id) => setDesign((d) => InvitationStudioService.bringForward(d, id))}
+              onSendBack={(id) => setDesign((d) => InvitationStudioService.sendBack(d, id))}
               onResetLayout={resetLayout}
               onCardSize={handleCardSize}
+              onUpdateImage={(id, props) => setDesign((d) => InvitationStudioService.updateImage(d, id, props))}
+              onDeleteImage={(id) => {
+                setSelectedImageId(null);
+                setDesign((d) => InvitationStudioService.removeImage(d, id));
+              }}
             />
           </div>
+
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={handlePhotoFile}
+          />
 
           <button type="button" className="invite-easy-btn invite-easy-btn--download" onClick={download} disabled={saving}>
             {saving ? 'Preparing…' : '⬇ Download your invitation PDF'}
           </button>
 
           <div className="invite-easy-links">
-            <button type="button" onClick={() => { setSelectedBlockId(null); setStep(1); }}>Change design</button>
+            <button type="button" onClick={() => { setSelectedBlockId(null); setSelectedImageId(null); setStep(1); }}>Change design</button>
             <span>·</span>
-            <button type="button" onClick={() => { setSelectedBlockId(null); setStep(2); }}>Edit details</button>
+            <button type="button" onClick={() => { setSelectedBlockId(null); setSelectedImageId(null); setStep(2); }}>Edit details</button>
           </div>
         </div>
       )}

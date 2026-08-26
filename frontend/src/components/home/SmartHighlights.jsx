@@ -8,9 +8,9 @@ function SmartHighlights() {
     <section className="section section--muted smart-highlights" id="smart-features">
       <div className="container">
         <div className="section__header">
-          <span className="section__eyebrow">Smart features</span>
-          <h2>AI-powered planning built in</h2>
-          <p>Cost prediction, vendor matching, seating optimisation, and your readiness score — from the WowWed specification.</p>
+          <span className="section__eyebrow">Decision support</span>
+          <h2>ML where it is ML — rules where it is rules</h2>
+          <p>Cost prediction and seating use trained models. Vendor match and the assistant use rules and keywords, not ML.</p>
         </div>
         <div className="smart-highlights__grid">
           {items.map((mod) => {

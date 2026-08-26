@@ -1,5 +1,6 @@
 import { normalizeCeremonyType } from '../data/formOptions';
-import { formatVendorCategories, locationSearchText, vendorMatchesLocation } from './vendorMeta';
+import { vendorCategoryLabels } from '../models/VendorCategory';
+import { formatVendorCategories, locationSearchText, vendorCategories, vendorMatchesLocation } from './vendorMeta';
 
 const CEREMONY_RULES = {
   'Church Wedding': {
@@ -100,10 +101,19 @@ export function scoreSmartVendor(vendor, { budget, district, ceremonyType }) {
     weddingTypeOk: weddingFit.ok,
     explicitType: weddingFit.explicit,
     startingPrice: budgetFit.min,
+    category: primaryCategory(vendor),
   };
 }
 
-export function recommendSmartVendors(vendors, profile, { limit = 8, excludeIds = [] } = {}) {
+function primaryCategory(vendor) {
+  return vendorCategories(vendor)[0] || 'Other';
+}
+
+function isVenueVendor(vendor) {
+  return vendorCategories(vendor).some((label) => /venue/i.test(label));
+}
+
+export function recommendSmartVendors(vendors, profile, { limit = 24, perCategory = 3, excludeIds = [] } = {}) {
   const district = profile?.district || '';
   const ceremonyType = profile?.ceremonyType || '';
   const budget = Number(profile?.budget) || 0;
@@ -112,14 +122,36 @@ export function recommendSmartVendors(vendors, profile, { limit = 8, excludeIds 
   const ranked = vendors
     .filter((vendor) => !excluded.has(vendor.id))
     .map((vendor) => scoreSmartVendor(vendor, { budget, district, ceremonyType }))
-    .filter((row) => row.allThree)
+    .filter((row) => {
+      if (!row.budgetOk) return false;
+      if (isVenueVendor(row.vendor) && district && !row.districtOk) return false;
+      if (isVenueVendor(row.vendor) && !row.weddingTypeOk) return false;
+      return true;
+    })
     .sort((a, b) => b.score - a.score || (b.vendor.rating || 0) - (a.vendor.rating || 0));
+
+  const buckets = new Map(vendorCategoryLabels.map((label) => [label, []]));
+  buckets.set('Other', []);
+  for (const row of ranked) {
+    const key = buckets.has(row.category) ? row.category : 'Other';
+    const list = buckets.get(key);
+    if (list.length < perCategory) list.push(row);
+  }
+
+  const matches = [];
+  for (let round = 0; round < perCategory && matches.length < limit; round += 1) {
+    for (const label of [...vendorCategoryLabels, 'Other']) {
+      const row = buckets.get(label)?.[round];
+      if (row) matches.push(row);
+      if (matches.length >= limit) break;
+    }
+  }
 
   return {
     district,
     ceremonyType,
     budget,
-    matches: ranked.slice(0, limit),
+    matches,
     totalMatches: ranked.length,
   };
 }
@@ -127,13 +159,14 @@ export function recommendSmartVendors(vendors, profile, { limit = 8, excludeIds 
 export function bookingForVendor(bookings, vendor) {
   if (!vendor) return null;
   const listingId = vendor.id || vendor.listingId;
-  return (bookings || []).find((booking) => {
-    if (listingId && booking.vendorListingId) {
-      return booking.vendorListingId === listingId;
-    }
-    if (!booking.vendorListingId && booking.vendorName && vendor.name) {
-      return booking.vendorName.trim().toLowerCase() === vendor.name.trim().toLowerCase();
-    }
-    return false;
-  }) || null;
+  const vendorName = String(vendor.name || vendor.businessName || '').trim().toLowerCase();
+  const list = bookings || [];
+  const byListing = listingId
+    ? list.find((booking) => booking.vendorListingId && booking.vendorListingId === listingId)
+    : null;
+  if (byListing) return byListing;
+  if (!vendorName) return null;
+  return list.find((booking) => (
+    String(booking.vendorName || '').trim().toLowerCase() === vendorName
+  )) || null;
 }

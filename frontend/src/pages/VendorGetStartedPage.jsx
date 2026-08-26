@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../components/layout/OnboardingLayout';
 import OnboardingIcon from '../components/ui/OnboardingIcon';
 import OnboardingOption from '../components/ui/OnboardingOption';
 import { districts, vendorCategoryOptions, vendorStages } from '../data/formOptions';
+import { useAuth } from '../context/AuthContext';
 import { saveOnboarding } from '../utils/storage';
 import { toggleListItem } from '../utils/vendorMeta';
 
@@ -18,6 +19,7 @@ function SelectionChip({ label, onRemove }) {
 
 function VendorGetStartedPage() {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const [step, setStep] = useState(1);
   const [error, setError] = useState('');
   const [districtSearch, setDistrictSearch] = useState('');
@@ -27,6 +29,12 @@ function VendorGetStartedPage() {
     vendorCategories: [],
     vendorDistricts: [],
   });
+
+  useEffect(() => {
+    if (!loading && user?.role === 'vendor') {
+      navigate('/vendor/profile', { replace: true });
+    }
+  }, [loading, user, navigate]);
 
   const filteredDistricts = useMemo(() => {
     const q = districtSearch.trim().toLowerCase();
@@ -82,7 +90,7 @@ function VendorGetStartedPage() {
 
   if (step === 1) {
     return (
-      <OnboardingLayout step={1} variant="vendor">
+      <OnboardingLayout step={1} totalSteps={3} variant="vendor">
         <h1 className="onboarding__title">Join WowWed as a vendor</h1>
         <p className="onboarding__subtitle">Tell us about your wedding business.</p>
 
@@ -107,7 +115,7 @@ function VendorGetStartedPage() {
   }
 
   return (
-    <OnboardingLayout step={2} variant="vendor" wide>
+    <OnboardingLayout step={2} totalSteps={3} variant="vendor" wide>
       <h1 className="onboarding__title">Almost there!</h1>
       <p className="onboarding__subtitle">Tell couples what you offer and where you work.</p>
 

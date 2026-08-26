@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { crewRoles } from '../../data/dashboardData';
 import { getCrew, saveCrew } from '../../utils/storage';
 import PageHeader from '../../components/ui/PageHeader';
+import PrettySelect from '../../components/ui/PrettySelect';
 
 function WeddingCrewPage() {
   const [crew, setCrew] = useState(() => getCrew());
@@ -62,12 +63,15 @@ function WeddingCrewPage() {
               <span>Name *</span>
               <input required placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />
             </label>
-            <label className="dash-field">
-              <span>Role</span>
-              <select value={role} onChange={(e) => setRole(e.target.value)}>
-                {crewRoles.map((r) => <option key={r}>{r}</option>)}
-              </select>
-            </label>
+            <div className="dash-field">
+              <PrettySelect
+                label="Role"
+                icon="crew"
+                value={role}
+                options={crewRoles.map((r) => ({ value: r, label: r, icon: 'crew' }))}
+                onChange={setRole}
+              />
+            </div>
             <div className="dash-panel__actions">
               <button type="button" className="dash-btn dash-btn--ghost" onClick={() => setPanelOpen(false)}>Cancel</button>
               <button type="submit" className="dash-btn dash-btn--primary">Add Member</button>

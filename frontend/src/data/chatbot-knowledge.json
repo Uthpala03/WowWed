@@ -4,7 +4,7 @@
     "name": "WowWed Offline Chatbot",
     "note": "Static, developer-maintained knowledge base. Edit this file and rebuild the frontend. There is no admin editing UI and no external API."
   },
-  "welcome": "Hello! I'm the WOWWED Assistant, inside WOWWED — an intelligent wedding planning and decision support system for Sri Lankan couples and vendors. How can I help you?",
+  "welcome": "Hello! I'm the WowWed assistant. I answer from a planning knowledge base — not a chat AI. How can I help you?",
   "fallback": "I'd love to help. Ask about your guests, budget, or wedding date, or tell me what you want to plan next.",
   "topics": [
     { "id": "ideas", "label": "Ideas", "blurb": "Themes, colours, décor", "icon": "sparkle" },
@@ -195,8 +195,8 @@
       "id": "greeting",
       "category": "general",
       "title": "",
-      "chat": "Hello! I'm the WOWWED Assistant, inside WOWWED — an intelligent wedding planning and decision support system for Sri Lankan couples and vendors. How can I help you?",
-      "answer": "Hello! I'm the WOWWED Assistant, inside WOWWED — an intelligent wedding planning and decision support system. How can I help you?"
+      "chat": "Hello! I'm the WowWed assistant. I answer from a planning knowledge base — not a chat AI. How can I help you?",
+      "answer": "Hello! I'm the WowWed assistant. I answer from a planning knowledge base — not a chat AI. How can I help you?"
     },
     {
       "id": "thanks",
@@ -209,8 +209,8 @@
       "id": "what-can-you-do",
       "category": "general",
       "title": "",
-      "chat": "I'm the WOWWED Assistant. WOWWED is an intelligent decision-support planner for Sri Lankan weddings — not a generic notes app. It covers the couple side (profile, checklist, guests, seating, invitations, LKR budget with cost prediction, vendors, analytics, reports, crew, readiness score) and a vendor side (listing and bookings).",
-      "answer": "WOWWED is an intelligent Sri Lankan wedding planner and decision support system. I am the Assistant inside it.",
+      "chat": "I'm the WowWed assistant — keyword answers from a knowledge base, not a chat AI. WowWed is a Sri Lankan wedding planner: profile, checklist, guests, seating, invitations, LKR budget with cost prediction, vendors, analytics, reports, crew, and a vendor side for listings and bookings.",
+      "answer": "I am the WowWed assistant (keyword answers, not a chat AI). WowWed is a Sri Lankan wedding planner and decision support system.",
       "showPoints": true,
       "points": [
         "Wedding profile, Home countdown, and Readiness Score (tasks 40%, RSVPs 35%, budget 25%)",
@@ -219,7 +219,7 @@
         "Seating chart with Smart Seating (auto-group by relationship and table size)",
         "Invitation studio (Classic, Floral, Modern, Poruwa) and PDF reports",
         "Budget in LKR, overspend alerts, and AI cost prediction (Random Forest)",
-        "Local vendor search and booking — Accept, Reject, or Negotiate; match by district, budget, and ceremony"
+        "Local vendor search and booking — Accept, Reject, or Negotiate; rule-based match by district, budget, and ceremony"
       ],
       "route": "/dashboard",
       "routeLabel": "Open WOWWED Home"
@@ -228,11 +228,11 @@
       "id": "about-wowwed",
       "category": "general",
       "title": "",
-      "chat": "WOWWED is an Intelligent Web-Based Wedding Planning and Decision Support System. It is not a generic wedding website. It is built for Sri Lankan couples and vendors: local ceremonies, LKR budgets, district vendors, and tools that help you decide — cost prediction, smart seating, vendor match, and a readiness score. I am the WOWWED Assistant, the chat inside that system — not the whole WOWWED app.",
-      "answer": "WOWWED is an Intelligent Web-Based Wedding Planning and Decision Support System for Sri Lankan couples and vendors. I am the Assistant inside it.",
+      "chat": "WowWed is a web-based wedding planning and decision support system for Sri Lankan couples and vendors: local ceremonies, LKR budgets, district vendors, and tools that help you decide — cost prediction (ML), seating (ML), vendor match (rules), and a readiness score. I am the WowWed assistant, a keyword helper inside that system — not a chat AI.",
+      "answer": "WowWed is a wedding planning and decision support system for Sri Lankan couples and vendors. I am the keyword assistant inside it — not a chat AI.",
       "showPoints": true,
       "points": [
-        "Decision support — not only storing notes: AI cost prediction, Smart Seating, Smart Vendor Match, Readiness Score",
+        "Decision support — cost prediction (ML), seating (ML), vendor match (rules), readiness score (formula)",
         "Couple workspace — profile, Sri Lankan checklist, guests & RSVP, seating, Poruwa invitations, LKR budget, vendor booking, analytics, PDF reports, crew, notifications",
         "Vendor workspace — live listing, portfolio, bookings, and calendar (no admin wait to publish)"
       ]
@@ -867,7 +867,7 @@
       "title": "AI cost prediction",
       "keywords": ["predict", "prediction", "estimate", "ai cost", "random forest", "how much will it cost"],
       "questions": ["how does cost prediction work", "can WowWed estimate my wedding cost"],
-      "answer": "On the Budget page you can run AI cost prediction. It estimates a total in LKR from guest count, district, ceremony type, scale (standard / premium / luxury), and wedding season. As a rough Sri Lankan range: a small hometown wedding may sit near Rs. 0.8–1.5 million; a mid-range hotel wedding of about 150–200 guests is often Rs. 2–4 million; luxury Colombo events run higher. Use the estimate as a planning range, then replace it with real quotations.",
+      "answer": "The Budget page estimates a total in LKR from Sri Lankan wedding records — guest count, district, ceremony, style (Budget / Standard / Premium), and season. Treat it as a planning range, then replace it with actual quotes.",
       "route": "/dashboard/budget",
       "routeLabel": "Run cost prediction",
       "relatedIds": ["budget-overview", "budget-district", "budget-peak-season"]
@@ -1041,7 +1041,7 @@
       "id": "readiness-score",
       "category": "wowwed",
       "title": "Readiness score",
-      "answer": "Your dashboard readiness score is: tasks 40% + RSVPs 35% + budget 25%. Green means you are on track, yellow means some gaps, red means the date is close and key pieces are missing. Tick checklist items, collect RSVPs, and log spending to lift the score — it is a reminder, not a grade.",
+      "answer": "Your dashboard readiness score is the equal average of checklist progress, RSVP confirmations, and budget health (a set budget that stays on track — not merely how much you have spent). Green means you are on track, yellow means some gaps, red means key pieces are missing. Tick checklist items, collect RSVPs, and keep the budget on plan to lift the score — it is a reminder, not a grade.",
       "route": "/dashboard",
       "routeLabel": "Open Home",
       "relatedIds": ["checklist-overview", "guests-rsvp", "budget-expenses"]
@@ -1073,8 +1073,8 @@
     {
       "id": "vendor-match",
       "category": "vendor",
-      "title": "Smart vendor match",
-      "answer": "On Vendors, filter by category, district, and price. WowWed highlights professionals that fit your district, budget, and ceremony — it is a rule-based shortlist, not a paid ranking. Always read the package and send a booking request to confirm the date.",
+      "title": "Vendor match",
+      "answer": "On Vendors, tap Match. WowWed shortlists listings that fit your district, budget, and ceremony using rules — not ML. Always read the package and send a booking request to confirm the date.",
       "route": "/dashboard/vendors",
       "routeLabel": "Find matching vendors",
       "relatedIds": ["vendor-overview", "budget-district", "vendor-booking"]

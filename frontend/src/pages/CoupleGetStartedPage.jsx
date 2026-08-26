@@ -3,8 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import OnboardingLayout from '../components/layout/OnboardingLayout';
 import OnboardingIcon from '../components/ui/OnboardingIcon';
 import OnboardingOption from '../components/ui/OnboardingOption';
+import PrettySelect from '../components/ui/PrettySelect';
 import {
-  districts,
+  locationSelectOptions,
   onboardingCeremonyTypes,
   optionStyle,
   planningStages,
@@ -153,25 +154,16 @@ function CoupleGetStartedPage() {
       <h1 className="onboarding__title">Almost there!</h1>
       <p className="onboarding__subtitle">Just a few more details to personalize your dashboard.</p>
 
-      <label className="onboarding__field">
-        <span>Wedding location (Optional)</span>
-        <div className="onboarding__input-wrap" style={optionStyle({ bg: '#e6f6ee', color: '#2e7d32' })}>
-          <span className="onboarding__option-icon onboarding__option-icon--input"><OnboardingIcon name="pin" size={18} /></span>
-          <select
-            className="onboarding__select--with-icon"
-            value={form.location}
-            onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
-          >
-            <option value="">Select district</option>
-            {form.location && !districts.includes(form.location) && (
-              <option value={form.location}>{form.location}</option>
-            )}
-            {districts.map((district) => (
-              <option key={district} value={district}>{district}</option>
-            ))}
-          </select>
-        </div>
-      </label>
+      <div className="onboarding__field">
+        <PrettySelect
+          label="Wedding location (Optional)"
+          icon="pin"
+          value={form.location}
+          placeholder="Select district"
+          options={locationSelectOptions({ emptyLabel: 'Select district', extra: form.location })}
+          onChange={(location) => setForm((f) => ({ ...f, location }))}
+        />
+      </div>
 
       <label className="onboarding__field">
         <span>Wedding Date (Optional)</span>

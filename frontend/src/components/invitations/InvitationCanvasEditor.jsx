@@ -21,8 +21,10 @@ function CanvasTextBlock({
   selected,
   cardWidth,
   editable,
+  extraOffset = null,
   onSelect,
   onMove,
+  onLiveDelta,
   onTextChange,
 }) {
   const rootRef = useRef(null);
@@ -76,6 +78,11 @@ function CanvasTextBlock({
         drag.startBy + (dy / drag.rect.height) * 100,
       );
       setLivePos(next);
+      onLiveDelta?.({
+        id: block.id,
+        dx: next.x - drag.startBx,
+        dy: next.y - drag.startBy,
+      });
     };
 
     const handleUp = (ev) => {
@@ -83,6 +90,7 @@ function CanvasTextBlock({
       dragRef.current = null;
       setIsDragging(false);
       setLivePos(null);
+      onLiveDelta?.(null);
 
       if (rootRef.current?.hasPointerCapture?.(ev.pointerId)) {
         rootRef.current.releasePointerCapture(ev.pointerId);
@@ -106,7 +114,7 @@ function CanvasTextBlock({
     window.addEventListener('pointermove', handleMove);
     window.addEventListener('pointerup', handleUp);
     window.addEventListener('pointercancel', handleUp);
-  }, [block.id, block.x, block.y, editable, isEditing, onMove, onSelect]);
+  }, [block.id, block.x, block.y, editable, isEditing, onLiveDelta, onMove, onSelect]);
 
   const handlePointerDown = (e) => {
     if (!editable) return;
@@ -153,18 +161,24 @@ function CanvasTextBlock({
     }
   };
 
+  const offsetPos = extraOffset
+    ? clampPos(block.x + extraOffset.dx, block.y + extraOffset.dy)
+    : null;
+  const stylePos = livePos || offsetPos;
+
   return (
     <div
       ref={rootRef}
       className={`invite-canvas-block${selected ? ' is-selected' : ''}${editable ? ' is-editable' : ''}${isDragging ? ' is-dragging' : ''}${isEditing ? ' is-editing' : ''}`}
-      style={blockStyle(block, cardWidth, livePos)}
+      style={blockStyle(block, cardWidth, stylePos)}
       onPointerDown={handlePointerDown}
       onDoubleClick={handleDoubleClick}
       role="textbox"
       tabIndex={editable ? 0 : -1}
       aria-label="Invitation text"
+      title={editable ? 'Drag to move' : undefined}
     >
-      {selected && editable && (
+      {editable && (
         <button
           type="button"
           className="invite-canvas-block__drag-bar"
@@ -172,7 +186,7 @@ function CanvasTextBlock({
           aria-label="Drag to move"
           title="Drag to move"
         >
-          ⠿ Drag
+          ⠿ Move
         </button>
       )}
 
@@ -194,25 +208,124 @@ function CanvasTextBlock({
   );
 }
 
+function CanvasPhoto({
+  image,
+  selected,
+  editable,
+  onSelect,
+  onMove,
+}) {
+  const rootRef = useRef(null);
+  const dragRef = useRef(null);
+  const [livePos, setLivePos] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const x = livePos?.x ?? image.x;
+  const y = livePos?.y ?? image.y;
+
+  const beginDrag = useCallback((e, card) => {
+    if (!editable) return;
+    e.preventDefault();
+    e.stopPropagation();
+    onSelect?.(image.id);
+    const rect = card.getBoundingClientRect();
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      startBx: image.x,
+      startBy: image.y,
+      rect,
+      active: false,
+    };
+
+    const handleMove = (ev) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      const dx = ev.clientX - drag.startX;
+      const dy = ev.clientY - drag.startY;
+      if (!drag.active) {
+        if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+        drag.active = true;
+        setIsDragging(true);
+      }
+      ev.preventDefault();
+      setLivePos(clampPos(
+        drag.startBx + (dx / drag.rect.width) * 100,
+        drag.startBy + (dy / drag.rect.height) * 100,
+      ));
+    };
+
+    const handleUp = (ev) => {
+      const drag = dragRef.current;
+      dragRef.current = null;
+      setIsDragging(false);
+      setLivePos(null);
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+      window.removeEventListener('pointercancel', handleUp);
+      if (drag?.active) {
+        const dx = ev.clientX - drag.startX;
+        const dy = ev.clientY - drag.startY;
+        const next = clampPos(
+          drag.startBx + (dx / drag.rect.width) * 100,
+          drag.startBy + (dy / drag.rect.height) * 100,
+        );
+        onMove?.(image.id, next.x, next.y);
+      }
+    };
+
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
+    window.addEventListener('pointercancel', handleUp);
+  }, [editable, image.id, image.x, image.y, onMove, onSelect]);
+
+  return (
+    <div
+      ref={rootRef}
+      className={`invite-canvas-photo${selected ? ' is-selected' : ''}${isDragging ? ' is-dragging' : ''}`}
+      style={{
+        left: `${x}%`,
+        top: `${y}%`,
+        width: `${image.width}%`,
+        height: `${image.height}%`,
+        borderRadius: image.shape === 'round' ? '50%' : '10px',
+      }}
+      onPointerDown={(e) => {
+        const card = rootRef.current?.closest('.invite-card');
+        if (card) beginDrag(e, card);
+      }}
+    >
+      <img src={image.src} alt="" draggable={false} />
+    </div>
+  );
+}
+
 function InvitationCanvasEditor({
   design,
   selectedBlockId = null,
+  selectedImageId = null,
   onSelectBlock,
+  onSelectImage,
   onMoveBlock,
+  onMoveImage,
   onTextChange,
   editable = true,
-  minimal = false,
+  moveTogether = false,
 }) {
   const cardRef = useRef(null);
+  const [groupDelta, setGroupDelta] = useState(null);
   const template = invitationTemplates.getById(design.template);
   const size = getCardSize(design.cardSize);
   const showArt = design.showDecorations !== false && template.decorImage;
   const blocks = (design.textBlocks || []).filter((b) => b.text?.trim());
+  const images = design.extraImages || [];
   const artSrc = template.decorImage;
 
   const handleBackgroundClick = useCallback(() => {
-    if (editable) onSelectBlock?.(null);
-  }, [editable, onSelectBlock]);
+    if (editable) {
+      onSelectBlock?.(null);
+      onSelectImage?.(null);
+    }
+  }, [editable, onSelectBlock, onSelectImage]);
 
   return (
     <div
@@ -230,21 +343,43 @@ function InvitationCanvasEditor({
           backgroundPosition: 'center top',
         } : {}),
       }}
-      onClick={handleBackgroundClick}
+      onClick={(e) => {
+        if (e.target === e.currentTarget || e.target.classList.contains('invite-photo-decor')) {
+          handleBackgroundClick();
+        }
+      }}
       role="presentation"
     >
       <InvitationPhotoDecor src={artSrc} active={showArt} />
 
       <div className="invite-canvas-layer">
+        {images.map((image) => (
+          <CanvasPhoto
+            key={image.id}
+            image={image}
+            selected={selectedImageId === image.id}
+            editable={editable}
+            onSelect={(id) => {
+              onSelectImage?.(id);
+              onSelectBlock?.(null);
+            }}
+            onMove={onMoveImage}
+          />
+        ))}
         {blocks.map((block) => (
           <CanvasTextBlock
             key={block.id}
             block={block}
-            selected={selectedBlockId === block.id}
+            selected={moveTogether || selectedBlockId === block.id}
             cardWidth={size.width}
             editable={editable}
-            onSelect={onSelectBlock}
+            extraOffset={moveTogether && groupDelta && groupDelta.id !== block.id ? groupDelta : null}
+            onSelect={(id) => {
+              onSelectBlock?.(id);
+              onSelectImage?.(null);
+            }}
             onMove={onMoveBlock}
+            onLiveDelta={moveTogether ? setGroupDelta : undefined}
             onTextChange={onTextChange}
           />
         ))}

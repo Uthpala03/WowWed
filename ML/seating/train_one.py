@@ -6,7 +6,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-DATA = Path(r"C:\Users\ASUS\Desktop\WowWed\WowWed\ML\seating\seating_dataset.csv")
+FOLDER = Path(__file__).resolve().parent
+DATA = FOLDER / "seating_dataset.csv"
 SEATS = 10
 MAX_SAME = 8
 

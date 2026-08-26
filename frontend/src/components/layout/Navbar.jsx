@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { mainNav } from '../../models/NavItem';
 import { coupleOnboarding, vendorOnboarding } from '../../models/OnboardingPath';
+import { useAuth } from '../../context/AuthContext';
 import { scrollToSection } from '../../utils/scrollToSection';
 import AppIcon from '../ui/AppIcon';
 import Button from '../ui/Button';
@@ -10,6 +11,8 @@ import WowWedLogo from '../ui/WowWedLogo';
 function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const dashTo = user?.role === 'vendor' ? '/vendor' : '/dashboard';
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeId, setActiveId] = useState('');
   const [scrolled, setScrolled] = useState(false);
@@ -86,13 +89,24 @@ function Navbar() {
         </nav>
 
         <div className="navbar__actions">
-          <Link className="navbar__login" to="/login">Log in</Link>
-          <Button variant="vendor" to={vendorOnboarding.route} className="navbar__btn-vendor">
-            Join as a vendor
-          </Button>
-          <Button variant="primary" to={coupleOnboarding.freshRoute} className="navbar__btn-plan">
-            Start planning
-          </Button>
+          {user ? (
+            <>
+              <Link className="navbar__login" to={dashTo}>Dashboard</Link>
+              <Button variant="primary" to={dashTo} className="navbar__btn-plan">
+                {user.role === 'vendor' ? 'Vendor home' : 'Continue planning'}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link className="navbar__login" to="/login">Log in</Link>
+              <Button variant="vendor" to={vendorOnboarding.route} className="navbar__btn-vendor">
+                Join as a vendor
+              </Button>
+              <Button variant="primary" to={coupleOnboarding.freshRoute} className="navbar__btn-plan">
+                Start planning
+              </Button>
+            </>
+          )}
         </div>
 
         <button
@@ -122,9 +136,17 @@ function Navbar() {
             </button>
           ))}
           <div className="navbar__mobile-actions">
-            <Link className="navbar__login navbar__login--block" to="/login" onClick={() => setMenuOpen(false)}>Log in</Link>
-            <Button variant="vendor" to={vendorOnboarding.route} onClick={() => setMenuOpen(false)}>Join as a vendor</Button>
-            <Button variant="primary" to={coupleOnboarding.freshRoute} onClick={() => setMenuOpen(false)}>Start planning</Button>
+            {user ? (
+              <Button variant="primary" to={dashTo} onClick={() => setMenuOpen(false)}>
+                {user.role === 'vendor' ? 'Vendor home' : 'Continue planning'}
+              </Button>
+            ) : (
+              <>
+                <Link className="navbar__login navbar__login--block" to="/login" onClick={() => setMenuOpen(false)}>Log in</Link>
+                <Button variant="vendor" to={vendorOnboarding.route} onClick={() => setMenuOpen(false)}>Join as a vendor</Button>
+                <Button variant="primary" to={coupleOnboarding.freshRoute} onClick={() => setMenuOpen(false)}>Start planning</Button>
+              </>
+            )}
           </div>
         </nav>
       )}
