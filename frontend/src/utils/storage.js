@@ -146,6 +146,18 @@ export async function hydrateUserData() {
   if (cache.user.role === 'couple') {
     cache.weddingProfile = results[3]?.profile || null;
     cache.onboarding = results[4]?.onboarding || null;
+    const profileBudget = Number(cache.weddingProfile?.budget) || 0;
+    if (profileBudget) {
+      const current = cache.budget && typeof cache.budget === 'object'
+        ? cache.budget
+        : { categories: [], expenses: [] };
+      cache.budget = {
+        ...current,
+        total: profileBudget,
+        categories: current.categories || [],
+        expenses: current.expenses || [],
+      };
+    }
   } else {
     cache.vendorProfile = results[3]?.profile || null;
     cache.onboarding = results[4]?.onboarding || null;
@@ -158,19 +170,27 @@ export async function hydrateUserData() {
 export function readCoupleSnapshot() {
   if (!cache.user || ownedByOtherUser()) {
     return {
+      userId: null,
       profile: null,
       onboarding: null,
-      tasks: null,
+      tasks: [],
       guests: [],
       budget: null,
+      seating: { tables: [], assignments: {} },
+      crew: [],
+      bookings: [],
     };
   }
   return {
+    userId: cache.user.id,
     profile: cache.weddingProfile,
     onboarding: cache.onboarding,
-    tasks: cache.tasks,
+    tasks: cache.tasks || [],
     guests: cache.guests || [],
     budget: cache.budget,
+    seating: cache.seating || { tables: [], assignments: {} },
+    crew: cache.crew || [],
+    bookings: cache.bookings || [],
   };
 }
 
@@ -319,10 +339,14 @@ export function getBudget() {
 
 export async function saveBudget(budget) {
   cache.budget = budget;
+  if (cache.weddingProfile && budget?.total != null) {
+    cache.weddingProfile = { ...cache.weddingProfile, budget: Number(budget.total) };
+  }
   if (cache.user) await api.saveData('budget', budget);
 }
 
 export function getSeating() {
+  if (ownedByOtherUser()) return { tables: [], assignments: {} };
   return cache.seating;
 }
 

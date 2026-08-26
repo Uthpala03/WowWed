@@ -12,3 +12,7 @@ bin/
 obj/
 frontend/build/
 WowWed.Launcher/
+
+# Vendor photos, PDF flyers and generated gallery pages
+backend/uploads/
+

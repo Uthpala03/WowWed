@@ -77,6 +77,31 @@ router.get('/', authRequired, async (req, res) => {
          ON DUPLICATE KEY UPDATE data_json = :data, updated_at = NOW()`,
         { userId, data: JSON.stringify(data.budget) },
       );
+    } else if (req.user.role === 'couple') {
+      const profileRows = await query(
+        'SELECT budget FROM wedding_profiles WHERE user_id = :userId',
+        { userId },
+      );
+      const profileBudget = Number(profileRows[0]?.budget) || 0;
+      if (profileBudget) {
+        const current = data.budget && typeof data.budget === 'object'
+          ? data.budget
+          : { categories: [], expenses: [] };
+        if (Number(current.total) !== profileBudget) {
+          data.budget = {
+            ...current,
+            total: profileBudget,
+            categories: current.categories || [],
+            expenses: current.expenses || [],
+          };
+          await query(
+            `INSERT INTO user_data (user_id, store_key, data_json)
+             VALUES (:userId, 'budget', :data)
+             ON DUPLICATE KEY UPDATE data_json = :data, updated_at = NOW()`,
+            { userId, data: JSON.stringify(data.budget) },
+          );
+        }
+      }
     }
 
     res.json(data);
@@ -126,6 +151,15 @@ router.put('/:key', authRequired, async (req, res) => {
        ON DUPLICATE KEY UPDATE data_json = :data, updated_at = NOW()`,
       { userId: req.user.id, key, data: JSON.stringify(data) },
     );
+
+    if (key === 'budget' && data && data.total != null) {
+      await query(
+        `UPDATE wedding_profiles
+         SET budget = :budget, updated_at = NOW()
+         WHERE user_id = :userId`,
+        { userId: req.user.id, budget: Number(data.total) || null },
+      );
+    }
 
     res.json({ ok: true });
   } catch (err) {

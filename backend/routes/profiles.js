@@ -40,7 +40,12 @@ function weddingFromRow(row) {
 }
 
 function parsePortfolioJson(raw) {
-  if (!raw) return { images: [], quotations: [], quotationPdf: null, categories: [], districts: [] };
+  if (!raw) {
+    return {
+      images: [], quotations: [], quotationPdf: null, categories: [], districts: [],
+      locations: [], phone: '', email: '', website: '', address: '',
+    };
+  }
   const data = typeof raw === 'object' ? raw : JSON.parse(raw);
   return {
     images: Array.isArray(data.images) ? data.images : [],
@@ -48,6 +53,11 @@ function parsePortfolioJson(raw) {
     quotationPdf: data.quotationPdf || null,
     categories: Array.isArray(data.categories) ? data.categories : [],
     districts: Array.isArray(data.districts) ? data.districts : [],
+    locations: Array.isArray(data.locations) ? data.locations : [],
+    phone: data.phone || '',
+    email: data.email || '',
+    website: data.website || '',
+    address: data.address || '',
   };
 }
 
@@ -65,6 +75,11 @@ function serializePortfolio(portfolio) {
     quotationPdf: portfolio.quotationPdf || null,
     categories: portfolio.categories || [],
     districts: portfolio.districts || [],
+    locations: portfolio.locations || [],
+    phone: portfolio.phone || '',
+    email: portfolio.email || '',
+    website: portfolio.website || '',
+    address: portfolio.address || '',
   });
 }
 
@@ -100,6 +115,10 @@ function vendorFromRow(row) {
     description: row.description || '',
     rating: Number(row.rating) || 4.5,
     ownerEmail: row.email || row.owner_email,
+    phone: portfolio.phone || '',
+    website: portfolio.website || '',
+    address: portfolio.address || '',
+    locations: portfolio.locations,
     portfolioImages: portfolio.images,
     quotations: portfolio.quotations,
     quotationPdf: portfolio.quotationPdf,
@@ -119,13 +138,17 @@ function listingFromRow(row) {
     name: row.name,
     category: categories[0] || row.category,
     categories,
-    city: districts[0] || row.city,
+    city: row.city || districts[0] || '',
     district: districts[0] || row.district,
     districts,
     priceRange: row.price_range,
     description: row.description || '',
     rating: Number(row.rating) || 4.5,
-    ownerEmail: row.owner_email,
+    ownerEmail: row.owner_email || portfolio.email || '',
+    phone: portfolio.phone || '',
+    website: portfolio.website || '',
+    address: portfolio.address || '',
+    locations: portfolio.locations,
     spotlight: Boolean(row.spotlight),
     portfolioImages: portfolio.images,
     quotations: portfolio.quotations,
@@ -133,15 +156,15 @@ function listingFromRow(row) {
   };
 }
 
-function portfolioPayload(p) {
+function portfolioPayload(p, existing = {}) {
   const categories = p.categories?.length
     ? p.categories
     : (p.category ? [p.category] : []);
   const districts = p.districts?.length
     ? p.districts
-    : (p.district ? [p.district] : []);
+    : (p.district ? [p.district] : existing.districts || []);
   return serializePortfolio({
-    images: p.portfolioImages || [],
+    images: p.portfolioImages || existing.images || [],
     quotations: (p.quotations || []).map((q) => ({
       id: q.id,
       title: q.title || '',
@@ -150,9 +173,14 @@ function portfolioPayload(p) {
       pdfName: q.pdfName || '',
       pdfUrl: q.pdfUrl || '',
     })),
-    quotationPdf: p.quotationPdf || null,
+    quotationPdf: p.quotationPdf || existing.quotationPdf || null,
     categories,
     districts,
+    locations: Array.isArray(p.locations) ? p.locations : (existing.locations || []),
+    phone: p.phone || existing.phone || '',
+    email: p.email || existing.email || '',
+    website: p.website || existing.website || '',
+    address: p.address || existing.address || '',
   });
 }
 
@@ -290,6 +318,12 @@ router.put('/vendor', authRequired, async (req, res) => {
   try {
     const p = req.body;
     const userId = req.user.id;
+    const existingRows = await query(
+      'SELECT portfolio_json FROM vendor_profiles WHERE user_id = :userId',
+      { userId },
+    );
+    const existing = parsePortfolioJson(existingRows[0]?.portfolio_json);
+    const portfolioJson = portfolioPayload(p, existing);
 
     await query(
       `INSERT INTO vendor_profiles (user_id, business_name, category, district, price_range, description, portfolio_json, rating)
@@ -305,7 +339,7 @@ router.put('/vendor', authRequired, async (req, res) => {
         district: primaryDistrict(p),
         priceRange: p.priceRange,
         description: p.description || '',
-        portfolioJson: portfolioPayload(p),
+        portfolioJson,
         rating: Number(p.rating) || 4.5,
       },
     );
@@ -328,7 +362,7 @@ router.put('/vendor', authRequired, async (req, res) => {
         district: primaryDistrict(p),
         priceRange: p.priceRange,
         description: p.description || '',
-        portfolioJson: portfolioPayload(p),
+        portfolioJson,
         rating: Number(p.rating) || 4.5,
         ownerEmail: p.ownerEmail,
       },

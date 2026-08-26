@@ -145,6 +145,20 @@ async function initDatabase(options = {}) {
     const tableNames = afterRows.map((r) => Object.values(r)[0]);
     log(`Database "${database}" ready — ${tableNames.length} table(s): ${tableNames.join(', ')}`);
 
+    try {
+      const { attachVendorMedia } = require('../scripts/attachVendorMedia');
+      await attachVendorMedia(connection, log);
+    } catch (err) {
+      log(`  ! Vendor media attach skipped: ${err.message}`);
+    }
+
+    try {
+      const { seedSriLankaVendors } = require('../scripts/seedSriLankaVendors');
+      await seedSriLankaVendors(connection, log);
+    } catch (err) {
+      log(`  ! Extra Sri Lankan vendors skipped: ${err.message}`);
+    }
+
     return { ok: true, database, tableCount: tableNames.length, tables: tableNames };
   } finally {
     if (connection) await connection.end();

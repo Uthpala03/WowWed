@@ -1,0 +1,1642 @@
+{
+  "_meta": {
+    "module": "M16",
+    "name": "WowWed Offline Chatbot",
+    "note": "Static, developer-maintained knowledge base. Edit this file and rebuild the frontend. There is no admin editing UI and no external API."
+  },
+  "welcome": "Hello! I'm the WOWWED Assistant, inside WOWWED — an intelligent wedding planning and decision support system for Sri Lankan couples and vendors. How can I help you?",
+  "fallback": "I'd love to help. Ask about your guests, budget, or wedding date, or tell me what you want to plan next.",
+  "topics": [
+    { "id": "ideas", "label": "Ideas", "blurb": "Themes, colours, décor", "icon": "sparkle" },
+    { "id": "checklist", "label": "To-do list", "blurb": "What to do, and when", "icon": "checklist" },
+    { "id": "ceremony", "label": "Ceremony", "blurb": "Poruwa, church, Hindu, Nikah", "icon": "sparkle" },
+    { "id": "guests", "label": "Guests", "blurb": "List and RSVPs", "icon": "guests" },
+    { "id": "seating", "label": "Seating", "blurb": "Tables and seats", "icon": "seating" },
+    { "id": "invitations", "label": "Invites", "blurb": "Cards and PDF", "icon": "invitations" },
+    { "id": "vendor", "label": "Vendors", "blurb": "Find and book", "icon": "vendors" },
+    { "id": "budget", "label": "Money", "blurb": "Budget and costs", "icon": "budget" }
+  ],
+  "starters": [
+    "What can you do?",
+    "What is WOWWED?",
+    "Tell me about our wedding",
+    "Help me plan my wedding",
+    "How can we arrange the seating?",
+    "How should we split the budget?"
+  ],
+  "synonyms": {
+    "poruwa": ["sinhala", "sinhalese", "buddhist wedding"],
+    "church": ["christian", "catholic", "chapel"],
+    "hindu": ["tamil", "kovil", "muhurtham"],
+    "nikah": ["muslim", "islamic", "islam", "walima"],
+    "photo": ["photos", "photographer", "photography", "videography", "video", "album"],
+    "budget": ["money", "cost", "costs", "spend", "lkr", "rupees", "price"],
+    "guest": ["guests", "invite list", "guest list", "headcount"],
+    "checklist": ["task list", "to do", "todo", "tasks", "task"],
+    "venue": ["hall", "hotel", "banquet", "reception hall", "wedding location"],
+    "expense": ["expenses", "spending", "costs"],
+    "planner": ["wedding planner", "event planner", "coordinator"],
+    "dj": ["disc jockey", "wedding dj", "band"],
+    "cater": ["caters", "catering", "menu", "food", "buffet", "per plate"],
+    "seating": ["seat", "seats", "sitting", "table plan"],
+    "invitation": ["invitations", "invite", "invite card", "wedding card"],
+    "rsvp": ["coming", "not coming", "waiting", "accepted", "replied"],
+    "csv": ["excel", "spreadsheet", "import guests", "upload guests"],
+    "theme": ["themes", "style", "aesthetic", "mood", "look and feel"],
+    "colour": ["color", "colors", "colours", "palette", "colour scheme", "color scheme"],
+    "recommend": ["suggest", "recommendation", "best", "suitable", "which one"],
+    "schedule": ["timeline", "timetable", "day plan", "order of events"],
+    "sri lankan": ["sri lanka", "lankan", "local wedding"]
+  },
+  "rules": [
+    { "id": "r-greeting", "topic": "general", "priority": 15, "any": ["hello", "hi", "hey", "hiya", "good morning", "good afternoon", "good evening", "hi there", "hey there"], "none": ["budget", "checklist", "vendor", "guest", "seat", "poruwa", "church", "hindu", "nikah", "help", "plan", "wowwed"], "say": ["Hello", "Hi", "Hey", "Good morning"], "ask": "Hi", "reply": "greeting" },
+    { "id": "r-thanks", "topic": "general", "priority": 15, "any": ["thanks", "thank you"], "none": ["card", "cards", "note"], "ask": "Thank you", "reply": "thanks" },
+    { "id": "r-help", "topic": "general", "priority": 62, "any": ["what can you", "how can you help", "what can wowwed", "what do you do", "what can i ask", "what do you help", "what does wowwed", "wowwed cover", "wowwed do"], "none": ["theme", "colour", "color", "decor", "budget", "venue", "guest", "seat"], "say": ["What can you do?", "How can you help me?", "What can WOWWED do?", "What does WOWWED cover?"], "ask": "What can WOWWED do?", "reply": "what-can-you-do" },
+    { "id": "r-about", "topic": "general", "priority": 64, "any": ["what is wowwed", "whats wowwed", "what is this app", "who is wowwed", "about wowwed", "what is wow wed", "decision support", "intelligent web"], "say": ["What is WOWWED?"], "ask": "What is WOWWED?", "reply": "about-wowwed" },
+    { "id": "r-help-plan", "topic": "general", "priority": 58, "any": ["need help planning", "help me plan", "help planning my", "help me planning", "help me with my wedding"], "none": ["budget", "venue", "seat", "photographer", "guest list"], "say": ["I need help planning my wedding.", "Help me plan my wedding."], "ask": "Help me plan my wedding", "reply": "help-plan" },
+
+    { "id": "r-poruwa-list", "topic": "checklist", "priority": 90, "all": ["poruwa"], "any": ["checklist", "task", "todo"], "ask": "Poruwa ceremony checklist", "reply": "checklist-poruwa" },
+    { "id": "r-church-list", "topic": "checklist", "priority": 90, "all": ["church"], "any": ["checklist", "task", "todo"], "ask": "Church wedding checklist", "reply": "checklist-church" },
+    { "id": "r-hindu-list", "topic": "checklist", "priority": 92, "all": ["hindu"], "any": ["checklist", "task", "todo"], "ask": "Hindu Tamil wedding checklist", "reply": "checklist-hindu" },
+    { "id": "r-nikah-list", "topic": "checklist", "priority": 90, "all": ["nikah"], "any": ["checklist", "task", "todo"], "ask": "Nikah ceremony checklist", "reply": "checklist-nikah" },
+    { "id": "r-reception-list", "topic": "checklist", "priority": 88, "all": ["reception"], "any": ["checklist", "task", "todo", "mc", "playlist"], "ask": "Reception checklist", "reply": "checklist-reception" },
+    { "id": "r-12m", "topic": "checklist", "priority": 80, "any": ["12 months", "twelve months", "one year", "year before", "how many months", "when to start planning"], "ask": "How many months before should we start?", "reply": "checklist-12-months" },
+    { "id": "r-6m", "topic": "checklist", "priority": 85, "any": ["6 months", "six months"], "ask": "What should we do 6 months before?", "reply": "checklist-6-months" },
+    { "id": "r-3m", "topic": "checklist", "priority": 85, "any": ["3 months", "three months", "90 days"], "ask": "What should we do 3 months before?", "reply": "checklist-3-months" },
+    { "id": "r-1month", "topic": "checklist", "priority": 85, "any": ["1 month", "one month", "four weeks", "final month"], "ask": "What should we do one month before?", "reply": "checklist-1-month" },
+    { "id": "r-week", "topic": "checklist", "priority": 85, "any": ["wedding week", "week of", "day of", "day before", "last week", "one week", "1 week"], "ask": "What should we do one week before?", "reply": "checklist-week" },
+    { "id": "r-check-overview", "topic": "checklist", "priority": 55, "any": ["checklist", "first steps", "where to start", "what should i do", "planning list", "start planning", "begin planning", "getting started", "newly engaged", "do first", "plan first", "book first", "organize", "preparations", "what do we need", "important steps", "things to do", "not forget", "dont forget", "don't forget"], "say": ["How do I start planning my wedding?", "Where should we start our wedding planning?", "What do we need for a wedding?", "What are the important wedding planning steps?", "Can you give me a wedding checklist?", "What should we plan first?", "What should we book first?", "Can you help us organize our wedding?", "What things should we not forget when planning a wedding?"], "ask": "How do I start planning my wedding?", "reply": "checklist-overview" },
+
+    { "id": "r-poruwa", "topic": "ceremony", "priority": 60, "any": ["poruwa", "sinhala", "jayamangala", "nekatha", "ashtaka", "ashlaka", "what is a poruwa"], "say": ["What is a Poruwa ceremony?", "What do we need for a Poruwa ceremony?", "How do I plan a Poruwa ceremony?"], "ask": "What is a Poruwa ceremony?", "reply": "ceremony-poruwa" },
+    { "id": "r-church", "topic": "ceremony", "priority": 60, "any": ["church", "christian", "priest", "choir", "hymns"], "none": ["checklist"], "ask": "How do I plan a church wedding?", "reply": "ceremony-church" },
+    { "id": "r-hindu", "topic": "ceremony", "priority": 60, "any": ["hindu", "tamil", "thaali", "mangalsutra", "mehendi", "mehndi"], "none": ["checklist"], "ask": "How do I plan a Hindu Tamil wedding?", "reply": "ceremony-hindu" },
+    { "id": "r-nikah", "topic": "ceremony", "priority": 60, "any": ["nikah", "muslim", "mosque", "imam", "mehr", "walima"], "none": ["checklist"], "ask": "How do I plan a Nikah?", "reply": "ceremony-nikah" },
+    { "id": "r-reception", "topic": "ceremony", "priority": 55, "any": ["reception", "civil", "party only", "celebration only"], "none": ["checklist", "hall"], "ask": "How do I plan a reception-only wedding?", "reply": "ceremony-reception" },
+    { "id": "r-types", "topic": "ceremony", "priority": 70, "any": ["ceremony types", "ceremony type", "which ceremony", "types of wedding", "supported ceremonies", "traditions"], "ask": "What ceremony types does WowWed support?", "reply": "ceremony-types" },
+    { "id": "r-choose", "topic": "ceremony", "priority": 72, "any": ["choose ceremony", "pick ceremony", "two ceremonies", "both ceremonies", "poruwa and church", "mixed ceremony"], "ask": "How do I choose a ceremony type?", "reply": "ceremony-choose" },
+
+    { "id": "r-photo", "topic": "vendor", "priority": 75, "any": ["photo", "photographer", "photography", "videography", "videographer", "video", "album", "pre shoot"], "none": ["spend", "how much", "percent", "or decoration"], "say": ["How do we choose a photographer?", "How do we choose a videographer?", "I need a photographer", "Find a wedding photographer", "Recommend a photographer", "Suggest photographers", "Where can I find a photographer?", "Which photographer should I choose?"], "ask": "How do we choose a photographer?", "reply": "vendor-photo" },
+    { "id": "r-venue", "topic": "vendor", "priority": 70, "any": ["venue", "hall", "hotel", "banquet", "location"], "none": ["budget", "cost", "percent", "split", "spend", "100", "200"], "say": ["How do we choose a wedding venue?", "Find a venue", "I need a wedding venue", "Suggest a wedding venue", "Recommend a venue", "Where can I have my wedding?", "What venue should I choose?", "What should we consider when selecting a venue?", "Which wedding venue is best for us?"], "ask": "How do we choose a wedding venue?", "reply": "vendor-venue" },
+    { "id": "r-cater", "topic": "vendor", "priority": 75, "any": ["cater", "catering", "caterer", "menu", "buffet", "rice and curry", "per plate"], "none": ["spend", "percent", "how much"], "say": ["How do we choose a caterer?", "How do I book wedding catering?", "Which caterer should we choose?"], "ask": "How do we choose a caterer?", "reply": "vendor-catering" },
+    { "id": "r-bridal", "topic": "vendor", "priority": 75, "any": ["bridal", "dress", "saree", "kandyan", "osariya", "makeup", "hair", "makeup artist"], "none": ["groom", "spend", "how much"], "say": ["How do we choose a makeup artist?", "How do I book bridal dressing?"], "ask": "How do we choose a makeup artist?", "reply": "vendor-bridal" },
+    { "id": "r-groom", "topic": "vendor", "priority": 75, "any": ["groom", "suit", "national dress", "nilame", "tux"], "none": ["spend", "how much", "family sit"], "ask": "Groom attire tips", "reply": "vendor-groom" },
+    { "id": "r-jewel", "topic": "vendor", "priority": 75, "any": ["jewellary", "jewellery", "jewelry", "gold", "necklace", "rings", "bridal jewellery"], "ask": "When should I order bridal jewellery?", "reply": "vendor-jewellery" },
+    { "id": "r-floral", "topic": "vendor", "priority": 75, "any": ["floral", "florist", "flower", "flowers", "deco", "decor", "decorator"], "none": ["spend", "how much", "percent", "photography"], "say": ["How do we choose a decorator?", "How do I book wedding flowers?"], "ask": "How do we choose a decorator?", "reply": "vendor-floral" },
+    { "id": "r-cake", "topic": "vendor", "priority": 75, "any": ["cake", "cakes", "tier", "cake tasting", "cake vendor"], "say": ["How do we choose a wedding cake vendor?", "When should I order the wedding cake?"], "ask": "How do we choose a wedding cake vendor?", "reply": "vendor-cakes" },
+    { "id": "r-book", "topic": "vendor", "priority": 72, "any": ["booking", "negotiate", "deposit", "accept", "reject"], "none": ["budget"], "ask": "How do vendor bookings work?", "reply": "vendor-booking" },
+    { "id": "r-contract", "topic": "vendor", "priority": 78, "any": ["contract", "quotation", "quote", "overtime", "cancellation"], "say": ["What should we check before hiring a vendor?", "What should a vendor contract include?"], "ask": "What should we check before hiring a vendor?", "reply": "vendor-contracts" },
+    { "id": "r-match", "topic": "vendor", "priority": 74, "any": ["match vendor", "smart vendor", "recommend vendor", "vendor match"], "ask": "How does vendor matching work?", "reply": "vendor-match" },
+    { "id": "r-vendor", "topic": "vendor", "priority": 50, "any": ["vendor", "vendors", "supplier", "find vendor", "marketplace", "service"], "say": ["How do we choose a vendor?", "What should I consider when choosing a vendor?", "Can I compare different vendors?", "Which vendors should we book first?", "How can I find vendors within my budget?", "How early should we book wedding vendors?"], "ask": "How do we choose a vendor?", "reply": "vendor-overview" },
+
+    { "id": "r-venue-share", "topic": "budget", "priority": 90, "all": ["venue"], "any": ["budget", "cost", "how much", "percent", "share", "take", "spend"], "say": ["How much should we spend on the venue?", "How much does a wedding venue cost?"], "ask": "How much should we spend on the venue?", "reply": "budget-venue-share" },
+    { "id": "r-predict", "topic": "budget", "priority": 80, "any": ["predict", "prediction", "estimate", "ai cost", "random forest", "how much will it cost", "how much does a wedding cost", "wedding cost", "how much money do i need", "what budget do i need"], "none": ["sri lanka", "sri lankan", "1 million", "2 million", "one million", "two million"], "say": ["How much will my wedding cost?", "What is the wedding cost?", "Estimate my wedding cost", "Can you estimate the cost?", "Give me a wedding cost estimate", "How much money do I need?", "What budget do I need for my wedding?"], "ask": "How much will my wedding cost?", "reply": "budget-predict" },
+    { "id": "r-budget", "topic": "budget", "priority": 50, "any": ["budget", "money", "cost", "lkr", "rupees", "afford"], "say": ["How can I create a wedding budget?", "Can you help me plan my wedding budget?", "How should we divide our wedding budget?"], "ask": "How can I create a wedding budget?", "reply": "budget-overview" },
+    { "id": "r-alloc", "topic": "budget", "priority": 72, "any": ["split", "allocate", "allocation", "percent", "percentage", "category budget", "divide"], "say": ["How should we divide our wedding budget?", "How should I split my wedding budget?", "What wedding expenses should we prioritize?"], "ask": "How should we divide our wedding budget?", "reply": "budget-allocation" },
+    { "id": "r-save", "topic": "budget", "priority": 78, "any": ["save", "saving", "cheaper", "cut cost", "reduce", "affordable", "on a budget", "low budget", "limited budget"], "say": ["How can we reduce our wedding expenses?", "How can we have a wedding on a low budget?", "We have a limited budget. What should we prioritize?", "How can we avoid exceeding our budget?"], "ask": "How can we reduce our wedding expenses?", "reply": "budget-saving" },
+    { "id": "r-peak", "topic": "budget", "priority": 80, "any": ["peak", "season", "december", "january", "off season", "wedding season"], "ask": "When is peak wedding season?", "reply": "budget-peak-season" },
+    { "id": "r-guest-cost", "topic": "budget", "priority": 78, "any": ["guest count", "headcount", "per plate", "afford guests", "number of guests affect", "guests affect the wedding budget"], "say": ["How does the number of guests affect the wedding budget?"], "ask": "How does the number of guests affect the wedding budget?", "reply": "budget-guest-count" },
+    { "id": "r-deposit", "topic": "budget", "priority": 80, "any": ["deposit", "deposits", "advance", "payment plan", "instalment", "installment"], "ask": "When do I pay vendor deposits?", "reply": "budget-deposits" },
+    { "id": "r-hidden", "topic": "budget", "priority": 80, "any": ["hidden", "service charge", "vat", "tipping", "generator fee", "forgotten cost", "unexpected"], "ask": "How much money should we keep for unexpected expenses?", "reply": "budget-hidden-costs" },
+    { "id": "r-district", "topic": "budget", "priority": 76, "any": ["district", "colombo", "gampaha", "outstation", "location cost"], "ask": "Does district change wedding cost?", "reply": "budget-district" },
+    { "id": "r-expense", "topic": "budget", "priority": 74, "any": ["expense", "expenses", "log spend", "track spend", "overspend", "over budget", "exceeding"], "ask": "How can we avoid exceeding our budget?", "reply": "budget-expenses" },
+
+    { "id": "r-csv", "topic": "guests", "priority": 85, "any": ["csv", "excel", "spreadsheet", "import guests", "upload guests", "bulk guests"], "ask": "How do I import a guest list from CSV?", "reply": "guests-csv" },
+    { "id": "r-rsvp", "topic": "guests", "priority": 80, "any": ["rsvp", "not coming", "rsvps", "reply status", "who is coming", "who replied"], "none": ["does not rsvp", "did not rsvp", "no rsvp"], "say": ["How do we handle RSVP responses?", "How can we track wedding invitations?", "How do we track RSVPs?"], "ask": "How do we handle RSVP responses?", "reply": "guests-rsvp" },
+    { "id": "r-groups", "topic": "guests", "priority": 78, "any": ["guest group", "groups", "vip", "neighbours", "neighbors"], "none": ["sit", "seating", "table"], "ask": "How should I group guests?", "reply": "guests-groups" },
+    { "id": "r-guests", "topic": "guests", "priority": 50, "any": ["guest", "guests", "invite list", "guest list", "plus one", "plus-one", "who to invite"], "none": ["seat", "seating", "table", "arrange"], "say": ["How do we create a guest list?", "How do we manage our guest list?", "Who should we invite to our wedding?", "How many guests should we invite?"], "ask": "How do we create a guest list?", "reply": "guests-overview" },
+
+    { "id": "r-smart-seat", "topic": "seating", "priority": 85, "any": ["smart seating", "auto seat", "auto-seat", "auto seat", "seating accuracy"], "ask": "How does smart seating work?", "reply": "seating-smart" },
+    { "id": "r-tables", "topic": "seating", "priority": 78, "any": ["table", "tables", "round", "head table", "suite", "organize tables", "organise tables"], "none": ["100", "cannot sit", "per table", "suitable"], "ask": "How can we organize tables for our wedding?", "reply": "seating-tables" },
+    { "id": "r-seating", "topic": "seating", "priority": 55, "any": ["seating", "seat", "sitting", "table plan", "who sits", "seating plan", "seating arrangement", "arrange guests", "arrange tables"], "say": ["Help with seating", "I need a seating plan", "Create a seating arrangement", "How should I arrange my guests?", "Help me arrange tables", "Can you organize my seating plan?", "How do we create a wedding seating plan?", "Can you help us arrange our guests?"], "ask": "How do we create a wedding seating plan?", "reply": "seating-overview" },
+
+    { "id": "r-invite-pdf", "topic": "invitations", "priority": 80, "any": ["pdf", "download invite", "print invitation", "export invitation"], "ask": "How do I download invitation PDFs?", "reply": "invitations-pdf" },
+    { "id": "r-invite", "topic": "invitations", "priority": 50, "any": ["invitation", "invitations", "invite card", "wedding card", "save the date", "template"], "say": ["How do I design invitations?", "When should we send invitations?"], "ask": "When should we send invitations?", "reply": "invitations-overview" },
+
+    { "id": "r-crew", "topic": "wowwed", "priority": 70, "any": ["crew", "bridesmaid", "groomsman", "maid of honour", "maid of honor", "best man", "flower girl", "helper"], "ask": "How do I organise the wedding crew?", "reply": "crew-overview" },
+    { "id": "r-analytics", "topic": "wowwed", "priority": 70, "any": ["analytics", "charts", "graph", "stats"], "ask": "What is on the Analytics page?", "reply": "analytics-overview" },
+    { "id": "r-reports", "topic": "wowwed", "priority": 70, "any": ["report", "reports", "pdf report", "export pdf", "print report"], "ask": "How do I download PDF reports?", "reply": "reports-overview" },
+    { "id": "r-ready", "topic": "wowwed", "priority": 72, "any": ["readiness", "on track", "readiness score", "green", "yellow", "red status"], "ask": "What is the readiness score?", "reply": "readiness-score" },
+    { "id": "r-profile", "topic": "wowwed", "priority": 70, "any": ["wedding profile", "partner names", "change date", "change ceremony"], "ask": "How do I edit our wedding profile?", "reply": "wedding-profile" },
+    { "id": "r-use", "topic": "wowwed", "priority": 45, "any": ["how to use", "this app", "dashboard", "where do i start"], "none": ["what is wowwed", "what can wowwed"], "ask": "How do I use WowWed?", "reply": "how-to-use" },
+
+    { "id": "r-theme", "topic": "ideas", "priority": 82, "any": ["theme", "themes", "wedding theme", "style", "aesthetic", "mood board"], "none": ["low budget", "on a budget"], "say": ["Give me wedding theme ideas", "What wedding theme should we choose?", "What are popular wedding themes?", "How do we choose our wedding style?", "Can you suggest a wedding theme for us?", "Suggest a wedding theme"], "ask": "What wedding theme should we choose?", "reply": "ideas-theme" },
+    { "id": "r-colour", "topic": "ideas", "priority": 84, "any": ["colour", "color", "palette", "colour scheme", "color scheme"], "say": ["What colour palette should we use?", "What colors are suitable for a wedding?", "Suggest wedding colours"], "ask": "What colors are suitable for a wedding?", "reply": "ideas-colours" },
+    { "id": "r-decor-ideas", "topic": "ideas", "priority": 83, "any": ["decoration", "decor ideas", "centrepiece", "centerpiece", "backdrop", "stage decor", "poruwa deco"], "say": ["Give me decoration ideas", "How should we decorate?", "What decor looks good?"], "ask": "Give me decoration ideas", "reply": "ideas-decor" },
+    { "id": "r-bridal-look", "topic": "ideas", "priority": 80, "any": ["bridal look", "saree vs dress", "what to wear bride", "kandyan vs western", "outfit ideas"], "ask": "What should the bride wear?", "reply": "ideas-bridal-look" },
+    { "id": "r-bridesmaid", "topic": "ideas", "priority": 78, "any": ["bridesmaid dress", "bridesmaids", "matching outfits", "party colours"], "ask": "Bridesmaid colour ideas", "reply": "ideas-bridesmaids" },
+    { "id": "r-menu-ideas", "topic": "ideas", "priority": 82, "any": ["menu ideas", "food ideas", "what to serve", "hopper", "kottu", "live station", "fusion menu"], "ask": "What food should we serve?", "reply": "ideas-menu" },
+    { "id": "r-cake-ideas", "topic": "ideas", "priority": 80, "any": ["cake flavour", "cake flavor", "cake ideas", "what cake"], "ask": "What wedding cake should we choose?", "reply": "ideas-cake" },
+    { "id": "r-favors", "topic": "ideas", "priority": 78, "any": ["favor", "favours", "favors", "return gift", "wedding gift guests"], "ask": "What wedding favours should we give?", "reply": "ideas-favors" },
+    { "id": "r-music", "topic": "ideas", "priority": 80, "any": ["playlist", "first dance", "wedding songs", "music ideas", "dj list"], "ask": "What music should we play?", "reply": "ideas-music" },
+    { "id": "r-honeymoon", "topic": "ideas", "priority": 80, "any": ["honeymoon", "after wedding trip", "where to go after"], "ask": "Honeymoon ideas in Sri Lanka", "reply": "ideas-honeymoon" },
+    { "id": "r-rain", "topic": "ideas", "priority": 80, "any": ["rain", "backup plan", "wet weather", "monsoon"], "ask": "What if it rains?", "reply": "ideas-rain" },
+    { "id": "r-vows", "topic": "ideas", "priority": 78, "any": ["vows", "speech", "speeches", "toast", "what to say"], "ask": "How do we write vows or speeches?", "reply": "ideas-vows" },
+    { "id": "r-poses", "topic": "ideas", "priority": 78, "any": ["photo pose", "poses", "pre shoot ideas", "what photos"], "ask": "Photography pose ideas", "reply": "ideas-photos" },
+    { "id": "r-dresscode", "topic": "ideas", "priority": 76, "any": ["dress code", "what should guests wear", "guest attire", "colour code guests"], "ask": "What should guests wear?", "reply": "ideas-dresscode" },
+    { "id": "r-homecoming", "topic": "ideas", "priority": 80, "any": ["homecoming", "magul", "second day"], "ask": "How do we plan the homecoming?", "reply": "ideas-homecoming" },
+    { "id": "r-pre-events", "topic": "ideas", "priority": 78, "any": ["mehendi", "mehndi", "hen party", "bachelor", "engagement party", "homecoming party"], "ask": "What pre-wedding events should we have?", "reply": "ideas-preevents" },
+    { "id": "r-outdoor", "topic": "ideas", "priority": 76, "any": ["outdoor wedding", "garden wedding", "beach wedding", "indoor or outdoor", "hotel or outdoor", "hotel wedding", "outdoor venue"], "say": ["Should we choose a hotel or outdoor venue?", "What are the advantages of an outdoor wedding?", "What are the advantages of a hotel wedding?", "Should we choose an indoor or outdoor venue?"], "ask": "Should we choose a hotel or outdoor venue?", "reply": "ideas-setting" },
+    { "id": "r-who-pays", "topic": "ideas", "priority": 76, "any": ["who pays", "parents pay", "who should pay"], "ask": "Who usually pays for the wedding?", "reply": "ideas-who-pays" },
+    { "id": "r-timeline-ideas", "topic": "ideas", "priority": 74, "any": ["day of timeline", "order of events", "run of show", "what time ceremony", "wedding timeline", "wedding day schedule", "day schedule"], "say": ["Can you create a wedding timeline?", "Can you create a wedding day schedule?", "What should happen first on the wedding day?", "What should we do on the wedding day?"], "ask": "Can you create a wedding timeline?", "reply": "ideas-timeline" },
+    { "id": "r-ideas-overview", "topic": "ideas", "priority": 40, "any": ["ideas", "inspiration", "pinterest", "google ideas"], "ask": "Give me wedding ideas", "reply": "ideas-overview" },
+
+    { "id": "r-sl-cost", "topic": "budget", "priority": 88, "all": ["sri lankan"], "any": ["cost", "price", "budget", "how much", "expensive", "afford"], "say": ["How much does a wedding cost in Sri Lanka?"], "ask": "How much does a wedding cost in Sri Lanka?", "reply": "budget-sri-lanka" },
+    { "id": "r-1-million", "topic": "budget", "priority": 88, "any": ["1 million", "one million", "rs 1 million"], "none": ["guest", "invite", "seating", "seat"], "say": ["Our budget is Rs. 1 million. What can we afford?"], "ask": "Our budget is Rs. 1 million. What can we afford?", "reply": "budget-1-million" },
+    { "id": "r-2m", "topic": "budget", "priority": 88, "any": ["2 million", "two million", "rs 2 million"], "none": ["guest", "invite"], "say": ["Our budget is Rs. 2 million. How should we allocate it?"], "ask": "Our budget is Rs. 2 million. How should we allocate it?", "reply": "budget-2-million" },
+    { "id": "r-cater-spend", "topic": "budget", "priority": 91, "all": ["cater"], "any": ["spend", "how much", "cost", "percent", "budget"], "ask": "How much should we spend on catering?", "reply": "budget-cater-share" },
+    { "id": "r-photo-spend", "topic": "budget", "priority": 91, "all": ["photo"], "any": ["spend", "how much", "cost", "percent", "budget"], "none": ["decoration", "decor", "floral"], "ask": "How much should we spend on photography?", "reply": "budget-photo-share" },
+    { "id": "r-decor-spend", "topic": "budget", "priority": 91, "any": ["decoration", "decorations", "spend on decor"], "none": ["photo", "photography"], "ask": "How much should we spend on decorations?", "reply": "budget-decor-share" },
+    { "id": "r-dress-spend", "topic": "budget", "priority": 91, "all": ["dress"], "any": ["spend", "how much", "cost"], "none": ["groom", "code"], "ask": "How much should we spend on the wedding dress?", "reply": "budget-dress-share" },
+    { "id": "r-groom-spend", "topic": "budget", "priority": 91, "all": ["groom"], "any": ["spend", "how much", "cost", "outfit"], "none": ["family"], "ask": "How much should we spend on the groom's outfit?", "reply": "budget-groom-share" },
+    { "id": "r-expensive", "topic": "budget", "priority": 86, "any": ["most expensive", "expensive services", "biggest cost", "largest expense"], "ask": "What are the most expensive wedding services?", "reply": "budget-expensive" },
+    { "id": "r-photo-vs-decor", "topic": "budget", "priority": 94, "all": ["photo", "decoration"], "any": ["photo"], "say": ["Should we spend more on photography or decoration?"], "ask": "Should we spend more on photography or decoration?", "reply": "budget-photo-vs-decor" },
+    { "id": "r-prioritize", "topic": "budget", "priority": 77, "any": ["what should we prioritize", "expenses should we prioritize", "prioritize with our budget"], "say": ["What wedding expenses should we prioritize?", "What should we prioritize with our budget?"], "ask": "What should we prioritize with our budget?", "reply": "budget-allocation" },
+
+    { "id": "r-venue-100", "topic": "vendor", "priority": 86, "all": ["100"], "any": ["venue", "hall", "hotel"], "none": ["seat", "seating", "table"], "say": ["What type of venue is best for 100 guests?"], "ask": "What type of venue is best for 100 guests?", "reply": "venue-100" },
+    { "id": "r-venue-200", "topic": "vendor", "priority": 86, "all": ["200"], "any": ["venue", "hall", "hotel"], "none": ["seat", "seating", "table"], "say": ["What type of venue is best for 200 guests?"], "ask": "What type of venue is best for 200 guests?", "reply": "venue-200" },
+    { "id": "r-venue-ask", "topic": "vendor", "priority": 84, "all": ["venue"], "any": ["questions to ask", "what should we ask", "what to ask", "ask a wedding venue"], "say": ["What questions should we ask a wedding venue?"], "ask": "What questions should we ask a wedding venue?", "reply": "venue-questions" },
+    { "id": "r-venue-book", "topic": "vendor", "priority": 84, "all": ["venue"], "any": ["how early", "when to book", "book the venue", "book a venue"], "say": ["How early should we book the venue?"], "ask": "How early should we book the venue?", "reply": "venue-when-to-book" },
+    { "id": "r-venue-check", "topic": "vendor", "priority": 84, "all": ["venue"], "any": ["check before", "before booking", "what should we check"], "say": ["What should we check before booking a venue?"], "ask": "What should we check before booking a venue?", "reply": "venue-questions" },
+    { "id": "r-planner", "topic": "vendor", "priority": 80, "any": ["wedding planner", "event planner", "planner"], "none": ["budget", "timeline", "checklist"], "say": ["How do we choose a wedding planner?"], "ask": "How do we choose a wedding planner?", "reply": "vendor-planner" },
+    { "id": "r-dj", "topic": "vendor", "priority": 82, "any": ["dj", "disc jockey", "wedding dj"], "none": ["playlist", "songs", "music ideas"], "say": ["How do we choose a DJ?"], "ask": "How do we choose a DJ?", "reply": "vendor-dj" },
+    { "id": "r-vendor-ask", "topic": "vendor", "priority": 82, "any": ["ask a vendor", "questions should we ask a vendor", "check before hiring", "before hiring a vendor"], "say": ["What questions should we ask a vendor?"], "ask": "What questions should we ask a vendor?", "reply": "vendor-questions" },
+    { "id": "r-book-vendors", "topic": "vendor", "priority": 73, "any": ["book wedding vendors", "book vendors first", "vendors should we book first", "how early should we book wedding vendors"], "say": ["Which vendors should we book first?", "How early should we book wedding vendors?"], "ask": "Which vendors should we book first?", "reply": "vendor-overview" },
+
+    { "id": "r-reduce-guests", "topic": "guests", "priority": 82, "any": ["reduce our guest", "reduce the guest", "cut the guest", "smaller guest list", "too many guests"], "say": ["How can we reduce our guest list?"], "ask": "How can we reduce our guest list?", "reply": "guests-reduce" },
+    { "id": "r-no-rsvp", "topic": "guests", "priority": 86, "any": ["does not rsvp", "did not rsvp", "no rsvp", "not rsvp", "guest does not"], "say": ["What should we do if a guest does not RSVP?"], "ask": "What should we do if a guest does not RSVP?", "reply": "guests-no-rsvp" },
+    { "id": "r-guest-1m", "topic": "guests", "priority": 90, "all": ["guest"], "any": ["1 million", "one million"], "say": ["How many guests should we invite if our budget is Rs. 1 million?"], "ask": "How many guests should we invite if our budget is Rs. 1 million?", "reply": "guests-1-million" },
+
+    { "id": "r-family-seat", "topic": "seating", "priority": 84, "any": ["bride family", "groom family", "brides family", "grooms family", "arrange family", "family members", "bride s family", "groom s family", "arrange friends"], "say": ["Where should the bride's family sit?", "Where should the groom's family sit?", "How should we arrange family members?", "How should we arrange friends?"], "ask": "Where should the bride's family sit?", "reply": "seating-family" },
+    { "id": "r-avoid-sit", "topic": "seating", "priority": 86, "any": ["cannot sit", "can t sit", "should not sit", "avoid sitting", "not sit together"], "say": ["What should we do if two guests cannot sit together?"], "ask": "What should we do if two guests cannot sit together?", "reply": "seating-avoid" },
+    { "id": "r-per-table", "topic": "seating", "priority": 84, "any": ["sit at one table", "per table", "how many guests can sit", "table capacity", "seats per table"], "ask": "How many guests can sit at one table?", "reply": "seating-tables" },
+    { "id": "r-seat-100", "topic": "seating", "priority": 86, "all": ["100"], "any": ["seating", "seat", "table"], "say": ["How can we create a seating arrangement for 100 guests?"], "ask": "How can we create a seating arrangement for 100 guests?", "reply": "seating-100" },
+
+    { "id": "r-sl-traditions", "topic": "ceremony", "priority": 82, "any": ["sri lankan wedding", "sri lankan traditions", "sri lankan customs", "lankan wedding", "traditional sri lankan"], "none": ["low budget", "cost", "price"], "say": ["What are the main Sri Lankan wedding traditions?", "What are common Sri Lankan wedding customs?", "What should we consider when planning a Sri Lankan wedding?", "What should we prepare for a traditional Sri Lankan wedding?"], "ask": "What are the main Sri Lankan wedding traditions?", "reply": "ceremony-sri-lankan" },
+    { "id": "r-poruwa-cost", "topic": "ceremony", "priority": 88, "all": ["poruwa"], "any": ["cost", "price", "how much", "budget", "expensive"], "say": ["What are the costs of a Poruwa ceremony?"], "ask": "What are the costs of a Poruwa ceremony?", "reply": "ceremony-poruwa-cost" },
+    { "id": "r-sl-vendors", "topic": "ceremony", "priority": 80, "all": ["sri lankan"], "any": ["vendor", "vendors"], "say": ["What vendors are needed for a Sri Lankan wedding?"], "ask": "What vendors are needed for a Sri Lankan wedding?", "reply": "ceremony-sri-lankan" },
+    { "id": "r-sl-modern", "topic": "ideas", "priority": 84, "any": ["traditional or modern", "traditional vs modern", "modern sri lankan", "difference between a traditional", "traditional and modern"], "say": ["Should we have a traditional or modern wedding?", "What is the difference between a traditional and modern Sri Lankan wedding?"], "ask": "Should we have a traditional or modern wedding?", "reply": "ideas-traditional-modern" },
+    { "id": "r-sl-low", "topic": "ceremony", "priority": 86, "all": ["traditional"], "any": ["low budget", "on a budget", "cheap", "limited budget"], "say": ["How can we plan a traditional wedding on a low budget?"], "ask": "How can we plan a traditional wedding on a low budget?", "reply": "ceremony-traditional-budget" },
+    { "id": "r-small-wed", "topic": "ideas", "priority": 80, "any": ["small wedding", "intimate wedding", "micro wedding"], "say": ["How can we plan a small wedding?"], "ask": "How can we plan a small wedding?", "reply": "ideas-small-large" },
+    { "id": "r-large-wed", "topic": "ideas", "priority": 80, "any": ["large wedding", "big wedding", "grand wedding"], "say": ["How can we plan a large wedding?"], "ask": "How can we plan a large wedding?", "reply": "ideas-small-large" },
+    { "id": "r-suitable", "topic": "ideas", "priority": 86, "any": ["suitable for us", "type of wedding", "wedding is suitable"], "none": ["theme", "venue", "100", "200"], "say": ["What type of wedding is suitable for us?"], "ask": "What type of wedding is suitable for us?", "reply": "ideas-traditional-modern" },
+    { "id": "r-low-theme", "topic": "ideas", "priority": 88, "all": ["theme"], "any": ["low budget", "cheap", "affordable"], "say": ["What is a suitable wedding theme for a low budget?"], "ask": "What is a suitable wedding theme for a low budget?", "reply": "ideas-theme-budget" },
+
+    { "id": "r-ceremony-length", "topic": "ideas", "priority": 80, "any": ["how long does a wedding ceremony", "ceremony usually take", "ceremony length"], "ask": "How long does a wedding ceremony usually take?", "reply": "ideas-timeline" },
+    { "id": "r-when-photos", "topic": "ideas", "priority": 80, "any": ["when should the photography", "photography start", "when should photography"], "ask": "When should the photography start?", "reply": "ideas-timeline" },
+    { "id": "r-when-reception", "topic": "ideas", "priority": 80, "any": ["when should we have the reception", "when is the reception"], "ask": "When should we have the reception?", "reply": "ideas-timeline" },
+    { "id": "r-confirm-vendors", "topic": "vendor", "priority": 80, "any": ["confirm vendors", "when should we confirm"], "ask": "When should we confirm vendors?", "reply": "vendor-booking" },
+    { "id": "r-finalize-guests", "topic": "guests", "priority": 80, "any": ["finalize the guest", "finalise the guest", "lock the guest"], "ask": "When should we finalize the guest list?", "reply": "guests-rsvp" },
+
+    { "id": "r-value", "topic": "ideas", "priority": 84, "any": ["better value", "which option is cheaper", "best value", "cheaper option", "gives better value"], "say": ["Which option is cheaper?", "Which vendor gives better value?", "Which vendor is best for our budget?"], "ask": "Which vendor gives better value?", "reply": "ideas-decide" },
+    { "id": "r-best-option", "topic": "ideas", "priority": 48, "any": ["best option", "best for our wedding", "which is best"], "none": ["photographer", "venue", "caterer", "theme", "100", "200"], "ask": "What is the best option for our wedding?", "reply": "ideas-decide" }
+  ],
+  "articles": [
+    {
+      "id": "greeting",
+      "category": "general",
+      "title": "",
+      "chat": "Hello! I'm the WOWWED Assistant, inside WOWWED — an intelligent wedding planning and decision support system for Sri Lankan couples and vendors. How can I help you?",
+      "answer": "Hello! I'm the WOWWED Assistant, inside WOWWED — an intelligent wedding planning and decision support system. How can I help you?"
+    },
+    {
+      "id": "thanks",
+      "category": "general",
+      "title": "",
+      "chat": "You're welcome! Tell me about your guests, budget, or the kind of wedding you want, and I'll help from there.",
+      "answer": "You're welcome! Tell me about your guests, budget, or the kind of wedding you want, and I'll help from there."
+    },
+    {
+      "id": "what-can-you-do",
+      "category": "general",
+      "title": "",
+      "chat": "I'm the WOWWED Assistant. WOWWED is an intelligent decision-support planner for Sri Lankan weddings — not a generic notes app. It covers the couple side (profile, checklist, guests, seating, invitations, LKR budget with cost prediction, vendors, analytics, reports, crew, readiness score) and a vendor side (listing and bookings).",
+      "answer": "WOWWED is an intelligent Sri Lankan wedding planner and decision support system. I am the Assistant inside it.",
+      "showPoints": true,
+      "points": [
+        "Wedding profile, Home countdown, and Readiness Score (tasks 40%, RSVPs 35%, budget 25%)",
+        "70+ Sri Lankan checklist tasks — Poruwa, church, Hindu Tamil, and Nikah",
+        "Guest list with family groups, RSVP, and CSV import",
+        "Seating chart with Smart Seating (auto-group by relationship and table size)",
+        "Invitation studio (Classic, Floral, Modern, Poruwa) and PDF reports",
+        "Budget in LKR, overspend alerts, and AI cost prediction (Random Forest)",
+        "Local vendor search and booking — Accept, Reject, or Negotiate; match by district, budget, and ceremony"
+      ],
+      "route": "/dashboard",
+      "routeLabel": "Open WOWWED Home"
+    },
+    {
+      "id": "about-wowwed",
+      "category": "general",
+      "title": "",
+      "chat": "WOWWED is an Intelligent Web-Based Wedding Planning and Decision Support System. It is not a generic wedding website. It is built for Sri Lankan couples and vendors: local ceremonies, LKR budgets, district vendors, and tools that help you decide — cost prediction, smart seating, vendor match, and a readiness score. I am the WOWWED Assistant, the chat inside that system — not the whole WOWWED app.",
+      "answer": "WOWWED is an Intelligent Web-Based Wedding Planning and Decision Support System for Sri Lankan couples and vendors. I am the Assistant inside it.",
+      "showPoints": true,
+      "points": [
+        "Decision support — not only storing notes: AI cost prediction, Smart Seating, Smart Vendor Match, Readiness Score",
+        "Couple workspace — profile, Sri Lankan checklist, guests & RSVP, seating, Poruwa invitations, LKR budget, vendor booking, analytics, PDF reports, crew, notifications",
+        "Vendor workspace — live listing, portfolio, bookings, and calendar (no admin wait to publish)"
+      ]
+    },
+    {
+      "id": "help-plan",
+      "category": "general",
+      "title": "",
+      "chat": "Of course. WOWWED is a Sri Lankan decision-support planner — checklist, guests, seating, budget in LKR, and local vendors — and I am the Assistant inside it. Tell me your guest count or budget, or ask about your wedding, and we’ll start from there.",
+      "answer": "I can help you plan in WOWWED — checklist, guests, seating, budget, and vendors."
+    },
+    {
+      "id": "checklist-overview",
+      "category": "checklist",
+      "title": "Wedding checklist overview",
+      "chat": "A good plan is to work backwards from the wedding date. Book the venue, photographer, catering, and bridal dressing first, then invitations, seating, and the final guest count. I can walk you through it step by step.",
+      "keywords": ["checklist", "task list", "to do", "todo", "planning list", "what should i do", "where to start", "first steps"],
+      "questions": ["what should be on my wedding checklist", "what should I do first on my wedding checklist", "how does the wowwed checklist work"],
+      "answer": "Work backwards from the wedding date. Book the scarce things first (venue, photographer, catering, bridal dressing), then invitations, fittings, seating, and final headcount. WowWed builds a Sri Lankan checklist from your ceremony type — open Wedding Checklist to tick items off by month and category.",
+      "points": [
+        "12 months out: budget, venue, auspicious date or church/kovil/mosque booking",
+        "6–10 months: photographer, catering, attire, theme, cake, entertainment",
+        "3–5 months: invitations, jewellery, contracts, fittings",
+        "1–2 months: seating chart, transport, final RSVPs, day-of timeline"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Open Wedding Checklist",
+      "relatedIds": ["checklist-12-months", "checklist-6-months", "checklist-poruwa"]
+    },
+    {
+      "id": "checklist-12-months",
+      "category": "checklist",
+      "title": "12 months before",
+      "keywords": ["12 months", "twelve months", "one year", "year before", "start planning", "early tasks", "from the start"],
+      "questions": ["what should I do 12 months before the wedding", "what to do a year before"],
+      "answer": "The first year is about locking the date, budget, and the places that book out.",
+      "points": [
+        "Set a total budget and category splits on the Budget page",
+        "Confirm the wedding date (nekatha, church calendar, or mosque availability)",
+        "Book the venue or reception hall",
+        "Start a guest list so venue capacity and catering quotes are realistic",
+        "Hire photographer and videographer — popular names fill 9–12 months ahead"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Open Wedding Checklist",
+      "relatedIds": ["checklist-overview", "budget-overview", "vendor-venue"]
+    },
+    {
+      "id": "checklist-6-months",
+      "category": "checklist",
+      "title": "6 months before",
+      "keywords": ["6 months", "six months", "halfway", "mid planning"],
+      "questions": ["what should I do 6 months before the wedding", "six month checklist"],
+      "answer": "Around six months out, most vendors should be booked and the look of the day should be decided.",
+      "points": [
+        "Book catering (rice and curry or hotel package) and the wedding cake",
+        "Book bridal dressing and the groom's national dress or suit",
+        "Choose theme, colours, and florist",
+        "Book band, DJ, or Kandyan dancers",
+        "Send save-the-date cards to family, especially outstation guests",
+        "Poruwa couples: book the Poruwa and ceremonial items"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Open Wedding Checklist",
+      "relatedIds": ["checklist-3-months", "vendor-overview", "checklist-poruwa"]
+    },
+    {
+      "id": "checklist-3-months",
+      "category": "checklist",
+      "title": "3 months before",
+      "keywords": ["3 months", "three months", "90 days"],
+      "questions": ["what should I do 3 months before the wedding"],
+      "answer": "This is invitation, fitting, and contract season — still early enough to fix gaps.",
+      "points": [
+        "Order and start delivering wedding invitations",
+        "Confirm vendor contracts and remaining deposits",
+        "Book hair, makeup, and clothing fittings",
+        "Order bridal jewellery if it is not already sorted",
+        "Collect RSVPs from close family first so catering numbers start to firm up"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Open Wedding Checklist",
+      "relatedIds": ["checklist-1-month", "vendor-booking", "budget-deposits"]
+    },
+    {
+      "id": "checklist-1-month",
+      "category": "checklist",
+      "title": "1 month before",
+      "keywords": ["1 month", "one month", "four weeks", "final month"],
+      "questions": ["what should I do 1 month before the wedding", "last month checklist"],
+      "answer": "The last month is confirmation, not new booking. Lock numbers and the day-of plan.",
+      "points": [
+        "Create the seating chart from confirmed guests",
+        "Arrange guest buses and parking",
+        "Confirm final headcount with the caterer",
+        "Create the wedding-day timeline",
+        "Confirm venue setup time and lighting",
+        "Pack an emergency kit (safety pins, stain stick, extra jewellery clasp, phone chargers)"
+      ],
+      "route": "/dashboard/seating",
+      "routeLabel": "Open Seating Chart",
+      "relatedIds": ["checklist-week", "checklist-overview"]
+    },
+    {
+      "id": "checklist-week",
+      "category": "checklist",
+      "title": "Wedding week",
+      "keywords": ["wedding week", "week of", "final week", "day before", "day of", "last week"],
+      "questions": ["what should I do in the wedding week", "day-of checklist"],
+      "answer": "Keep the week light. Confirm, rest, and hand the plan to someone who is not getting married.",
+      "points": [
+        "Reconfirm every vendor's arrival time and contact person",
+        "Share the day-of timeline with the wedding crew",
+        "Prepare cash envelopes for remaining balances and tips",
+        "Steam outfits and pack ceremony items the night before",
+        "Assign one coordinator for vendor questions so the couple can stay present"
+      ],
+      "route": "/dashboard/crew",
+      "routeLabel": "Open Wedding Crew",
+      "relatedIds": ["checklist-1-month", "vendor-booking"]
+    },
+    {
+      "id": "checklist-poruwa",
+      "category": "checklist",
+      "title": "Poruwa ceremony checklist",
+      "keywords": ["poruwa checklist", "poruwa tasks", "jayamangala", "ashlaka", "ashtaka", "nekatha", "kiribath", "magul"],
+      "questions": ["what is on a Poruwa checklist", "Poruwa ceremony tasks"],
+      "answer": "A Poruwa wedding adds ritual bookings on top of the shared WowWed checklist. Confirm the auspicious time early — it drives venue slot, photography, and catering.",
+      "points": [
+        "Confirm auspicious date and nekatha with an astrologer",
+        "Book the Poruwa and ceremonial items (usually 6 months out)",
+        "Find Jayamangala Gatha singers and ashtaka reciters",
+        "Arrange kiribath and traditional sweetmeats",
+        "Plan the Magul homecoming",
+        "Collect Poruwa items the week before so nothing is missing on the day"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Open Wedding Checklist",
+      "relatedIds": ["ceremony-poruwa", "checklist-overview", "vendor-floral"]
+    },
+    {
+      "id": "checklist-church",
+      "category": "checklist",
+      "title": "Church wedding checklist",
+      "keywords": ["church checklist", "priest", "choir", "hymns", "aisle", "marriage certificate"],
+      "questions": ["church wedding checklist", "what to do for a church wedding"],
+      "answer": "Church dates and paperwork take longer than a reception-only booking, so start with the parish.",
+      "points": [
+        "Book the church and priest as early as 12 months ahead",
+        "Arrange the choir and hymn list",
+        "Prepare marriage certificate documents",
+        "Plan aisle flowers and church décor with parish rules in mind",
+        "Schedule the church rehearsal in the final month"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Open Wedding Checklist",
+      "relatedIds": ["ceremony-church", "vendor-floral", "checklist-overview"]
+    },
+    {
+      "id": "checklist-hindu",
+      "category": "checklist",
+      "title": "Hindu Tamil wedding checklist",
+      "keywords": ["hindu checklist", "kovil", "thaali", "mangalsutra", "mehendi", "mehndi"],
+      "questions": ["Hindu Tamil wedding checklist", "kovil wedding tasks"],
+      "answer": "Hindu Tamil weddings combine kovil ritual, thaali, and often a mehendi night — book the priest and hall together so muhurtham and catering line up.",
+      "points": [
+        "Book the kovil and priest about 12 months out",
+        "Arrange the thaali / mangalsutra",
+        "Book the mehendi night",
+        "Arrange Hindu ceremonial items",
+        "Confirm vegetarian catering if the kovil or families require it"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Open Wedding Checklist",
+      "relatedIds": ["ceremony-hindu", "vendor-jewellery", "checklist-overview"]
+    },
+    {
+      "id": "checklist-nikah",
+      "category": "checklist",
+      "title": "Nikah ceremony checklist",
+      "keywords": ["nikah checklist", "mosque", "imam", "qazi", "mehr", "walima", "wali"],
+      "questions": ["Nikah checklist", "Muslim wedding tasks"],
+      "answer": "A Nikah is often simpler than a large reception, but documents, mehr, and the walima still need a clear timeline.",
+      "points": [
+        "Book the mosque and imam / qazi",
+        "Prepare nikah documents and agree the mehr",
+        "Plan the walima reception and guest count",
+        "Share dress-code notes with guests in advance"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Open Wedding Checklist",
+      "relatedIds": ["ceremony-nikah", "checklist-overview", "budget-overview"]
+    },
+    {
+      "id": "checklist-reception",
+      "category": "checklist",
+      "title": "Reception checklist",
+      "keywords": ["reception checklist", "mc", "first dance", "cake cutting", "playlist", "civil"],
+      "questions": ["reception only checklist", "what to plan for the reception"],
+      "answer": "A reception-only celebration still needs a host, a run of show, and a clear end time with the venue.",
+      "points": [
+        "Book an MC for speeches and announcements",
+        "Plan cake cutting and first dance",
+        "Create the reception playlist with the band or DJ",
+        "Confirm last-song and venue close-down time"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Open Wedding Checklist",
+      "relatedIds": ["ceremony-reception", "vendor-overview"]
+    },
+    {
+      "id": "ceremony-types",
+      "category": "ceremony",
+      "title": "Ceremony types in WowWed",
+      "keywords": ["ceremony types", "ceremony type", "traditions", "which ceremony", "types of wedding", "supported ceremonies"],
+      "questions": ["what ceremony types does WowWed support", "which ceremonies can I plan"],
+      "answer": "WowWed is built for Sri Lankan weddings. Pick a ceremony type in your wedding profile and the checklist plus vendor suggestions adapt to it.",
+      "points": [
+        "Poruwa Ceremony — Sinhalese / Buddhist tradition",
+        "Church Wedding — Christian / Western tradition",
+        "Hindu Tamil Wedding — kovil and thaali rites",
+        "Muslim Nikah Ceremony — Islamic tradition",
+        "Reception — celebration only, or after a legal/religious ceremony elsewhere"
+      ],
+      "route": "/wedding-profile",
+      "routeLabel": "Edit wedding profile",
+      "relatedIds": ["ceremony-poruwa", "ceremony-church", "ceremony-hindu", "ceremony-nikah"]
+    },
+    {
+      "id": "ceremony-choose",
+      "category": "ceremony",
+      "title": "Choosing a ceremony type",
+      "keywords": ["choose ceremony", "pick ceremony", "which type", "both ceremonies", "poruwa and church", "mixed ceremony"],
+      "questions": ["how do I choose a ceremony type", "can I have two ceremonies"],
+      "answer": "Choose the ceremony that families will actually attend as the 'main' event, then add a reception if you need a larger celebration. If you are having Poruwa in the morning and church or a hotel reception later, set the profile to the ritual that drives the checklist — usually Poruwa — and add reception tasks yourself.",
+      "points": [
+        "One ritual + hotel reception is the most common split",
+        "Two full ceremonies need two timelines, two décor setups, and extra photography hours",
+        "Tell vendors the day's order so they quote the right package"
+      ],
+      "route": "/wedding-profile",
+      "routeLabel": "Edit wedding profile",
+      "relatedIds": ["ceremony-types", "ceremony-poruwa", "budget-overview"]
+    },
+    {
+      "id": "ceremony-poruwa",
+      "category": "ceremony",
+      "title": "Poruwa ceremony",
+      "keywords": ["poruwa", "sinhala", "sinhalese", "buddhist", "traditional sri lankan", "poruwa ceremony"],
+      "questions": ["how do I plan a Poruwa ceremony", "what is a Poruwa ceremony"],
+      "answer": "A Poruwa ceremony is the traditional Sinhalese Buddhist wedding ritual on a decorated wooden platform. The couple exchange vows with ashtaka recitations, Jayamangala Gatha, and symbolic offerings. Book the Poruwa, singers, and ritual items 3–6 months ahead, and lock nekatha before you confirm the venue slot.",
+      "points": [
+        "Auspicious time (nekatha) comes first — photography and catering follow it",
+        "Allow extra time if a hotel reception is the same day",
+        "Brief the photographer on close-ups of the seven steps, rings, and family blessings"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Open Poruwa checklist",
+      "relatedIds": ["checklist-poruwa", "vendor-floral", "ceremony-types"]
+    },
+    {
+      "id": "ceremony-church",
+      "category": "ceremony",
+      "title": "Church wedding",
+      "keywords": ["church", "christian", "catholic", "chapel", "western wedding", "church wedding"],
+      "questions": ["how do I plan a church wedding", "what is a church wedding in Sri Lanka"],
+      "answer": "A church wedding follows Christian liturgy — processional, readings, vows, and blessing. Parishes often require membership, documents, and a rehearsal. Décor is usually simpler than a hotel Poruwa; spend on music, flowers along the aisle, and a photographer who knows low light.",
+      "points": [
+        "Ask the parish about photography rules and flash",
+        "Confirm whether rice-throwing or petals are allowed outside",
+        "Plan a buffer between church and reception for photos and travel"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Open church checklist",
+      "relatedIds": ["checklist-church", "vendor-photo", "ceremony-types"]
+    },
+    {
+      "id": "ceremony-hindu",
+      "category": "ceremony",
+      "title": "Hindu Tamil wedding",
+      "keywords": ["hindu", "tamil", "kovil", "muhurtham", "thaali", "mangalsutra", "hindu tamil"],
+      "questions": ["how do I plan a Hindu Tamil wedding", "what happens at a Tamil wedding"],
+      "answer": "A Hindu Tamil wedding centres on muhurtham, the thaali / mangalsutra, and priest-led rites at a kovil or hall. Families often host mehendi and a large vegetarian feast. Book priest, hall, and catering as one timeline so the ritual and meal are not rushed.",
+      "points": [
+        "Confirm muhurtham before printing invitations",
+        "Jewellery and thaali need a dedicated pickup and security plan",
+        "Tell the photographer which moments cannot be missed (thaali tying, homam, blessings)"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Open Hindu checklist",
+      "relatedIds": ["checklist-hindu", "vendor-jewellery", "ceremony-types"]
+    },
+    {
+      "id": "ceremony-nikah",
+      "category": "ceremony",
+      "title": "Muslim Nikah ceremony",
+      "keywords": ["nikah", "muslim", "islamic", "islam", "mosque", "walima", "mehr"],
+      "questions": ["how do I plan a Nikah", "what is a Nikah ceremony"],
+      "answer": "Nikah is the Islamic marriage contract, often at a mosque or home, followed by a walima reception. Keep the Nikah guest list closer and let the walima carry the larger celebration if you need it. Dress code, gender seating, and photography rules vary — ask the imam early and share notes with guests.",
+      "points": [
+        "Documents and mehr should be agreed before invitations go out",
+        "A walima can be the same day or later — budget catering once per event",
+        "If seating is separated, plan that on the Seating Chart before the week of"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Open Nikah checklist",
+      "relatedIds": ["checklist-nikah", "ceremony-types", "budget-overview"]
+    },
+    {
+      "id": "ceremony-reception",
+      "category": "ceremony",
+      "title": "Reception",
+      "keywords": ["reception", "party only", "celebration only", "hotel wedding", "civil"],
+      "questions": ["how do I plan a reception-only wedding", "what is a WowWed reception"],
+      "answer": "Choose Reception when the legal or religious ceremony is separate (or already done) and WowWed is for the celebration. Focus on venue, catering, cake, MC, music, and seating. You can still add ritual tasks manually on the checklist if a short blessing is part of the evening.",
+      "points": [
+        "Venue close-down time drives the run of show",
+        "An MC keeps cake cutting, speeches, and first dance on schedule",
+        "Guest count is the biggest cost lever — freeze RSVPs two weeks out"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Open reception checklist",
+      "relatedIds": ["checklist-reception", "vendor-venue", "budget-guest-count"]
+    },
+    {
+      "id": "vendor-overview",
+      "category": "vendor",
+      "title": "Finding wedding vendors",
+      "keywords": ["vendor", "vendors", "supplier", "book vendor", "find vendor", "marketplace"],
+      "questions": ["how do I choose and book wedding vendors", "where do I find vendors"],
+      "answer": "Browse WowWed Vendors by category and district, then send a booking request. Shortlist two options in each critical category so a decline does not stall the timeline. Filter by your district first — travel fees add up for photography, décor, and cake delivery.",
+      "points": [
+        "Categories: Venue & Res. Halls, Bridal Service, Groom service, Photography & Videography, Jewellary, Floral & Déco, Caters, Cakes",
+        "Ask for a written package, overtime rate, and what is not included",
+        "Send booking requests early — peak months fill first"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Browse vendors",
+      "relatedIds": ["vendor-booking", "vendor-venue", "vendor-photo"]
+    },
+    {
+      "id": "vendor-booking",
+      "category": "vendor",
+      "title": "Booking and negotiating",
+      "keywords": ["booking", "book", "negotiate", "deposit", "request", "accept", "reject", "contract"],
+      "questions": ["how do vendor bookings work", "should I pay a deposit"],
+      "answer": "On WowWed you send a booking request; the vendor can accept, reject, or negotiate. Treat accept as a hold until the deposit and contract are in writing. Keep every change (guest count, overtime, extra hours) on paper.",
+      "points": [
+        "Pay deposits only against a dated quotation",
+        "Record remaining balances in Budget so the week-of cash is planned",
+        "Confirm rain or power-cut backup for outdoor and garden venues"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Open Vendors",
+      "relatedIds": ["budget-deposits", "vendor-contracts", "vendor-overview"]
+    },
+    {
+      "id": "vendor-contracts",
+      "category": "vendor",
+      "title": "Vendor contracts",
+      "keywords": ["contract", "contracts", "quotation", "quote", "package", "overtime", "cancellation"],
+      "questions": ["what should a vendor contract include"],
+      "answer": "A useful contract is specific. Names, date, arrival time, guest count, package items, overtime, cancellation, and the remaining balance should all be written down.",
+      "points": [
+        "Date, venue, and start/end times",
+        "Exact deliverables (hours of coverage, number of outfits, menu items)",
+        "Overtime rate and who authorises it",
+        "Cancellation and postponement terms",
+        "Final payment date — usually a few days before, not on the porch"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Open Vendors",
+      "relatedIds": ["vendor-booking", "budget-deposits"]
+    },
+    {
+      "id": "vendor-venue",
+      "category": "vendor",
+      "title": "Venue & reception halls",
+      "chat": "{{ifGuests}}For {{guests}} guests, look for a hall that seats that number comfortably — not a huge ballroom that will look empty. {{/ifGuests}}{{ifBudget}}With {{budget}}, a mid-range hotel package or a well-chosen banquet hall is usually the right match. {{/ifBudget}}Visit at the same time of day as your ceremony, and ask what is included — chairs, Poruwa space, changing rooms, and a generator.",
+      "keywords": ["venue", "hall", "hotel", "banquet", "reception hall", "res hall", "ballroom"],
+      "questions": ["how do I choose a wedding venue", "venue booking tips"],
+      "answer": "The venue sets guest capacity, catering style, and often the date. Visit in person at the same time of day as your ceremony. Ask what is included — chairs, Poruwa space, changing rooms, generator, and last-event time.",
+      "points": [
+        "Match hall capacity to your realistic guest list, not the wish list",
+        "Colombo and Gampaha hotels book out first for December–January and July–August",
+        "Outdoor lawns need a rain plan and lighting, not just décor"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find venues",
+      "relatedIds": ["budget-venue-share", "vendor-catering", "ceremony-choose"]
+    },
+    {
+      "id": "vendor-photo",
+      "category": "vendor",
+      "title": "Photography & videography",
+      "keywords": ["photo", "photos", "photographer", "photography", "videography", "video", "album", "pre shoot", "pre-wedding"],
+      "questions": ["tips for booking a photographer", "how to choose a wedding photographer"],
+      "answer": "Book photography 9–12 months ahead for popular teams. Share your ceremony type so they know Poruwa close-ups, church low light, or thaali timing. A second shooter is worth it if you have two locations the same day.",
+      "points": [
+        "Ask how many hours, how many cameras, and when the album is delivered",
+        "Pre-wedding shoots are usually a separate package",
+        "Confirm drone or church photography rules before the quote is signed"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find photographers",
+      "relatedIds": ["vendor-overview", "budget-allocation", "checklist-12-months"]
+    },
+    {
+      "id": "vendor-catering",
+      "category": "vendor",
+      "title": "Catering",
+      "keywords": ["cater", "caters", "catering", "menu", "food", "rice and curry", "buffet", "per plate"],
+      "questions": ["how do I book wedding catering", "catering tips"],
+      "answer": "Catering is usually the second-largest cost after the venue. Hotel packages bundle food with the hall; outside caterers need kitchen access, power, and a per-plate number locked two weeks before.",
+      "points": [
+        "Get a tasting for the main menu, not only the cake",
+        "Plan welcome drinks, oil cakes, or sweetmeats as a separate line if they are not in the package",
+        "Vegetarian, halal, and children's plates should be counted, not guessed"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find caterers",
+      "relatedIds": ["budget-guest-count", "vendor-venue", "budget-allocation"]
+    },
+    {
+      "id": "vendor-bridal",
+      "category": "vendor",
+      "title": "Bridal service",
+      "keywords": ["bridal", "bride", "dress", "saree", "kandyan", "osariya", "makeup", "hair", "dressing"],
+      "questions": ["how do I book bridal dressing", "bridal service tips"],
+      "answer": "Sri Lankan bridal service often includes Kandyan, Indian, or Western dressing plus hair and makeup. Book the dressing house when the date is firm, then schedule a trial and a fitting three months out.",
+      "points": [
+        "Say whether you need a going-away outfit or homecoming saree",
+        "Trials should use the same jewellery and flowers as the day",
+        "Confirm who comes to the venue and at what time — overtime is common"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find bridal services",
+      "relatedIds": ["vendor-groom", "vendor-jewellery", "checklist-3-months"]
+    },
+    {
+      "id": "vendor-groom",
+      "category": "vendor",
+      "title": "Groom service",
+      "keywords": ["groom", "suit", "national dress", "tux", "groom service", "nilame"],
+      "questions": ["groom attire tips", "how to book groom service"],
+      "answer": "Groom service is easy to leave late — do not. National dress or a suit needs the same fitting window as the bride, especially if the party is matching.",
+      "points": [
+        "Book 6–9 months out if the outfit is custom",
+        "Share colour cues with the bride's dressing house",
+        "Keep a spare shirt and comfortable shoes at the venue"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find groom services",
+      "relatedIds": ["vendor-bridal", "checklist-6-months"]
+    },
+    {
+      "id": "vendor-jewellery",
+      "category": "vendor",
+      "title": "Jewellery",
+      "keywords": ["jewellary", "jewellery", "jewelry", "gold", "necklace", "thaali", "rings", "bridal jewellery"],
+      "questions": ["when should I order bridal jewellery", "jewellery tips"],
+      "answer": "Order or reserve bridal jewellery about four months ahead so resizing and matching sets are not rushed. For Hindu weddings, treat the thaali as its own task with a trusted family member responsible on the day.",
+      "points": [
+        "Insurance or a written custody plan for hired sets",
+        "Try jewellery at the makeup trial",
+        "Wedding rings are a separate, earlier purchase than the bridal set"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find jewellers",
+      "relatedIds": ["checklist-hindu", "vendor-bridal", "budget-hidden-costs"]
+    },
+    {
+      "id": "vendor-floral",
+      "category": "vendor",
+      "title": "Floral & décor",
+      "keywords": ["floral", "florist", "flower", "flowers", "deco", "decor", "jasmine", "poruwa deco"],
+      "questions": ["how do I book wedding flowers", "décor tips"],
+      "answer": "Florals and décor should follow the ceremony. A Poruwa needs traditional structure and jasmine; a church may limit attachments to pews; a hotel stage can take a larger flower wall. Book around six months out and share reference photos plus venue rules.",
+      "points": [
+        "Ask what happens in heat — fresh flowers wilt in outdoor noon ceremonies",
+        "Lighting is part of décor, not an afterthought",
+        "Reuse ceremony flowers at the reception where the venue allows it"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find florists",
+      "relatedIds": ["ceremony-poruwa", "vendor-venue", "budget-allocation"]
+    },
+    {
+      "id": "vendor-cakes",
+      "category": "vendor",
+      "title": "Wedding cakes",
+      "keywords": ["cake", "cakes", "tier", "cake tasting", "wedding cake"],
+      "questions": ["when should I order the wedding cake", "cake vendor tips"],
+      "answer": "Order the cake about six months ahead, with a tasting if the design is custom. Confirm delivery time, setup at the venue, and whether cutting service is included. A small display cake plus a sheet cake in the kitchen is a common cost saver for large guest counts.",
+      "points": [
+        "Tell the baker the climate and how long the cake will sit out",
+        "Allergies and vegetarian icing should be on the order form",
+        "Transport is often extra — budget delivery, not only the cake"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find cake makers",
+      "relatedIds": ["vendor-catering", "budget-saving", "checklist-6-months"]
+    },
+    {
+      "id": "budget-overview",
+      "category": "budget",
+      "title": "Wedding budget basics",
+      "chat": "Tell me your total in rupees — or open Budget if you already set one — and I’ll split venue, catering, photography, décor, and a small buffer into actual amounts.",
+      "keywords": ["budget", "money", "cost", "costs", "spend", "lkr", "rupees", "afford", "price"],
+      "questions": ["how should I split my wedding budget", "how do I start a wedding budget"],
+      "answer": "Set a total first, then allocate by category, then track expenses against those envelopes.",
+      "points": [],
+      "route": "/dashboard/budget",
+      "routeLabel": "Open Budget",
+      "relatedIds": ["budget-allocation", "budget-predict", "budget-hidden-costs"]
+    },
+    {
+      "id": "budget-allocation",
+      "category": "budget",
+      "title": "How to split the budget",
+      "chat": "{{ifBudget}}Based on {{budget}}, {{/ifBudget}}I can help you allocate expenses across the venue, catering, photography, decoration, and other services. A simple split is venue and food first, then photography, then attire and décor, with a little kept back for surprises.",
+      "keywords": ["split", "allocate", "allocation", "percent", "percentage", "category budget", "share"],
+      "questions": ["how do I allocate the wedding budget", "budget percentages"],
+      "answer": "Percentages are a starting point, not a rule. A hotel package that includes food will make 'venue' look huge and 'catering' small — that is fine if the total is still inside the cap. Adjust after the first two quotes.",
+      "points": [
+        "If the hotel bundles hall + menu, treat it as one line and protect photography and attire next",
+        "Guest count moves catering more than it moves the photographer",
+        "Luxury décor is the category that quietly blows a 'standard' budget"
+      ],
+      "route": "/dashboard/budget",
+      "routeLabel": "Open Budget",
+      "relatedIds": ["budget-venue-share", "budget-guest-count", "budget-saving"]
+    },
+    {
+      "id": "budget-venue-share",
+      "category": "budget",
+      "title": "Venue share of the budget",
+      "keywords": ["venue cost", "venue budget", "hall cost", "hotel package", "how much venue", "venue take", "venue share"],
+      "questions": ["how much should the venue take from the budget"],
+      "answer": "Plan 30–40% of the total for venue, or more if the hotel package includes catering. Get the minimum spend in writing — many halls charge for a floor even if your list shrinks. A smaller hall at a realistic headcount beats a grand ballroom at 60% capacity.",
+      "route": "/dashboard/budget",
+      "routeLabel": "Open Budget",
+      "relatedIds": ["vendor-venue", "budget-allocation", "budget-guest-count"]
+    },
+    {
+      "id": "budget-peak-season",
+      "category": "budget",
+      "title": "Peak season pricing",
+      "keywords": ["peak", "season", "december", "january", "july", "august", "off season", "wedding season"],
+      "questions": ["when is peak wedding season", "does season change the cost"],
+      "answer": "Sri Lankan peak months (roughly December–January and July–August) raise venue and photography prices and fill calendars. Auspicious weekends book first. If the date is flexible, a mid-week or off-peak date is one of the largest discounts you can get without cutting the guest list.",
+      "points": [
+        "Ask vendors for weekday vs Saturday rates",
+        "Nekatha and church calendars still constrain 'any Saturday'",
+        "Cost prediction on the Budget page treats peak months as a higher factor"
+      ],
+      "route": "/dashboard/budget",
+      "routeLabel": "Open Budget",
+      "relatedIds": ["budget-predict", "budget-district", "vendor-venue"]
+    },
+    {
+      "id": "budget-guest-count",
+      "category": "budget",
+      "title": "Guest count and cost",
+      "keywords": ["guest count", "headcount", "per plate", "how many guests", "invite list", "rsvp"],
+      "questions": ["how does guest count affect budget", "how many guests can I afford"],
+      "answer": "Every extra guest is extra catering, cake, seating, and sometimes a larger hall. Build the guest list early, track RSVPs, and freeze the headcount about two weeks before for the caterer. A smaller confirmed list is cheaper than a padded 'maybe' list.",
+      "points": [
+        "Use Guest List RSVP status so the seating chart and catering number match",
+        "Outstation guests may also need rooms and buses — log those as logistics, not catering",
+        "Children and crew meals should be counted if the caterer charges for them"
+      ],
+      "route": "/dashboard/guests",
+      "routeLabel": "Open Guest List",
+      "relatedIds": ["budget-overview", "vendor-catering", "checklist-1-month"]
+    },
+    {
+      "id": "budget-deposits",
+      "category": "budget",
+      "title": "Deposits and cash flow",
+      "keywords": ["deposit", "deposits", "advance", "balance", "payment plan", "instalment"],
+      "questions": ["when do I pay vendor deposits", "how to plan wedding payments"],
+      "answer": "Most vendors want a booking deposit now and the balance shortly before the wedding. Map those dates on the Budget page so three deposits do not land in the same month. Never pay a large balance in cash on the day without a receipt.",
+      "points": [
+        "Typical split: 30–50% to book, remainder 1–2 weeks before",
+        "Keep a small cash float for day-of tips and overtime",
+        "If a vendor negotiates, get the new total in writing before the next payment"
+      ],
+      "route": "/dashboard/budget",
+      "routeLabel": "Open Budget",
+      "relatedIds": ["vendor-booking", "budget-hidden-costs"]
+    },
+    {
+      "id": "budget-hidden-costs",
+      "category": "budget",
+      "title": "Hidden costs",
+      "keywords": ["hidden", "extra", "overtime", "service charge", "tax", "tips", "generator", "transport fee"],
+      "questions": ["what wedding costs do people forget", "hidden wedding expenses"],
+      "answer": "Quotes often omit the extras that appear in the last six weeks. Add a contingency line of 5–10% for them.",
+      "points": [
+        "Service charge and VAT on hotel bills",
+        "Photography or décor overtime",
+        "Generator, corkage, and cake-cutting fees",
+        "Guest transport, welcome drinks, and printed extras",
+        "Alterations, extra makeup, and jewellery hire"
+      ],
+      "route": "/dashboard/budget",
+      "routeLabel": "Open Budget",
+      "relatedIds": ["budget-saving", "vendor-contracts", "budget-overview"]
+    },
+    {
+      "id": "budget-saving",
+      "category": "budget",
+      "title": "Ways to save",
+      "keywords": ["save", "saving", "cheaper", "cut cost", "reduce", "affordable", "on a budget"],
+      "questions": ["how can I save money on the wedding", "budget wedding tips"],
+      "answer": "Cut the things guests will not notice before you cut photography hours or food quality. Date, guest count, and venue package are the three large levers.",
+      "points": [
+        "Trim the guest list before you trim the menu",
+        "Reuse ceremony flowers at the reception",
+        "Display cake plus kitchen sheet cake for large lists",
+        "Weekday or off-peak dates",
+        "One strong photographer instead of two average packages"
+      ],
+      "route": "/dashboard/budget",
+      "routeLabel": "Open Budget",
+      "relatedIds": ["budget-guest-count", "budget-peak-season", "budget-allocation"]
+    },
+    {
+      "id": "budget-predict",
+      "category": "budget",
+      "title": "AI cost prediction",
+      "keywords": ["predict", "prediction", "estimate", "ai cost", "random forest", "how much will it cost"],
+      "questions": ["how does cost prediction work", "can WowWed estimate my wedding cost"],
+      "answer": "On the Budget page you can run AI cost prediction. It estimates a total in LKR from guest count, district, ceremony type, scale (standard / premium / luxury), and wedding season. As a rough Sri Lankan range: a small hometown wedding may sit near Rs. 0.8–1.5 million; a mid-range hotel wedding of about 150–200 guests is often Rs. 2–4 million; luxury Colombo events run higher. Use the estimate as a planning range, then replace it with real quotations.",
+      "route": "/dashboard/budget",
+      "routeLabel": "Run cost prediction",
+      "relatedIds": ["budget-overview", "budget-district", "budget-peak-season"]
+    },
+    {
+      "id": "budget-district",
+      "category": "budget",
+      "title": "District and location costs",
+      "keywords": ["district", "colombo", "gampaha", "kandy", "galle", "location", "city", "outstation"],
+      "questions": ["does district change wedding cost", "is Colombo more expensive"],
+      "answer": "Yes. Colombo and nearby Gampaha usually cost more for halls, décor, and photography than Kurunegala, Matara, or Jaffna. Outstation weddings add vendor travel. Filter vendors by your district so quotes are comparable, and log travel as its own budget line if you hire a Colombo team for a hometown wedding.",
+      "route": "/dashboard/vendors",
+      "routeLabel": "Filter vendors by district",
+      "relatedIds": ["budget-predict", "vendor-overview", "budget-overview"]
+    },
+    {
+      "id": "budget-expenses",
+      "category": "budget",
+      "title": "Track expenses",
+      "answer": "On Budget, set a total, add category envelopes (venue, catering, photos…), then log each payment as an expense. WowWed compares spent vs planned and flags when a category or the total is over. Open Expense overview for a cleaner list of what has gone out.",
+      "points": [
+        "Add the category first, then the expense under it",
+        "Record deposits as soon as you pay them",
+        "If you go over, trim guest count or décor before cutting photography hours"
+      ],
+      "route": "/dashboard/budget",
+      "routeLabel": "Open Budget",
+      "relatedIds": ["budget-overview", "budget-hidden-costs", "budget-saving"]
+    },
+    {
+      "id": "guests-overview",
+      "category": "guests",
+      "title": "Guest list",
+      "chat": "{{ifGuests}}For {{guests}} guests, {{/ifGuests}}start with a clear list — family, friends, and anyone who must be there. Group people as you add them (bride’s family, groom’s family, friends). That makes seating and RSVPs much easier later.",
+      "answer": "Keep every name in Guest List — not in a side notebook. Add people one by one or import a CSV. Put each guest in a group (bride’s family, friends, VIP…). That group is what Smart Seating uses later, so it is worth doing now.",
+      "points": [
+        "Name is required; phone or email helps you follow up",
+        "RSVP starts as Waiting until they reply",
+        "A realistic list is kinder to your venue and catering quotes"
+      ],
+      "route": "/dashboard/guests",
+      "routeLabel": "Open Guest List",
+      "relatedIds": ["guests-rsvp", "guests-csv", "guests-groups"]
+    },
+    {
+      "id": "guests-rsvp",
+      "category": "guests",
+      "title": "Track RSVPs",
+      "answer": "Each guest has three replies: Coming, Waiting, or Not coming. Update them as answers arrive. Aim to lock the “Coming” number about two weeks before, then send that headcount to the caterer and build the seating chart from Coming guests only.",
+      "points": [
+        "You can update several guests at once with bulk RSVP",
+        "Waiting guests still count toward invitations, not toward catering",
+        "Analytics shows how many have answered"
+      ],
+      "route": "/dashboard/guests",
+      "routeLabel": "Update RSVPs",
+      "relatedIds": ["guests-overview", "seating-overview", "budget-guest-count"]
+    },
+    {
+      "id": "guests-csv",
+      "category": "guests",
+      "title": "Import guests from CSV",
+      "answer": "On Guest List, download the CSV template, fill name, email, phone, group, rsvp, age, notes, and avoid, then import. Large family lists (hundreds of names) belong in a spreadsheet first. Duplicate names with the same phone or email are skipped so you can import more than once safely.",
+      "points": [
+        "Keep the header row exactly as the template",
+        "Use Coming / Waiting / Not coming (or yes / no) for RSVP",
+        "Group names such as Bride's Family match WowWed’s groups"
+      ],
+      "route": "/dashboard/guests",
+      "routeLabel": "Open Guest List",
+      "relatedIds": ["guests-overview", "guests-groups", "guests-rsvp"]
+    },
+    {
+      "id": "guests-groups",
+      "category": "guests",
+      "title": "Guest groups",
+      "answer": "Groups keep families together on the seating chart. Use Bride’s / Groom’s family and friends, colleagues, relatives, VIP, neighbours, or Other. VIP and close family usually sit nearer the couple. Mark people who should not sit together in the avoid note.",
+      "route": "/dashboard/guests",
+      "routeLabel": "Open Guest List",
+      "relatedIds": ["seating-smart", "guests-overview", "seating-overview"]
+    },
+    {
+      "id": "seating-overview",
+      "category": "seating",
+      "title": "Seating chart",
+      "chat": "I can help create a seating arrangement based on your guest relationships, table capacity, and seating constraints.{{ifGuests}} For {{guests}} guests, plan about {{tables}} — keep both families close to the couple, then seat friends together.{{/ifGuests}}",
+      "answer": "Add tables, then seat guests who are Coming. Start with family and VIP, then friends. You can place people by hand or run Smart Seating and fix anything that feels wrong. Only Coming guests should be seated — Waiting and Not coming stay off the floor plan.",
+      "points": [
+        "Create tables before you auto-seat",
+        "Leave a couple of spare seats for late yes replies",
+        "Share the chart with family using the Seating PDF report"
+      ],
+      "route": "/dashboard/seating",
+      "routeLabel": "Open Seating Chart",
+      "relatedIds": ["seating-smart", "seating-tables", "guests-rsvp"]
+    },
+    {
+      "id": "seating-smart",
+      "category": "seating",
+      "title": "Smart seating",
+      "answer": "Smart Seating groups Coming guests by their group (family, friends, VIP…) and fills tables without going over seat counts. It is a starting layout, not a final decision — drag anyone who should move. Run it again after RSVPs change.",
+      "points": [
+        "Guests need a group on the Guest List for this to work well",
+        "Use Avoid notes for people who must not share a table",
+        "Check seating accuracy on Analytics after you auto-seat"
+      ],
+      "route": "/dashboard/seating",
+      "routeLabel": "Open Seating Chart",
+      "relatedIds": ["seating-overview", "guests-groups", "analytics-overview"]
+    },
+    {
+      "id": "seating-tables",
+      "category": "seating",
+      "title": "Tables",
+      "answer": "Add each table with a name, seat count, and shape (round, rectangle, square, head table, or standing). Suites such as family or VIP help you zone the room. A head table is usually for the couple and wedding crew; round tables of 8–10 work for most Sri Lankan halls.",
+      "route": "/dashboard/seating",
+      "routeLabel": "Add tables",
+      "relatedIds": ["seating-overview", "seating-smart", "crew-overview"]
+    },
+    {
+      "id": "invitations-overview",
+      "category": "invitations",
+      "title": "Invitations",
+      "answer": "Open Invitations, pick a template (Classic, Floral, Modern, or Poruwa), then fill your names, date, venue, and message. The preview updates as you type. Send save-the-dates earlier; send the full invitation about 6–8 weeks before, once the venue and time are firm.",
+      "points": [
+        "Your wedding profile names and date can fill the card for you",
+        "Keep one clear RSVP instruction (phone, WhatsApp, or WowWed list)",
+        "Print extras for elders who prefer a paper card"
+      ],
+      "route": "/dashboard/invitations",
+      "routeLabel": "Design invitations",
+      "relatedIds": ["invitations-pdf", "guests-rsvp", "checklist-3-months"]
+    },
+    {
+      "id": "invitations-pdf",
+      "category": "invitations",
+      "title": "Download invitations",
+      "answer": "When the design looks right, export or print from the Invitations studio. Use PDF for the printer and for WhatsApp sharing. Double-check spelling of both families’ names before you send a hundred copies.",
+      "route": "/dashboard/invitations",
+      "routeLabel": "Open Invitations",
+      "relatedIds": ["invitations-overview", "reports-overview"]
+    },
+    {
+      "id": "crew-overview",
+      "category": "wowwed",
+      "title": "Wedding crew",
+      "answer": "Wedding Crew is your bridesmaids, groomsmen, best man, maid of honour, flower girl, ring bearer, and day-of helpers. Add each person and a role so you know who to call when a vendor arrives. Give one coordinator the day-of timeline — it should not be the couple.",
+      "route": "/dashboard/crew",
+      "routeLabel": "Open Wedding Crew",
+      "relatedIds": ["checklist-week", "seating-tables", "how-to-use"]
+    },
+    {
+      "id": "analytics-overview",
+      "category": "wowwed",
+      "title": "Analytics",
+      "answer": "Analytics is a snapshot of your own wedding — RSVP split, checklist progress, budget used, seating quality, and readiness score. Nothing here is shared with other couples. Use it when you want to see what still needs attention this week.",
+      "route": "/dashboard/analytics",
+      "routeLabel": "Open Analytics",
+      "relatedIds": ["readiness-score", "guests-rsvp", "budget-overview"]
+    },
+    {
+      "id": "reports-overview",
+      "category": "wowwed",
+      "title": "PDF reports",
+      "answer": "Reports can print five PDFs: guest list, budget, vendors, seating, or a full summary. Use them when a parent or vendor asks “send me the list”. Each report uses the data already in your dashboard — update RSVPs or expenses first, then download.",
+      "route": "/dashboard/reports",
+      "routeLabel": "Open Reports",
+      "relatedIds": ["guests-overview", "seating-overview", "budget-overview"]
+    },
+    {
+      "id": "readiness-score",
+      "category": "wowwed",
+      "title": "Readiness score",
+      "answer": "Your dashboard readiness score is: tasks 40% + RSVPs 35% + budget 25%. Green means you are on track, yellow means some gaps, red means the date is close and key pieces are missing. Tick checklist items, collect RSVPs, and log spending to lift the score — it is a reminder, not a grade.",
+      "route": "/dashboard",
+      "routeLabel": "Open Home",
+      "relatedIds": ["checklist-overview", "guests-rsvp", "budget-expenses"]
+    },
+    {
+      "id": "wedding-profile",
+      "category": "wowwed",
+      "title": "Wedding profile",
+      "answer": "Tap the couple names in the sidebar (or Settings) to edit partners’ names, ceremony type, district, date, and guest count. Ceremony type rebuilds suggested checklist tasks, and district helps vendor search and cost prediction. Change these early so the rest of WowWed stays in sync.",
+      "route": "/wedding-profile",
+      "routeLabel": "Edit wedding profile",
+      "relatedIds": ["ceremony-types", "how-to-use", "checklist-overview"]
+    },
+    {
+      "id": "how-to-use",
+      "category": "wowwed",
+      "title": "How to use WowWed",
+      "chat": "Start on Home for the countdown and Readiness Score. Fill your wedding profile first — names, date, ceremony (Poruwa, church, Hindu, or Nikah), and district — so the Sri Lankan checklist, vendor match, and cost prediction line up. Then guests, seating, invitations, budget in LKR, and vendors.",
+      "answer": "Start on Home for the countdown and readiness score. Work left to right: Checklist, Guests, Seating, Invitations, Budget, Vendors. Analytics and Reports are for checking progress. This assistant stays on your device and only answers from the rules in this knowledge base.",
+      "points": [
+        "Fill the wedding profile first (date, ceremony, district)",
+        "Import or type the guest list before seating",
+        "Send vendor booking requests from Vendors, then log deposits in Budget"
+      ],
+      "route": "/dashboard",
+      "routeLabel": "Open Home",
+      "relatedIds": ["checklist-overview", "guests-overview", "vendor-overview"]
+    },
+    {
+      "id": "vendor-match",
+      "category": "vendor",
+      "title": "Smart vendor match",
+      "answer": "On Vendors, filter by category, district, and price. WowWed highlights professionals that fit your district, budget, and ceremony — it is a rule-based shortlist, not a paid ranking. Always read the package and send a booking request to confirm the date.",
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find matching vendors",
+      "relatedIds": ["vendor-overview", "budget-district", "vendor-booking"]
+    },
+    {
+      "id": "ideas-overview",
+      "category": "ideas",
+      "title": "Wedding ideas",
+      "answer": "Couples usually start with four choices: theme, colours, setting (indoor / garden / beach), and food style. Pick those first — they guide the Poruwa or church décor, invitations, and outfits. Tap Ideas & style for ready-made questions, or type “wedding theme”, “colour palette”, or “decoration ideas”.",
+      "points": [
+        "Theme — traditional gold & ivory, garden green, beach coral, or modern minimal",
+        "Colours — two mains + one accent, tested in hall lighting",
+        "Setting — indoor hall, hotel garden, or coast, with a rain plan",
+        "Food — rice-and-curry, hotel buffet, or live hopper / kottu stations"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Add style tasks to the checklist",
+      "relatedIds": ["ideas-theme", "ideas-colours", "ideas-decor", "ideas-menu"]
+    },
+    {
+      "id": "ideas-theme",
+      "category": "ideas",
+      "title": "Wedding theme ideas",
+      "answer": "A theme is a simple story, not a costume party. Choose one that fits your ceremony and venue, then repeat it in flowers, lighting, and the invitation. Popular Sri Lankan directions couples search for:",
+      "points": [
+        "Classic Kandyan — carved Poruwa, ivory, gold, jasmine, brass lamps",
+        "Garden romance — whites, greens, hanging florals, fairy lights",
+        "Beach / south-coast — sand, coral, light blue, coconut and lotus details",
+        "Hill-country — emerald, champagne, tea-estate views, wood and ferns",
+        "Modern minimal — ivory, soft peach, clean stage, fewer heavy backdrops",
+        "Jewel fusion — burgundy or emerald with gold for a night hotel reception"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Put “choose theme” on the checklist",
+      "relatedIds": ["ideas-colours", "ideas-decor", "ideas-setting", "vendor-floral"]
+    },
+    {
+      "id": "ideas-colours",
+      "category": "ideas",
+      "title": "Colour palette ideas",
+      "answer": "Pick two main colours and one accent, then use them on the Poruwa or aisle, table flowers, and bridesmaid outfits. Match the venue: gold halls like maroon and ivory; gardens like sage and cream; beaches like coral and sand.",
+      "points": [
+        "Sinhala / Poruwa — red, gold, and white for prosperity and the Kandyan saree",
+        "Hindu Tamil — bright red, yellow, and green with temple flowers",
+        "Nikah / walima — jewel blues, greens, purples, or soft pastels",
+        "Church — ivory, blush, and greenery (check parish décor rules)",
+        "2025–26 trend — ivory + soft gold + burnt orange, or emerald + burgundy"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Add colour choices to your tasks",
+      "relatedIds": ["ideas-theme", "ideas-bridesmaids", "ideas-decor", "ideas-dresscode"]
+    },
+    {
+      "id": "ideas-decor",
+      "category": "ideas",
+      "title": "Decoration ideas",
+      "answer": "Spend on what the camera and guests see first: ceremony backdrop, entrance, and the couple’s table. Keep the Poruwa or altar readable — too many flowers hide the ritual. Reuse ceremony flowers at the reception if the venue allows it.",
+      "points": [
+        "Poruwa: carved wood, jasmine, lotus, punkala pots, oil lamps — or a simple ivory floral arch",
+        "Entrance: name board, drapes, and a photo wall guests actually use",
+        "Tables: low centrepieces so people can talk; candles or fairy lights after dark",
+        "Stage: one strong backdrop beats five competing props",
+        "Heat tip: outdoor noon flowers wilt — plan shade or indoor backup"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find floral & décor vendors",
+      "relatedIds": ["ideas-theme", "vendor-floral", "ideas-setting", "ideas-rain"]
+    },
+    {
+      "id": "ideas-bridal-look",
+      "category": "ideas",
+      "title": "Bridal look ideas",
+      "answer": "Sri Lankan brides often wear a Kandyan osariya or Indian saree for the ritual and change for the reception. A Western gown works for church or a hotel evening. Book the dressing house when the date is firm, then trial hair, makeup, and jewellery together.",
+      "points": [
+        "Poruwa day: Kandyan saree in white, gold, or cream",
+        "Hindu wedding: Kanchipuram or bright silk, with thaali planned as its own task",
+        "Church: gown or modest saree — ask the parish about veil and shoulders",
+        "Homecoming: a red or bright saree is still the usual “second look”",
+        "Keep one going-away outfit if you have photos after the reception"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find bridal services",
+      "relatedIds": ["vendor-bridal", "ideas-colours", "vendor-jewellery", "ideas-homecoming"]
+    },
+    {
+      "id": "ideas-bridesmaids",
+      "category": "ideas",
+      "title": "Bridesmaid ideas",
+      "answer": "Give the party one colour family, not identical factory dresses. Jewel emerald, burgundy, or champagne photographs well in Sri Lankan halls. Groomsmen can echo the same colour in the pocket square or sash so the group looks planned, not uniform.",
+      "route": "/dashboard/crew",
+      "routeLabel": "Add your wedding crew",
+      "relatedIds": ["ideas-colours", "crew-overview", "ideas-dresscode"]
+    },
+    {
+      "id": "ideas-menu",
+      "category": "ideas",
+      "title": "Food and menu ideas",
+      "answer": "Guests remember food more than napkin folds. A hotel package is simplest. If you want a “Sri Lankan Google favourite” menu, mix a main buffet with one or two live stations — hoppers, kottu, or a seafood grill — plus traditional sweets.",
+      "points": [
+        "Welcome: iced drinks, oil cakes, kevum, or a short-eats table",
+        "Main: rice and curry, hotel international buffet, or both",
+        "Live corners: hoppers, kottu, string hoppers, or a dessert watalappan station",
+        "Count vegetarian, halal, and children’s plates — do not guess",
+        "Lock the headcount two weeks out with the caterer"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find caterers",
+      "relatedIds": ["vendor-catering", "budget-guest-count", "ideas-cake", "guests-rsvp"]
+    },
+    {
+      "id": "ideas-cake",
+      "category": "ideas",
+      "title": "Cake ideas",
+      "answer": "A small display cake for photos plus a kitchen sheet cake is the usual way to feed a large Sri Lankan guest list without paying for a five-tier sculpture. Chocolate, butter cake, and fruit cake travel well in heat; cream-heavy designs need air-conditioning.",
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find cake makers",
+      "relatedIds": ["vendor-cakes", "ideas-menu", "budget-saving"]
+    },
+    {
+      "id": "ideas-favors",
+      "category": "ideas",
+      "title": "Wedding favours",
+      "answer": "Skip plastic trinkets guests leave on the table. Better return-gifts: seed packets, local tea, jaggery sweets, handmade soap, or a small plant. One nice thing beats five cheap things. Put a simple thank-you note with your names and date.",
+      "route": "/dashboard/checklist",
+      "routeLabel": "Add favours to the checklist",
+      "relatedIds": ["ideas-overview", "budget-saving", "invitations-overview"]
+    },
+    {
+      "id": "ideas-music",
+      "category": "ideas",
+      "title": "Music and first dance",
+      "answer": "Build three playlists: ceremony (soft, no lyrics that clash with ritual), dinner (talkable volume), and dance (the late energy). For Poruwa, Jayamangala Gatha is the musical heart — do not bury it under a DJ. A live Kandyan drum or violin moment photographs well. First dance: pick a song you both already know, 2–3 minutes, then invite parents in.",
+      "route": "/dashboard/checklist",
+      "routeLabel": "Add music to the checklist",
+      "relatedIds": ["checklist-reception", "crew-overview", "ideas-timeline"]
+    },
+    {
+      "id": "ideas-honeymoon",
+      "category": "ideas",
+      "title": "Honeymoon ideas",
+      "answer": "Many couples stay in Sri Lanka for 3–5 nights before a later overseas trip: south-coast beach (Mirissa, Bentota), hill country (Ella, Nuwara Eliya), or a quiet Galle Fort hotel. Book refundable rooms until vendor balances are paid. Passports and leave from work need more lead time than the hotel.",
+      "route": "/dashboard/checklist",
+      "routeLabel": "Add honeymoon to the checklist",
+      "relatedIds": ["checklist-6-months", "budget-overview", "ideas-setting"]
+    },
+    {
+      "id": "ideas-rain",
+      "category": "ideas",
+      "title": "Rain and backup plans",
+      "answer": "Southwest monsoon (May–September) and northeast rains can still appear on a “dry” weekend. If any part is outdoor, write a Plan B in the venue contract: indoor hall, tent, or covered porch, plus where the Poruwa moves. Lighting and a generator matter as much as the tent.",
+      "points": [
+        "Ask the hotel what happens if rain starts at nekatha time",
+        "Keep a clear umbrella pair for photos — it looks intentional",
+        "Tell the photographer and florist the backup location in advance"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Ask venues about rain plans",
+      "relatedIds": ["ideas-setting", "vendor-venue", "vendor-contracts"]
+    },
+    {
+      "id": "ideas-vows",
+      "category": "ideas",
+      "title": "Vows and speeches",
+      "answer": "Keep vows short (45–90 seconds) and specific — one memory, one promise, one laugh. Speeches: welcome, parents or siblings, best man / maid of honour, couple last. Give speakers a time limit (3 minutes) and a microphone test. For Poruwa, the ashtaka and blessings already carry the ritual — extra speeches belong at the reception.",
+      "route": "/dashboard/crew",
+      "routeLabel": "Assign speech roles in Wedding Crew",
+      "relatedIds": ["ceremony-poruwa", "checklist-reception", "ideas-timeline"]
+    },
+    {
+      "id": "ideas-photos",
+      "category": "ideas",
+      "title": "Photo ideas",
+      "answer": "Give the photographer a short must-have list so they are not guessing: couple portraits, both families, Poruwa or altar details, thaali or rings, cake, and grandparents. Golden hour outside beats a dark hall. A second shooter helps if church and hotel are on the same day.",
+      "points": [
+        "Poruwa: seven steps, close-ups of hands, lamps, and family blessings",
+        "Church: aisle walk, vows, signing — check flash rules",
+        "Hindu: thaali tying and homam cannot be missed",
+        "Reception: entrance, first dance, cake, and a 20-minute couple break for portraits"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find photographers",
+      "relatedIds": ["vendor-photo", "ideas-timeline", "ceremony-poruwa"]
+    },
+    {
+      "id": "ideas-dresscode",
+      "category": "ideas",
+      "title": "Guest dress code",
+      "answer": "Put the dress code on the invitation: “National or formal”, “Garden — heels will sink”, or “Mosque — covered shoulders”. Suggest a colour to avoid if it clashes with the bridal party (often white or the exact bridesmaid shade). For Nikah, share modest-dress notes early.",
+      "route": "/dashboard/invitations",
+      "routeLabel": "Add notes on the invitation",
+      "relatedIds": ["invitations-overview", "ideas-colours", "ceremony-nikah"]
+    },
+    {
+      "id": "ideas-homecoming",
+      "category": "ideas",
+      "title": "Homecoming",
+      "answer": "The Magul homecoming is often the next day at the groom’s home: a shorter blessing, kiribath, sweets, and a bright saree for the bride. Treat it as a second mini-event — guest list, food, and a photographer hour — not an afterthought. Put it on the checklist so it has a budget line.",
+      "route": "/dashboard/checklist",
+      "routeLabel": "See Poruwa / homecoming tasks",
+      "relatedIds": ["checklist-poruwa", "ceremony-poruwa", "ideas-bridal-look"]
+    },
+    {
+      "id": "ideas-preevents",
+      "category": "ideas",
+      "title": "Pre-wedding events",
+      "answer": "You do not need every party. Pick one or two: engagement, mehendi, bachelor/hen night, or a small home blessing. Each extra event is another outfit, another caterer, and another day off work. Hindu weddings often include mehendi; many Sinhala couples keep only the wedding day plus homecoming.",
+      "route": "/dashboard/checklist",
+      "routeLabel": "Add events to the checklist",
+      "relatedIds": ["checklist-hindu", "ideas-homecoming", "budget-saving"]
+    },
+    {
+      "id": "ideas-setting",
+      "category": "ideas",
+      "title": "Indoor, garden, or beach",
+      "answer": "Indoor hotel halls are safest for large lists, nekatha timing, and rain. You get rooms, generators, and a kitchen — at a higher package price. Outdoor lawns and gardens look beautiful and need shade, insects, lighting, a rain cover, and extra décor. Beach weddings (Galle, Bentota, Mirissa) are windy — weight the décor and keep the ceremony short. Mixed (Poruwa indoor, photos in the garden) is the usual Sri Lankan compromise.",
+      "route": "/dashboard/vendors",
+      "routeLabel": "Browse venues",
+      "relatedIds": ["vendor-venue", "ideas-rain", "ideas-theme", "budget-district"]
+    },
+    {
+      "id": "ideas-who-pays",
+      "category": "ideas",
+      "title": "Who pays",
+      "answer": "There is no single Sri Lankan rule anymore. Talk early: some families still host the home ceremony while the couple pays the hotel; others split 50/50; some couples pay all of it. Write the agreement down so vendor deposits do not surprise anyone. Use WowWed Budget so every contribution is visible.",
+      "route": "/dashboard/budget",
+      "routeLabel": "Open Budget",
+      "relatedIds": ["budget-overview", "budget-deposits", "wedding-profile"]
+    },
+    {
+      "id": "ideas-timeline",
+      "category": "ideas",
+      "title": "Wedding-day timeline",
+      "answer": "Work backwards from nekatha, church time, or the hotel slot. Hair and dressing take longer than you think. Photography usually starts at getting-ready, not at the ceremony. Put a 30–45 minute buffer between ceremony and reception for photos and travel. Give one coordinator (not the couple) the printed timeline and vendor numbers.",
+      "points": [
+        "Getting ready and family photos — start photography here",
+        "Ceremony (Poruwa / church / kovil / nikah) is often 45–90 minutes; a full Poruwa can run longer",
+        "Couple + family portraits after the ritual",
+        "Reception: entrance, dinner, speeches, cake, first dance, send-off",
+        "Send invitations about 6–8 weeks before; confirm vendors 2–4 weeks before; freeze the guest list about 2 weeks before catering"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "See the week-of checklist",
+      "relatedIds": ["checklist-week", "ideas-photos", "crew-overview"]
+    },
+    {
+      "id": "budget-sri-lanka",
+      "category": "budget",
+      "title": "Wedding cost in Sri Lanka",
+      "answer": "There is no single price. Hometown and outstation weddings are usually cheaper than Colombo hotel packages. Guest count, season, and whether food is bundled with the hall move the total more than the cake or favours.",
+      "points": [
+        "Small / hometown (about 80–120 guests): often around Rs. 0.8–1.5 million",
+        "Mid-range hotel (about 150–200 guests): often Rs. 2–4 million",
+        "Premium Colombo weekend: Rs. 4 million and up",
+        "Keep 5–10% extra for VAT, overtime, and last-minute extras"
+      ],
+      "route": "/dashboard/budget",
+      "routeLabel": "Estimate in Budget",
+      "relatedIds": ["budget-predict", "budget-1-million", "budget-allocation"]
+    },
+    {
+      "id": "budget-1-million",
+      "category": "budget",
+      "title": "Rs. 1 million budget",
+      "chat": "Rs. 1 million can work if you keep the guest list smaller and skip a luxury hotel package. Prioritise food, a good photographer, and a venue that already includes chairs and a kitchen.",
+      "answer": "Rs. 1 million is a tight but possible Sri Lankan wedding if you keep the list small and skip a luxury hotel package. Prioritise food, a decent photographer, and a venue that already includes chairs and a kitchen.",
+      "points": [
+        "Aim for about 80–120 guests, not 200",
+        "Hometown hall, home garden, or a modest hotel weekday package",
+        "One photographer (skip a second shooter and a long film)",
+        "Simple Poruwa or ceremony décor; reuse flowers at the reception",
+        "Family catering or a set menu instead of a live-station buffet"
+      ],
+      "route": "/dashboard/budget",
+      "routeLabel": "Open Budget",
+      "relatedIds": ["guests-1-million", "budget-saving", "ideas-small-large"]
+    },
+    {
+      "id": "budget-2-million",
+      "category": "budget",
+      "title": "Rs. 2 million budget",
+      "chat": "Based on your budget of Rs. 2 million, I can help you allocate expenses across the venue, catering, photography, decoration, and other services.{{ifGuests}} For {{guests}} guests, venue and food will take the largest share.{{/ifGuests}}",
+      "answer": "Rs. 2 million usually covers a mid-range wedding of about 120–180 guests if you watch the hall package. Allocate the largest slices to venue + catering, then photography, then attire.",
+      "points": [
+        "Venue + food: about Rs. 1.0–1.3 million",
+        "Photography & video: about Rs. 200,000–350,000",
+        "Attire, makeup, and jewellery hire: about Rs. 150,000–250,000",
+        "Décor, cake, music, invitations, and extras share the rest",
+        "Hold about Rs. 100,000–200,000 as contingency"
+      ],
+      "route": "/dashboard/budget",
+      "routeLabel": "Open Budget",
+      "relatedIds": ["budget-allocation", "budget-1-million", "vendor-venue"]
+    },
+    {
+      "id": "budget-cater-share",
+      "category": "budget",
+      "title": "Catering share of the budget",
+      "answer": "Plan about 20–25% of the total for catering, or more if the hotel bill is mostly food. Per-plate cost times guest count is the real number — shrinking the list saves more than swapping dessert.",
+      "route": "/dashboard/budget",
+      "routeLabel": "Open Budget",
+      "relatedIds": ["vendor-catering", "budget-guest-count", "budget-allocation"]
+    },
+    {
+      "id": "budget-photo-share",
+      "category": "budget",
+      "title": "Photography share of the budget",
+      "answer": "Plan about 10–15% for photography and videography. This is the memory you cannot restage. If the budget is tight, keep a strong photographer and shorten hours or skip the cinematic film before you hire a cheap unknown team.",
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find photographers",
+      "relatedIds": ["vendor-photo", "budget-photo-vs-decor", "budget-allocation"]
+    },
+    {
+      "id": "budget-decor-share",
+      "category": "budget",
+      "title": "Decoration share of the budget",
+      "answer": "Décor often lands around 8–12% unless you want a full stage and floral ceiling. Spend on the ceremony backdrop and the couple’s table first. Luxury décor is the category that most often blows a ‘standard’ budget.",
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find décor vendors",
+      "relatedIds": ["vendor-floral", "budget-photo-vs-decor", "budget-saving"]
+    },
+    {
+      "id": "budget-dress-share",
+      "category": "budget",
+      "title": "Wedding dress / saree share",
+      "answer": "Attire and jewellery together are often 8–12% of the total. A Kandyan or Indian bridal hire is usually cheaper than a custom gown. Budget the trial, extra makeup, and a going-away or homecoming outfit separately so they do not surprise you.",
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find bridal services",
+      "relatedIds": ["vendor-bridal", "budget-groom-share", "budget-allocation"]
+    },
+    {
+      "id": "budget-groom-share",
+      "category": "budget",
+      "title": "Groom outfit share",
+      "answer": "The groom’s outfit is usually a smaller line than the bride’s — still book fittings early. National dress or a hired suit plus shoes and grooming often sits well below 5% of a mid-range budget. Match colours with the bridal house so photos look planned.",
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find groom services",
+      "relatedIds": ["vendor-groom", "budget-dress-share", "budget-allocation"]
+    },
+    {
+      "id": "budget-expensive",
+      "category": "budget",
+      "title": "Most expensive wedding services",
+      "answer": "In Sri Lanka the large costs are almost always venue (especially a Colombo hotel package), catering, and then photography. Décor can overtake photography if you request a full floral stage. Cake, invitations, and favours are small compared with guest count.",
+      "points": [
+        "Protect venue + food first — they serve every guest",
+        "Protect photography second — you cannot redo the day",
+        "Cut décor scale, peak-season dates, and extra guests before you cut food quality"
+      ],
+      "route": "/dashboard/budget",
+      "routeLabel": "Open Budget",
+      "relatedIds": ["budget-allocation", "budget-saving", "budget-photo-vs-decor"]
+    },
+    {
+      "id": "budget-photo-vs-decor",
+      "category": "budget",
+      "title": "Photography vs decoration",
+      "answer": "If you must choose, spend more on photography. Guests remember the food and the pictures; heavy décor is forgotten after the hall lights come on. Keep décor focused on the ceremony backdrop and head table, and put the rest of that money into a second shooter or more coverage hours.",
+      "route": "/dashboard/budget",
+      "routeLabel": "Open Budget",
+      "relatedIds": ["budget-photo-share", "budget-decor-share", "vendor-photo"]
+    },
+    {
+      "id": "venue-100",
+      "category": "vendor",
+      "title": "Venue for about 100 guests",
+      "answer": "For about 100 guests, a hotel banquet room, a boutique villa, a home garden with a hired marquee, or a small restaurant hall all work. Avoid a 400-seat ballroom — it will look empty and you may still pay a high minimum spend. Confirm seated capacity, not standing cocktail numbers.",
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find venues",
+      "relatedIds": ["venue-200", "vendor-venue", "ideas-small-large"]
+    },
+    {
+      "id": "venue-200",
+      "category": "vendor",
+      "title": "Venue for about 200 guests",
+      "answer": "For about 200 guests you usually need a hotel ballroom, a large banquet hall, or a well-planned outdoor space with backup cover. Check kitchen capacity, parking, generator, and how many round tables of 8–10 actually fit. A packed 150-seat room is worse than a slightly larger hall.",
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find venues",
+      "relatedIds": ["venue-100", "vendor-venue", "budget-guest-count"]
+    },
+    {
+      "id": "venue-questions",
+      "category": "vendor",
+      "title": "Questions to ask a venue",
+      "answer": "Visit at the same time of day as your ceremony and get the answers in writing before you pay a deposit.",
+      "points": [
+        "What is included — chairs, Poruwa space, changing rooms, air-con, generator?",
+        "What is the minimum spend and the last-event / music cut-off time?",
+        "Can we bring an outside caterer, florist, or photographer?",
+        "What are corkage, cake-cutting, and overtime fees?",
+        "Is there a rain plan for lawns, and where do guests park?"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find venues",
+      "relatedIds": ["venue-when-to-book", "vendor-venue", "vendor-contracts"]
+    },
+    {
+      "id": "venue-when-to-book",
+      "category": "vendor",
+      "title": "When to book the venue",
+      "answer": "Book the venue first, usually 9–12 months ahead (12–18 months for popular Colombo Saturday halls in December–January). The date and guest capacity unlock catering, photography, and invitations. Do not print cards until the hall has confirmed the slot in writing.",
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find venues",
+      "relatedIds": ["vendor-overview", "checklist-12-months", "vendor-venue"]
+    },
+    {
+      "id": "vendor-planner",
+      "category": "vendor",
+      "title": "Choosing a wedding planner",
+      "answer": "A planner is worth it if you have two ceremonies, a large list, or little time. Ask what is included (vendor talks, day-of coordination, or full planning), how many weddings they run the same weekend, and whether they take commission from vendors. For a smaller wedding, a trusted family coordinator plus WowWed checklists may be enough.",
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find planners",
+      "relatedIds": ["vendor-overview", "ideas-timeline", "vendor-contracts"]
+    },
+    {
+      "id": "vendor-dj",
+      "category": "vendor",
+      "title": "Choosing a DJ or music",
+      "answer": "Listen to a live or recorded set, not only photos. Share a must-play and do-not-play list, confirm they have backup speakers, and check hotel volume rules. A good DJ who reads the room beats an expensive band that only plays for 45 minutes.",
+      "route": "/dashboard/vendors",
+      "routeLabel": "Find music vendors",
+      "relatedIds": ["ideas-music", "vendor-overview", "vendor-contracts"]
+    },
+    {
+      "id": "vendor-questions",
+      "category": "vendor",
+      "title": "Questions to ask a vendor",
+      "answer": "Compare at least two quotes with the same date, guest count, and hours. Before you hire anyone, check the contract, not only the Instagram page.",
+      "points": [
+        "What is included, and what costs extra (overtime, travel, extra albums)?",
+        "Have they worked your ceremony type and this venue before?",
+        "When is the deposit, the balance, and the cancellation rule?",
+        "Who actually turns up on the day — the person you met, or a junior?",
+        "Can you see a full wedding (not only highlights) from a similar budget?"
+      ],
+      "route": "/dashboard/vendors",
+      "routeLabel": "Compare vendors",
+      "relatedIds": ["vendor-contracts", "vendor-overview", "ideas-decide"]
+    },
+    {
+      "id": "guests-reduce",
+      "category": "guests",
+      "title": "Reducing the guest list",
+      "answer": "A smaller list is the fastest way to protect food, hall, and seating costs. Start with people you would miss if they were not there, then household units (not every cousin by name), then colleagues. Drop plus-ones you have never met, and skip distant relatives you would not invite to dinner.",
+      "route": "/dashboard/guests",
+      "routeLabel": "Open Guest List",
+      "relatedIds": ["guests-overview", "budget-guest-count", "ideas-small-large"]
+    },
+    {
+      "id": "guests-no-rsvp",
+      "category": "guests",
+      "title": "If a guest does not RSVP",
+      "answer": "Do not guess. Call or WhatsApp once, then again a week later. Elders often reply only by phone. If there is still no answer about two weeks before, mark them Not coming for catering, leave one spare seat if they are close family, and tell the caterer a firm number. Waiting forever is how buffets run short.",
+      "route": "/dashboard/guests",
+      "routeLabel": "Update RSVPs",
+      "relatedIds": ["guests-rsvp", "seating-overview", "budget-guest-count"]
+    },
+    {
+      "id": "guests-1-million",
+      "category": "guests",
+      "title": "Guest count on Rs. 1 million",
+      "answer": "On Rs. 1 million, plan for about 80–120 guests unless family is cooking at home. Every extra person is extra food, cake, and sometimes a larger hall. Build the list in WowWed, track RSVPs, and freeze the number before you pay the catering balance.",
+      "route": "/dashboard/guests",
+      "routeLabel": "Open Guest List",
+      "relatedIds": ["budget-1-million", "budget-guest-count", "guests-reduce"]
+    },
+    {
+      "id": "seating-family",
+      "category": "seating",
+      "title": "Where families and friends sit",
+      "answer": "Seat the couple at the head table. Put the bride’s parents and closest relatives at the nearest tables on her side, and the groom’s family on his side — that is the usual Sri Lankan pattern. VIP and grandparents closer than distant cousins. Friends can mix at mid-room tables; keep school and office groups together so nobody sits among strangers.",
+      "route": "/dashboard/seating",
+      "routeLabel": "Open Seating Chart",
+      "relatedIds": ["seating-overview", "seating-avoid", "guests-groups"]
+    },
+    {
+      "id": "seating-avoid",
+      "category": "seating",
+      "title": "Guests who cannot sit together",
+      "answer": "On the Guest List, put an Avoid note on anyone who must not share a table (divorced relatives, rival uncles, ex-partners). Smart Seating uses that note. If you seat by hand, place those guests on opposite sides of the room with a buffer table, and do not put them in the same suite.",
+      "route": "/dashboard/seating",
+      "routeLabel": "Open Seating Chart",
+      "relatedIds": ["seating-smart", "guests-groups", "seating-overview"]
+    },
+    {
+      "id": "seating-100",
+      "category": "seating",
+      "title": "Seating for 100 guests",
+      "answer": "For 100 seated guests, plan about 10–12 round tables of 8–10, plus a head table. Add two spare seats for late yes replies. Create tables in Seating Chart first, mark Coming guests only, then run Smart Seating and fix family placement by hand.",
+      "route": "/dashboard/seating",
+      "routeLabel": "Open Seating Chart",
+      "relatedIds": ["seating-tables", "seating-family", "seating-overview"]
+    },
+    {
+      "id": "ceremony-sri-lankan",
+      "category": "ceremony",
+      "title": "Sri Lankan wedding traditions",
+      "chat": "I can help you plan a traditional Sri Lankan wedding, including the Poruwa ceremony, vendors, budget, and schedule. The Poruwa, an auspicious time, and elders’ blessings are the heart of it — then the reception can be as simple or as grand as you like.",
+      "answer": "A traditional Sinhala wedding centres on the Poruwa (the decorated wooden platform), an auspicious nekatha time, Jayamangala Gatha, and elders’ blessings. Many couples also have a church, Hindu, or Nikah ceremony, then a hotel reception. Homecoming (magul) the next day is still common. Tell WowWed your ceremony type so checklists and vendors match.",
+      "points": [
+        "Poruwa, ashtaka, and traditional items if you follow Sinhala custom",
+        "Family jewellery, betel, and oil lamps as elders expect",
+        "Hotel or home reception after the ritual",
+        "Vendors: venue, caterer, photographer, florist/Poruwa décor, bridal dressing, music"
+      ],
+      "route": "/dashboard/checklist",
+      "routeLabel": "Open ceremony checklist",
+      "relatedIds": ["ceremony-poruwa", "ideas-traditional-modern", "checklist-poruwa"]
+    },
+    {
+      "id": "ceremony-poruwa-cost",
+      "category": "ceremony",
+      "title": "Poruwa ceremony costs",
+      "answer": "A Poruwa budget is usually the structure, floral décor, ashtaka reciter, Jayamangala singers, traditional trays, and sometimes a specialist coordinator. Simple hometown setups may be tens of thousands of rupees; a fully decorated hotel Poruwa with heavy florals can run into a few hundred thousand. Ask what the florist includes — the wooden Poruwa hire is often separate from flowers.",
+      "route": "/dashboard/budget",
+      "routeLabel": "Log Poruwa costs",
+      "relatedIds": ["ceremony-poruwa", "vendor-floral", "budget-decor-share"]
+    },
+    {
+      "id": "ceremony-traditional-budget",
+      "category": "ceremony",
+      "title": "Traditional wedding on a low budget",
+      "answer": "Keep the ritual, cut the scale. A home or temple Poruwa with family flowers, a hired simple structure, and a rice-and-curry lunch for a short list looks more ‘Sri Lankan’ than a half-empty ballroom. Spend on the photographer and the meal; print fewer programmes and skip a giant stage.",
+      "route": "/dashboard/budget",
+      "routeLabel": "Open Budget",
+      "relatedIds": ["budget-saving", "ceremony-poruwa", "ideas-small-large"]
+    },
+    {
+      "id": "ideas-traditional-modern",
+      "category": "ideas",
+      "title": "Traditional or modern",
+      "chat": "I can help you plan a traditional Sri Lankan wedding, including the Poruwa ceremony, vendors, budget, and schedule — or a more modern reception if you prefer both. Many couples keep the ritual traditional and let the evening feel contemporary.",
+      "answer": "Choose the ritual your families need, then modernise the party if you want. A traditional Sri Lankan wedding keeps Poruwa or kovil/nikah customs, national dress, and elder-led seating. A modern one may use a short civil or hotel ceremony, a lighter colour palette, and a playlist-led reception. Many couples do both: traditional morning, modern evening. Pick based on family expectation, guest count, and budget — not on Pinterest alone.",
+      "route": "/dashboard/checklist",
+      "routeLabel": "Set ceremony tasks",
+      "relatedIds": ["ceremony-choose", "ideas-theme", "ideas-small-large"]
+    },
+    {
+      "id": "ideas-small-large",
+      "category": "ideas",
+      "title": "Small or large wedding",
+      "answer": "A small wedding (often under 100 guests) is easier on budget, seating, and nerves — think villa, garden, or a weekday hotel suite. A large wedding (200+) needs a hall with real capacity, more ushers, earlier RSVPs, and a tighter timeline. Guest count should follow budget and venue, not the other way around.",
+      "route": "/dashboard/guests",
+      "routeLabel": "Build the guest list",
+      "relatedIds": ["guests-reduce", "venue-100", "budget-guest-count"]
+    },
+    {
+      "id": "ideas-theme-budget",
+      "category": "ideas",
+      "title": "Low-budget wedding theme",
+      "answer": "Pick a simple story you can repeat with lighting and greenery, not with imported flowers. Strong low-cost directions: ivory + greenery garden, classic white Poruwa with jasmine, or modern minimal (candles, drapes, one backdrop). Avoid multiple themes in one hall. Reuse ceremony flowers at the reception.",
+      "route": "/dashboard/checklist",
+      "routeLabel": "Add theme to your tasks",
+      "relatedIds": ["ideas-theme", "ideas-decor", "budget-saving"]
+    },
+    {
+      "id": "ideas-decide",
+      "category": "ideas",
+      "title": "Which option is best",
+      "answer": "The ‘best’ vendor is the one that fits your date, district, guest count, and remaining budget — not the most followers. Compare two quotes with the same hours and inclusions. Value usually means: reliable team, clear contract, and work that matches your ceremony, not the cheapest line. If money is short, protect venue, food, and photography; trim décor and extras.",
+      "route": "/dashboard/vendors",
+      "routeLabel": "Compare vendors",
+      "relatedIds": ["vendor-questions", "budget-allocation", "vendor-match"]
+    }
+  ]
+}

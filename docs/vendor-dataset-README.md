@@ -1,43 +1,44 @@
 # WowWed vendor dataset
 
-Complete one-to-one extract of every PDF and image in `C:\Users\ASUS\Desktop\Vendors` (2026-2027 guides, menus, scanned flyers and WhatsApp images).
+**200 Sri Lankan wedding vendors** with photos.
 
 ## Files
 
 | File | Use |
 |---|---|
-| `vendor-dataset.json` | Full listings in WowWed API shape |
-| `vendor_listings_seed.sql` | MySQL import (replaces placeholder `v1`-`v8` and all `vw-*`) |
-| `source_index.csv` | Maps each source PDF/JPEG to its vendor |
-| `vendor_listings_seed.sql` | Loads listings into MySQL (`wowwed.vendor_listings`) |
+| `vendor-dataset.json` | Full 200 listings in WowWed API shape |
+| `vendor_listings_seed.sql` | MySQL import for flyer vendors `vw-01`–`vw-65` |
+| `sri_lanka_vendors_extra.sql` | MySQL upsert for public vendors `vw-66`–`vw-200` |
+| `source_index.csv` | Maps each source PDF/JPEG to `vw-01`–`vw-65` |
 
-Copies also live in `WowWed\WowWed\docs\` so the backend can seed them.
+Copies also live in `C:\Users\ASUS\Desktop\Vendors\wowwed-dataset\`.
 
-## How to load into WowWed
+## Two sources
 
-**New database:** restart the backend. `docs/mysql-setup.sql` inserts these vendors with `INSERT IGNORE`.
-
-**Existing database:**
+- **vw-01 – vw-65** — every PDF and WhatsApp image in `C:\Users\ASUS\Desktop\Vendors` (2026–2027 guides)
+- **vw-66 – vw-200** — extra Sri Lankan hotels, photographers, jewellers, salons, florists, caterers and cake studios from public hotel sites, Wikipedia photos, [MyWed](https://mywed.com/en/Sri-Lanka-wedding-photographers/) and official brand pages
 
 ```bash
-mysql -u root -p wowwed < "C:\Users\ASUS\Desktop\WowWed\WowWed\docs\vendor_listings_seed.sql"
+npm run vendors:media --prefix backend
+npm run vendors:sri-lanka --prefix backend
 ```
 
-That removes placeholder ids `v1`-`v8` and inserts `vw-01`-`vw-65`.
+Photos are stored in `backend/uploads/vendors/vw-XX/`. Backend start also runs both seeders.
 
 ## What is in the set
 
-- **65 vendors** and **213 packages**
-- Venues: 22
-- Photography: 27
-- Bridal: 4
-- Groom: 2
-- Floral and deco / planning: 7
-- Jewellery: 1
-- Cakes: 2
+- **200 vendors** (plus any couple/vendor accounts created in the app)
+- Venues: 72
+- Photography: 57
+- Bridal: 16
+- Groom: 10
+- Floral and deco: 17
+- Jewellery: 13
+- Caterers: 8
+- Cakes: 7
 
-Prices are in LKR as printed. Per-person menus are stored as package `price` (per person). Listing `priceRange` is `min-max` in rupees so WowWed filters work.
+Prices are in LKR. Flyer vendors use printed package prices. Extra vendors use public starting rates (photographers converted from published USD listings) or “confirm with vendor” ranges.
 
 ## Coverage
 
-Every named PDF, Scanned Document 34-68, and WhatsApp image in the Vendors folder is assigned to a listing in `source_index.csv`.
+Every named PDF, Scanned Document 34–68, and WhatsApp image in the Vendors folder is assigned in `source_index.csv`. Extra vendors use Wikipedia / MyWed / category photos — not Google Image scrape.

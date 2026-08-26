@@ -1,851 +1,801 @@
-guest_count,district,ceremony_type,scale,seasonal,total_cost_lkr
-253,Matara,Hindu Tamil Wedding,budget,1,7016000
-234,Monaragala,Hindu Tamil Wedding,budget,0,5490000
-305,Nuwara Eliya,Muslim Nikah Ceremony,premium,1,24083000
-114,Kegalle,Church Wedding,premium,0,6940000
-354,Kegalle,Reception,luxury,0,26705000
-265,Colombo,Reception,premium,0,19381000
-130,Kandy,Hindu Tamil Wedding,budget,0,4087000
-291,Trincomalee,Hindu Tamil Wedding,premium,1,19100000
-245,Monaragala,Reception,standard,0,7140000
-294,Polonnaruwa,Poruwa Ceremony,luxury,0,25334000
-168,Matara,Poruwa Ceremony,budget,1,4867000
-326,Puttalam,Hindu Tamil Wedding,premium,0,18732000
-307,Gampaha,Hindu Tamil Wedding,luxury,0,32444000
-95,Kalutara,Church Wedding,luxury,0,11640000
-237,Hambantota,Hindu Tamil Wedding,standard,0,8501000
-180,Badulla,Poruwa Ceremony,premium,1,12642000
-272,Kegalle,Hindu Tamil Wedding,standard,0,10910000
-211,Gampaha,Church Wedding,budget,0,6247000
-120,Kegalle,Church Wedding,standard,0,4547000
-197,Kandy,Reception,budget,1,5862000
-246,Kandy,Reception,budget,0,5824000
-222,Mullaitivu,Poruwa Ceremony,premium,1,13134000
-244,Colombo,Hindu Tamil Wedding,premium,1,22167000
-149,Batticaloa,Reception,premium,1,8754000
-195,Batticaloa,Reception,standard,1,8163000
-540,Nuwara Eliya,Poruwa Ceremony,premium,0,35153000
-130,Kurunegala,Hindu Tamil Wedding,standard,0,5822000
-202,Ampara,Church Wedding,budget,0,4258000
-414,Galle,Muslim Nikah Ceremony,luxury,1,43191000
-140,Kurunegala,Church Wedding,standard,1,6434000
-262,Polonnaruwa,Reception,standard,0,8785000
-169,Hambantota,Hindu Tamil Wedding,budget,0,4543000
-206,Ratnapura,Hindu Tamil Wedding,standard,0,8145000
-341,Ratnapura,Poruwa Ceremony,standard,0,10551000
-401,Gampaha,Reception,budget,1,12496000
-98,Hambantota,Church Wedding,standard,0,4050000
-257,Gampaha,Poruwa Ceremony,budget,1,9209000
-127,Matara,Hindu Tamil Wedding,budget,0,4000000
-74,Colombo,Hindu Tamil Wedding,luxury,0,12655000
-330,Kilinochchi,Muslim Nikah Ceremony,premium,0,14906000
-246,Hambantota,Reception,budget,1,5346000
-496,Colombo,Hindu Tamil Wedding,premium,0,37276000
-254,Gampaha,Reception,standard,1,12653000
-103,Nuwara Eliya,Muslim Nikah Ceremony,premium,0,8023000
-209,Vavuniya,Reception,premium,1,10240000
-422,Kalutara,Poruwa Ceremony,standard,1,23142000
-111,Kalutara,Reception,premium,1,8833000
-68,Galle,Poruwa Ceremony,budget,1,3028000
-331,Colombo,Reception,standard,0,14381000
-140,Colombo,Reception,budget,1,5583000
-262,Hambantota,Poruwa Ceremony,luxury,1,29978000
-248,Kurunegala,Muslim Nikah Ceremony,budget,0,5574000
-97,Jaffna,Reception,premium,0,6118000
-192,Matara,Reception,luxury,0,16149000
-239,Gampaha,Hindu Tamil Wedding,standard,0,13552000
-51,Kilinochchi,Church Wedding,standard,0,2273000
-363,Kalutara,Reception,standard,1,15268000
-411,Kilinochchi,Muslim Nikah Ceremony,premium,0,18108000
-328,Kandy,Muslim Nikah Ceremony,premium,1,25916000
-302,Puttalam,Hindu Tamil Wedding,budget,0,6639000
-91,Colombo,Reception,standard,0,4972000
-223,Nuwara Eliya,Poruwa Ceremony,budget,0,6151000
-347,Ampara,Hindu Tamil Wedding,premium,0,18739000
-397,Kurunegala,Poruwa Ceremony,luxury,1,32535000
-382,Kilinochchi,Muslim Nikah Ceremony,luxury,0,28682000
-245,Nuwara Eliya,Muslim Nikah Ceremony,standard,1,12252000
-203,Vavuniya,Poruwa Ceremony,premium,0,12461000
-138,Kandy,Church Wedding,luxury,0,15101000
-366,Ampara,Muslim Nikah Ceremony,standard,0,11077000
-40,Badulla,Poruwa Ceremony,premium,1,4840000
-43,Kandy,Church Wedding,standard,1,3545000
-250,Gampaha,Reception,budget,1,7327000
-297,Puttalam,Poruwa Ceremony,premium,0,17680000
-245,Colombo,Hindu Tamil Wedding,budget,0,8948000
-176,Galle,Poruwa Ceremony,budget,1,5130000
-77,Vavuniya,Church Wedding,budget,0,1910000
-241,Anuradhapura,Reception,luxury,1,19491000
-368,Kurunegala,Muslim Nikah Ceremony,standard,0,11296000
-180,Batticaloa,Hindu Tamil Wedding,luxury,0,18044000
-105,Ampara,Poruwa Ceremony,standard,1,4811000
-161,Monaragala,Hindu Tamil Wedding,standard,0,6441000
-256,Kegalle,Poruwa Ceremony,premium,0,17401000
-183,Hambantota,Poruwa Ceremony,budget,0,4560000
-434,Colombo,Reception,standard,1,20113000
-256,Kandy,Muslim Nikah Ceremony,budget,1,7038000
-97,Gampaha,Hindu Tamil Wedding,standard,1,6612000
-258,Kegalle,Hindu Tamil Wedding,premium,0,17738000
-182,Jaffna,Hindu Tamil Wedding,premium,1,14573000
-377,Matale,Poruwa Ceremony,luxury,0,30706000
-134,Gampaha,Church Wedding,standard,1,7910000
-339,Colombo,Church Wedding,premium,1,30299000
-40,Kandy,Reception,premium,1,4791000
-140,Kandy,Church Wedding,premium,0,10138000
-158,Trincomalee,Poruwa Ceremony,premium,0,10241000
-210,Matara,Church Wedding,standard,1,9612000
-399,Colombo,Church Wedding,luxury,0,43328000
-374,Gampaha,Reception,luxury,0,38163000
-180,Hambantota,Poruwa Ceremony,luxury,1,20340000
-160,Anuradhapura,Muslim Nikah Ceremony,standard,1,6351000
-129,Puttalam,Muslim Nikah Ceremony,standard,0,4996000
-109,Matara,Reception,standard,0,4476000
-252,Monaragala,Reception,standard,0,7291000
-83,Ratnapura,Reception,premium,1,6127000
-256,Galle,Poruwa Ceremony,standard,1,13413000
-148,Monaragala,Hindu Tamil Wedding,budget,1,4140000
-121,Mannar,Muslim Nikah Ceremony,luxury,0,11528000
-192,Matara,Reception,standard,0,6270000
-298,Vavuniya,Reception,standard,0,8991000
-397,Badulla,Reception,luxury,0,26254000
-40,Kandy,Muslim Nikah Ceremony,luxury,0,6792000
-40,Kilinochchi,Poruwa Ceremony,luxury,1,5608000
-149,Gampaha,Reception,budget,1,4791000
-106,Ampara,Muslim Nikah Ceremony,premium,0,6161000
-78,Kalutara,Reception,budget,0,2305000
-223,Trincomalee,Hindu Tamil Wedding,premium,0,13117000
-369,Kandy,Reception,premium,0,19520000
-40,Jaffna,Poruwa Ceremony,standard,0,2508000
-283,Matara,Church Wedding,standard,0,10758000
-182,Colombo,Hindu Tamil Wedding,budget,0,6106000
-238,Vavuniya,Church Wedding,standard,1,9644000
-98,Gampaha,Church Wedding,standard,0,5965000
-184,Ratnapura,Reception,premium,1,11160000
-40,Kurunegala,Reception,luxury,0,3986000
-306,Matale,Muslim Nikah Ceremony,luxury,1,30268000
-482,Gampaha,Church Wedding,luxury,0,51122000
-288,Trincomalee,Reception,standard,0,8961000
-167,Polonnaruwa,Church Wedding,budget,0,3785000
-254,Kandy,Reception,luxury,1,27101000
-40,Mannar,Poruwa Ceremony,standard,1,2606000
-106,Kilinochchi,Muslim Nikah Ceremony,budget,0,2333000
-281,Kilinochchi,Church Wedding,budget,1,5710000
-218,Ampara,Church Wedding,standard,1,8682000
-181,Kalutara,Church Wedding,standard,1,8474000
-118,Jaffna,Church Wedding,budget,1,3272000
-269,Galle,Poruwa Ceremony,standard,0,12459000
-305,Colombo,Poruwa Ceremony,premium,1,30460000
-107,Matale,Hindu Tamil Wedding,budget,0,3714000
-276,Ratnapura,Muslim Nikah Ceremony,standard,0,9561000
-445,Gampaha,Poruwa Ceremony,standard,0,20945000
-290,Galle,Hindu Tamil Wedding,standard,1,16201000
-257,Gampaha,Muslim Nikah Ceremony,budget,0,8863000
-410,Polonnaruwa,Church Wedding,budget,1,9259000
-99,Galle,Hindu Tamil Wedding,budget,1,4202000
-417,Vavuniya,Church Wedding,budget,0,7737000
-197,Galle,Muslim Nikah Ceremony,budget,0,5673000
-263,Kalutara,Poruwa Ceremony,premium,1,24097000
-224,Matale,Muslim Nikah Ceremony,premium,0,14028000
-340,Kalutara,Muslim Nikah Ceremony,luxury,0,34786000
-197,Ampara,Muslim Nikah Ceremony,standard,1,8150000
-175,Kandy,Hindu Tamil Wedding,budget,0,5479000
-378,Ratnapura,Reception,budget,0,5775000
-223,Galle,Hindu Tamil Wedding,premium,0,13036000
-263,Kandy,Muslim Nikah Ceremony,luxury,0,27283000
-184,Ampara,Church Wedding,standard,0,6480000
-412,Ampara,Muslim Nikah Ceremony,standard,1,18598000
-313,Kalutara,Hindu Tamil Wedding,premium,0,23599000
-223,Trincomalee,Muslim Nikah Ceremony,budget,1,5776000
-40,Kalutara,Poruwa Ceremony,budget,0,2163000
-143,Gampaha,Hindu Tamil Wedding,premium,0,12178000
-250,Ampara,Hindu Tamil Wedding,budget,0,4699000
-218,Matara,Church Wedding,luxury,0,20052000
-324,Matale,Reception,premium,1,19042000
-172,Kalutara,Reception,premium,0,11162000
-224,Colombo,Reception,standard,0,10852000
-51,Mannar,Poruwa Ceremony,luxury,0,6675000
-151,Kandy,Poruwa Ceremony,premium,1,12699000
-137,Badulla,Poruwa Ceremony,standard,1,6685000
-347,Mannar,Reception,premium,1,13964000
-185,Kurunegala,Poruwa Ceremony,luxury,0,17734000
-427,Kegalle,Hindu Tamil Wedding,luxury,1,44073000
-269,Kandy,Reception,luxury,1,31295000
-93,Gampaha,Church Wedding,budget,0,3644000
-273,Anuradhapura,Hindu Tamil Wedding,premium,1,14996000
-262,Kurunegala,Church Wedding,standard,1,11398000
-92,Kurunegala,Poruwa Ceremony,budget,0,2823000
-264,Gampaha,Reception,premium,0,17875000
-69,Kandy,Reception,budget,0,2210000
-188,Nuwara Eliya,Muslim Nikah Ceremony,budget,1,5893000
-341,Trincomalee,Muslim Nikah Ceremony,premium,0,18132000
-51,Kurunegala,Poruwa Ceremony,luxury,1,6844000
-256,Puttalam,Church Wedding,luxury,0,21216000
-315,Kalutara,Reception,premium,0,18789000
-304,Mullaitivu,Muslim Nikah Ceremony,luxury,0,22215000
-139,Monaragala,Hindu Tamil Wedding,standard,1,6546000
-178,Batticaloa,Church Wedding,budget,1,5065000
-164,Kalutara,Reception,premium,1,12467000
-182,Hambantota,Church Wedding,luxury,1,19127000
-40,Ratnapura,Hindu Tamil Wedding,premium,1,4969000
-335,Monaragala,Reception,standard,1,10002000
-219,Monaragala,Church Wedding,standard,0,7454000
-114,Puttalam,Hindu Tamil Wedding,standard,1,5417000
-160,Matale,Church Wedding,luxury,0,13776000
-197,Galle,Muslim Nikah Ceremony,premium,1,15839000
-265,Kandy,Hindu Tamil Wedding,standard,1,14309000
-344,Gampaha,Poruwa Ceremony,budget,0,10366000
-211,Jaffna,Muslim Nikah Ceremony,budget,0,4456000
-119,Trincomalee,Poruwa Ceremony,standard,0,5531000
-246,Kandy,Muslim Nikah Ceremony,budget,0,6236000
-66,Gampaha,Hindu Tamil Wedding,budget,0,2895000
-220,Hambantota,Muslim Nikah Ceremony,budget,0,4788000
-393,Vavuniya,Poruwa Ceremony,luxury,1,36195000
-287,Galle,Poruwa Ceremony,luxury,0,28232000
-132,Jaffna,Church Wedding,standard,0,5196000
-93,Kalutara,Hindu Tamil Wedding,luxury,1,15140000
-258,Colombo,Church Wedding,budget,0,8453000
-199,Jaffna,Muslim Nikah Ceremony,standard,1,7562000
-121,Colombo,Hindu Tamil Wedding,luxury,1,21413000
-361,Mannar,Church Wedding,budget,0,7077000
-40,Galle,Church Wedding,premium,1,5069000
-177,Colombo,Reception,budget,0,5762000
-158,Kalutara,Reception,standard,0,7833000
-40,Colombo,Hindu Tamil Wedding,premium,1,6386000
-111,Mullaitivu,Hindu Tamil Wedding,standard,1,5030000
-93,Monaragala,Muslim Nikah Ceremony,standard,0,3815000
-43,Jaffna,Hindu Tamil Wedding,luxury,0,6371000
-314,Gampaha,Reception,budget,1,7847000
-185,Galle,Reception,luxury,0,19431000
-191,Colombo,Hindu Tamil Wedding,premium,1,19070000
-383,Colombo,Poruwa Ceremony,standard,1,20926000
-148,Colombo,Church Wedding,budget,1,5775000
-317,Kalutara,Reception,budget,1,7484000
-40,Trincomalee,Hindu Tamil Wedding,budget,0,1898000
-361,Monaragala,Hindu Tamil Wedding,standard,0,12299000
-156,Anuradhapura,Reception,luxury,1,13957000
-89,Kurunegala,Hindu Tamil Wedding,luxury,0,10238000
-222,Kalutara,Church Wedding,budget,1,7419000
-109,Mannar,Church Wedding,standard,0,3887000
-40,Kandy,Muslim Nikah Ceremony,standard,0,3260000
-132,Hambantota,Muslim Nikah Ceremony,standard,1,5744000
-411,Kandy,Muslim Nikah Ceremony,luxury,1,45600000
-214,Kandy,Reception,luxury,0,21315000
-389,Trincomalee,Reception,standard,0,10391000
-222,Matale,Poruwa Ceremony,luxury,1,25451000
-40,Mannar,Church Wedding,standard,1,2498000
-74,Ratnapura,Reception,luxury,1,7595000
-176,Mannar,Church Wedding,premium,0,8185000
-147,Puttalam,Poruwa Ceremony,luxury,1,12458000
-287,Puttalam,Church Wedding,premium,0,14168000
-355,Trincomalee,Church Wedding,budget,0,6474000
-264,Badulla,Muslim Nikah Ceremony,luxury,1,28008000
-56,Galle,Muslim Nikah Ceremony,premium,1,5158000
-245,Mannar,Hindu Tamil Wedding,luxury,1,24785000
-40,Kandy,Reception,budget,0,2010000
-271,Kandy,Reception,luxury,0,24846000
-267,Kalutara,Poruwa Ceremony,standard,0,13025000
-139,Vavuniya,Hindu Tamil Wedding,luxury,1,15622000
-77,Colombo,Poruwa Ceremony,luxury,1,13606000
-164,Puttalam,Hindu Tamil Wedding,luxury,1,16513000
-314,Kandy,Church Wedding,budget,1,9633000
-325,Vavuniya,Poruwa Ceremony,luxury,0,22266000
-217,Trincomalee,Muslim Nikah Ceremony,standard,0,8692000
-354,Kurunegala,Hindu Tamil Wedding,standard,0,10962000
-230,Colombo,Hindu Tamil Wedding,luxury,0,30337000
-382,Colombo,Reception,budget,0,10223000
-199,Matara,Reception,budget,1,4895000
-165,Colombo,Hindu Tamil Wedding,standard,0,10527000
-276,Ratnapura,Reception,premium,0,15690000
-370,Colombo,Hindu Tamil Wedding,standard,0,18878000
-196,Kandy,Muslim Nikah Ceremony,standard,0,8339000
-310,Polonnaruwa,Church Wedding,luxury,0,22351000
-124,Colombo,Hindu Tamil Wedding,premium,0,12092000
-40,Badulla,Hindu Tamil Wedding,luxury,1,6547000
-378,Kandy,Muslim Nikah Ceremony,budget,0,10056000
-186,Kandy,Reception,luxury,0,17928000
-381,Kegalle,Muslim Nikah Ceremony,luxury,1,36587000
-325,Matale,Muslim Nikah Ceremony,standard,0,11878000
-224,Anuradhapura,Muslim Nikah Ceremony,premium,0,12611000
-343,Galle,Poruwa Ceremony,premium,0,21500000
-450,Kalutara,Church Wedding,budget,1,12916000
-232,Mullaitivu,Muslim Nikah Ceremony,luxury,1,18207000
-256,Gampaha,Church Wedding,standard,0,11267000
-181,Batticaloa,Church Wedding,luxury,0,16442000
-90,Kalutara,Church Wedding,standard,1,5547000
-274,Monaragala,Church Wedding,budget,1,6440000
-280,Hambantota,Reception,standard,1,10406000
-141,Kalutara,Hindu Tamil Wedding,budget,0,3687000
-194,Puttalam,Hindu Tamil Wedding,luxury,0,20362000
-201,Mannar,Hindu Tamil Wedding,standard,0,7889000
-91,Galle,Church Wedding,budget,0,2874000
-386,Nuwara Eliya,Poruwa Ceremony,standard,0,15888000
-370,Matale,Reception,luxury,1,30854000
-47,Galle,Reception,luxury,0,5991000
-139,Gampaha,Reception,luxury,0,14947000
-130,Gampaha,Hindu Tamil Wedding,budget,1,4868000
-237,Ampara,Hindu Tamil Wedding,premium,0,13841000
-218,Gampaha,Reception,budget,1,6988000
-40,Colombo,Reception,premium,0,4507000
-206,Jaffna,Muslim Nikah Ceremony,budget,1,5487000
-67,Colombo,Hindu Tamil Wedding,premium,0,8261000
-269,Matara,Hindu Tamil Wedding,budget,0,7051000
-344,Gampaha,Poruwa Ceremony,budget,1,11747000
-275,Colombo,Muslim Nikah Ceremony,premium,1,26064000
-215,Colombo,Reception,premium,1,15655000
-255,Colombo,Poruwa Ceremony,luxury,0,38516000
-241,Matale,Church Wedding,luxury,1,23842000
-338,Kurunegala,Church Wedding,premium,1,19960000
-339,Mullaitivu,Reception,standard,0,8628000
-58,Anuradhapura,Reception,premium,1,3885000
-225,Hambantota,Hindu Tamil Wedding,premium,0,12766000
-164,Nuwara Eliya,Church Wedding,standard,0,7064000
-262,Matara,Poruwa Ceremony,premium,0,19723000
-98,Jaffna,Muslim Nikah Ceremony,budget,1,3355000
-220,Vavuniya,Hindu Tamil Wedding,luxury,0,17158000
-234,Nuwara Eliya,Church Wedding,budget,0,6427000
-140,Kandy,Church Wedding,luxury,0,16644000
-149,Monaragala,Reception,luxury,1,12384000
-316,Puttalam,Poruwa Ceremony,premium,0,15972000
-82,Gampaha,Hindu Tamil Wedding,luxury,1,13275000
-242,Jaffna,Reception,budget,0,5016000
-429,Matale,Poruwa Ceremony,premium,1,26224000
-156,Anuradhapura,Church Wedding,budget,0,3887000
-155,Batticaloa,Reception,budget,1,4202000
-66,Kalutara,Poruwa Ceremony,budget,1,2782000
-161,Anuradhapura,Poruwa Ceremony,premium,0,10266000
-196,Trincomalee,Muslim Nikah Ceremony,premium,0,11204000
-129,Kandy,Poruwa Ceremony,luxury,0,13961000
-293,Gampaha,Reception,budget,0,7383000
-318,Kegalle,Muslim Nikah Ceremony,budget,0,7411000
-289,Hambantota,Hindu Tamil Wedding,premium,0,17441000
-90,Matale,Muslim Nikah Ceremony,premium,0,6289000
-86,Gampaha,Hindu Tamil Wedding,luxury,1,15315000
-170,Mullaitivu,Reception,standard,0,5672000
-252,Trincomalee,Hindu Tamil Wedding,premium,0,16924000
-230,Matale,Hindu Tamil Wedding,luxury,0,24116000
-342,Kandy,Hindu Tamil Wedding,budget,1,10339000
-250,Kalutara,Muslim Nikah Ceremony,premium,0,16774000
-158,Kandy,Muslim Nikah Ceremony,budget,0,4727000
-230,Gampaha,Reception,luxury,0,24768000
-40,Galle,Church Wedding,standard,1,3136000
-293,Gampaha,Poruwa Ceremony,premium,0,18810000
-304,Jaffna,Church Wedding,premium,1,20143000
-391,Polonnaruwa,Reception,luxury,0,26306000
-97,Matale,Hindu Tamil Wedding,budget,0,3057000
-382,Kilinochchi,Hindu Tamil Wedding,standard,1,14045000
-55,Kandy,Poruwa Ceremony,luxury,0,8139000
-292,Badulla,Poruwa Ceremony,luxury,1,31199000
-143,Colombo,Reception,budget,0,4653000
-100,Kandy,Reception,premium,1,8094000
-294,Ratnapura,Muslim Nikah Ceremony,budget,1,7264000
-152,Colombo,Hindu Tamil Wedding,luxury,1,31015000
-376,Galle,Poruwa Ceremony,budget,0,9143000
-40,Jaffna,Church Wedding,premium,0,3362000
-279,Anuradhapura,Poruwa Ceremony,premium,1,18286000
-156,Matale,Poruwa Ceremony,standard,1,6973000
-158,Kandy,Church Wedding,premium,0,10661000
-223,Ampara,Muslim Nikah Ceremony,luxury,0,17520000
-276,Nuwara Eliya,Poruwa Ceremony,budget,0,7804000
-332,Galle,Muslim Nikah Ceremony,premium,0,17712000
-344,Anuradhapura,Hindu Tamil Wedding,standard,0,11168000
-315,Colombo,Muslim Nikah Ceremony,standard,0,17158000
-71,Trincomalee,Reception,budget,1,1951000
-79,Colombo,Muslim Nikah Ceremony,premium,1,7582000
-137,Vavuniya,Church Wedding,budget,0,2987000
-246,Kilinochchi,Church Wedding,premium,0,12226000
-87,Kurunegala,Poruwa Ceremony,budget,0,2616000
-190,Gampaha,Poruwa Ceremony,budget,1,6863000
-172,Anuradhapura,Hindu Tamil Wedding,premium,1,13029000
-406,Hambantota,Church Wedding,luxury,1,40499000
-273,Badulla,Muslim Nikah Ceremony,luxury,1,27387000
-133,Batticaloa,Poruwa Ceremony,luxury,0,11175000
-262,Jaffna,Church Wedding,budget,0,6309000
-263,Nuwara Eliya,Muslim Nikah Ceremony,standard,0,12036000
-146,Trincomalee,Hindu Tamil Wedding,budget,1,4687000
-209,Anuradhapura,Hindu Tamil Wedding,premium,0,14656000
-292,Gampaha,Poruwa Ceremony,premium,1,25354000
-147,Trincomalee,Poruwa Ceremony,luxury,0,13003000
-234,Ratnapura,Hindu Tamil Wedding,budget,1,5186000
-242,Kegalle,Reception,luxury,1,22765000
-176,Gampaha,Muslim Nikah Ceremony,premium,1,14670000
-252,Kilinochchi,Church Wedding,standard,0,7309000
-110,Monaragala,Church Wedding,budget,0,2410000
-304,Kandy,Reception,budget,0,7032000
-284,Ratnapura,Reception,budget,0,5201000
-409,Colombo,Hindu Tamil Wedding,luxury,1,64672000
-216,Kurunegala,Muslim Nikah Ceremony,standard,1,8136000
-40,Gampaha,Church Wedding,standard,1,3546000
-225,Vavuniya,Church Wedding,standard,1,7527000
-237,Badulla,Church Wedding,luxury,0,18951000
-150,Ampara,Muslim Nikah Ceremony,premium,0,8780000
-230,Puttalam,Muslim Nikah Ceremony,standard,0,6891000
-389,Galle,Church Wedding,premium,1,25007000
-163,Polonnaruwa,Muslim Nikah Ceremony,standard,1,7401000
-274,Badulla,Hindu Tamil Wedding,standard,0,10621000
-226,Colombo,Church Wedding,luxury,1,32051000
-130,Gampaha,Hindu Tamil Wedding,budget,1,5124000
-266,Batticaloa,Reception,standard,0,8245000
-255,Kalutara,Reception,premium,1,19380000
-358,Hambantota,Church Wedding,luxury,0,25596000
-143,Badulla,Poruwa Ceremony,luxury,1,15599000
-213,Galle,Church Wedding,luxury,0,22846000
-256,Batticaloa,Hindu Tamil Wedding,standard,1,10589000
-363,Kegalle,Muslim Nikah Ceremony,luxury,1,41556000
-40,Matara,Reception,standard,0,2228000
-86,Jaffna,Reception,standard,0,3905000
-286,Badulla,Muslim Nikah Ceremony,premium,1,17093000
-40,Matara,Hindu Tamil Wedding,budget,1,2669000
-280,Gampaha,Hindu Tamil Wedding,standard,1,16732000
-40,Monaragala,Church Wedding,standard,1,2411000
-200,Kalutara,Church Wedding,premium,0,13614000
-169,Galle,Muslim Nikah Ceremony,standard,0,8543000
-362,Ampara,Poruwa Ceremony,budget,0,6956000
-148,Batticaloa,Hindu Tamil Wedding,premium,0,9222000
-132,Kalutara,Poruwa Ceremony,premium,1,13706000
-250,Kandy,Reception,standard,0,8733000
-105,Kilinochchi,Reception,budget,1,2781000
-131,Colombo,Church Wedding,standard,1,7954000
-45,Colombo,Reception,premium,0,4984000
-294,Gampaha,Hindu Tamil Wedding,budget,0,9409000
-339,Jaffna,Muslim Nikah Ceremony,luxury,1,33615000
-198,Nuwara Eliya,Church Wedding,standard,0,7793000
-169,Kalutara,Poruwa Ceremony,budget,1,6171000
-40,Colombo,Poruwa Ceremony,budget,0,2794000
-221,Mannar,Church Wedding,budget,0,4424000
-296,Polonnaruwa,Church Wedding,premium,1,19371000
-352,Anuradhapura,Poruwa Ceremony,premium,1,25048000
-137,Colombo,Reception,budget,0,3429000
-172,Nuwara Eliya,Hindu Tamil Wedding,luxury,0,24557000
-248,Kilinochchi,Reception,budget,0,4173000
-274,Galle,Reception,standard,1,12053000
-266,Kandy,Church Wedding,luxury,1,33639000
-40,Gampaha,Hindu Tamil Wedding,budget,0,2341000
-49,Colombo,Poruwa Ceremony,budget,0,3324000
-311,Galle,Reception,premium,0,14788000
-199,Hambantota,Hindu Tamil Wedding,luxury,1,24408000
-302,Gampaha,Church Wedding,luxury,0,32266000
-89,Galle,Church Wedding,premium,1,9256000
-392,Hambantota,Hindu Tamil Wedding,standard,0,15634000
-382,Kalutara,Church Wedding,budget,0,8216000
-193,Anuradhapura,Reception,budget,0,3275000
-275,Anuradhapura,Muslim Nikah Ceremony,standard,0,10692000
-51,Mullaitivu,Reception,premium,0,2800000
-293,Kandy,Hindu Tamil Wedding,standard,1,13891000
-253,Vavuniya,Reception,premium,1,13842000
-149,Mullaitivu,Hindu Tamil Wedding,premium,0,8004000
-124,Colombo,Church Wedding,luxury,0,16214000
-120,Kurunegala,Poruwa Ceremony,budget,0,3514000
-369,Vavuniya,Hindu Tamil Wedding,premium,0,15974000
-189,Kegalle,Church Wedding,budget,1,5562000
-451,Ratnapura,Reception,luxury,1,40101000
-107,Galle,Reception,luxury,0,10514000
-250,Colombo,Poruwa Ceremony,luxury,0,30026000
-301,Ratnapura,Muslim Nikah Ceremony,standard,1,11533000
-304,Kalutara,Reception,budget,0,6691000
-174,Nuwara Eliya,Muslim Nikah Ceremony,premium,1,13003000
-81,Kandy,Church Wedding,budget,1,3218000
-134,Jaffna,Poruwa Ceremony,luxury,0,13356000
-172,Kalutara,Poruwa Ceremony,luxury,0,20917000
-40,Matale,Muslim Nikah Ceremony,premium,0,3440000
-243,Ampara,Church Wedding,budget,0,4848000
-313,Gampaha,Poruwa Ceremony,premium,1,26959000
-142,Matale,Church Wedding,premium,0,8185000
-40,Kurunegala,Hindu Tamil Wedding,premium,1,5063000
-330,Puttalam,Poruwa Ceremony,premium,0,17628000
-319,Matara,Hindu Tamil Wedding,budget,1,8747000
-308,Kalutara,Poruwa Ceremony,premium,0,21760000
-40,Mullaitivu,Reception,luxury,1,5075000
-196,Kalutara,Muslim Nikah Ceremony,budget,1,6263000
-339,Galle,Poruwa Ceremony,budget,0,8556000
-200,Kalutara,Church Wedding,premium,1,16602000
-289,Ratnapura,Hindu Tamil Wedding,standard,0,12167000
-214,Colombo,Hindu Tamil Wedding,premium,1,22993000
-40,Hambantota,Reception,premium,0,3082000
-40,Gampaha,Reception,premium,0,4244000
-366,Kandy,Reception,luxury,0,32316000
-40,Mannar,Muslim Nikah Ceremony,budget,1,1836000
-240,Kurunegala,Muslim Nikah Ceremony,budget,0,5773000
-370,Galle,Muslim Nikah Ceremony,luxury,0,36415000
-329,Mullaitivu,Church Wedding,premium,0,15254000
-128,Anuradhapura,Reception,budget,0,2632000
-356,Polonnaruwa,Hindu Tamil Wedding,premium,1,20734000
-375,Monaragala,Church Wedding,premium,0,15607000
-198,Galle,Hindu Tamil Wedding,standard,0,9204000
-176,Kegalle,Church Wedding,premium,0,11419000
-135,Monaragala,Muslim Nikah Ceremony,premium,0,7624000
-159,Polonnaruwa,Muslim Nikah Ceremony,premium,1,10306000
-215,Kilinochchi,Hindu Tamil Wedding,standard,0,8138000
-352,Kalutara,Church Wedding,luxury,0,35265000
-210,Puttalam,Hindu Tamil Wedding,premium,0,12532000
-400,Jaffna,Poruwa Ceremony,luxury,1,33262000
-361,Gampaha,Hindu Tamil Wedding,premium,1,27357000
-200,Vavuniya,Church Wedding,standard,0,6494000
-62,Galle,Poruwa Ceremony,standard,0,3766000
-147,Colombo,Hindu Tamil Wedding,premium,0,13716000
-260,Gampaha,Poruwa Ceremony,premium,1,24206000
-355,Galle,Muslim Nikah Ceremony,standard,1,15993000
-40,Kalutara,Church Wedding,budget,0,1833000
-213,Mullaitivu,Reception,luxury,0,15234000
-236,Kandy,Muslim Nikah Ceremony,premium,1,19326000
-350,Badulla,Poruwa Ceremony,premium,0,14405000
-253,Hambantota,Muslim Nikah Ceremony,budget,0,5346000
-204,Anuradhapura,Poruwa Ceremony,standard,1,9521000
-100,Badulla,Muslim Nikah Ceremony,standard,0,4109000
-179,Galle,Hindu Tamil Wedding,standard,0,8170000
-91,Galle,Reception,budget,0,2742000
-116,Mannar,Church Wedding,luxury,0,9297000
-291,Colombo,Muslim Nikah Ceremony,standard,0,16747000
-168,Ampara,Poruwa Ceremony,budget,1,4514000
-41,Monaragala,Muslim Nikah Ceremony,premium,0,3557000
-256,Galle,Reception,luxury,0,23925000
-317,Gampaha,Church Wedding,premium,1,25544000
-304,Mullaitivu,Muslim Nikah Ceremony,premium,0,14107000
-172,Gampaha,Poruwa Ceremony,luxury,0,20330000
-385,Mullaitivu,Church Wedding,luxury,1,29442000
-221,Galle,Church Wedding,standard,0,10251000
-208,Gampaha,Reception,luxury,0,20551000
-281,Kandy,Church Wedding,standard,1,13575000
-326,Puttalam,Hindu Tamil Wedding,standard,1,14647000
-40,Kandy,Church Wedding,luxury,1,7305000
-173,Badulla,Hindu Tamil Wedding,budget,1,4670000
-305,Hambantota,Church Wedding,standard,1,11823000
-106,Colombo,Poruwa Ceremony,luxury,0,14336000
-494,Gampaha,Reception,standard,0,19081000
-208,Galle,Church Wedding,budget,0,5524000
-201,Kalutara,Hindu Tamil Wedding,luxury,0,22582000
-157,Kilinochchi,Hindu Tamil Wedding,budget,1,4876000
-370,Gampaha,Muslim Nikah Ceremony,luxury,1,44329000
-182,Colombo,Hindu Tamil Wedding,standard,0,13778000
-100,Monaragala,Hindu Tamil Wedding,budget,0,2897000
-282,Nuwara Eliya,Hindu Tamil Wedding,premium,1,25244000
-40,Colombo,Reception,luxury,1,8334000
-318,Colombo,Poruwa Ceremony,luxury,0,40402000
-276,Colombo,Poruwa Ceremony,luxury,1,44070000
-209,Galle,Reception,budget,0,4606000
-327,Kalutara,Hindu Tamil Wedding,standard,1,14869000
-332,Jaffna,Poruwa Ceremony,premium,1,23325000
-222,Kandy,Reception,premium,0,13447000
-40,Galle,Poruwa Ceremony,premium,1,4902000
-320,Matale,Reception,budget,0,5735000
-145,Batticaloa,Church Wedding,luxury,0,12008000
-137,Mannar,Muslim Nikah Ceremony,budget,0,2806000
-40,Galle,Church Wedding,luxury,0,7263000
-359,Mullaitivu,Muslim Nikah Ceremony,standard,0,11535000
-266,Ratnapura,Muslim Nikah Ceremony,luxury,1,29598000
-187,Jaffna,Muslim Nikah Ceremony,budget,1,5393000
-240,Mannar,Poruwa Ceremony,premium,1,14389000
-139,Gampaha,Poruwa Ceremony,luxury,0,20182000
-216,Hambantota,Poruwa Ceremony,luxury,0,19584000
-254,Kalutara,Church Wedding,luxury,0,27738000
-152,Nuwara Eliya,Church Wedding,standard,0,7786000
-74,Badulla,Hindu Tamil Wedding,premium,1,7305000
-244,Galle,Hindu Tamil Wedding,budget,0,8067000
-166,Gampaha,Muslim Nikah Ceremony,budget,0,5721000
-183,Kurunegala,Reception,premium,0,9619000
-169,Mullaitivu,Poruwa Ceremony,premium,1,11328000
-479,Gampaha,Muslim Nikah Ceremony,luxury,1,54524000
-150,Nuwara Eliya,Muslim Nikah Ceremony,luxury,0,16500000
-40,Kalutara,Reception,luxury,1,6789000
-221,Anuradhapura,Church Wedding,budget,0,4835000
-209,Anuradhapura,Muslim Nikah Ceremony,premium,1,14057000
-235,Gampaha,Muslim Nikah Ceremony,premium,0,16928000
-122,Matara,Reception,standard,1,5433000
-277,Polonnaruwa,Church Wedding,budget,1,6307000
-211,Colombo,Muslim Nikah Ceremony,luxury,0,26668000
-146,Monaragala,Poruwa Ceremony,premium,0,8348000
-188,Nuwara Eliya,Poruwa Ceremony,standard,1,12298000
-127,Gampaha,Reception,budget,0,4031000
-125,Colombo,Hindu Tamil Wedding,standard,1,8945000
-98,Kalutara,Poruwa Ceremony,luxury,1,13712000
-120,Colombo,Muslim Nikah Ceremony,budget,0,4805000
-133,Kalutara,Muslim Nikah Ceremony,standard,0,7391000
-285,Vavuniya,Church Wedding,budget,0,6215000
-212,Ampara,Hindu Tamil Wedding,luxury,0,18255000
-245,Kalutara,Muslim Nikah Ceremony,budget,1,7868000
-146,Gampaha,Hindu Tamil Wedding,standard,0,8093000
-295,Kandy,Poruwa Ceremony,premium,0,21551000
-140,Trincomalee,Hindu Tamil Wedding,luxury,0,14235000
-151,Colombo,Muslim Nikah Ceremony,standard,0,9468000
-436,Matara,Poruwa Ceremony,standard,1,18261000
-176,Kandy,Reception,budget,0,4744000
-249,Mullaitivu,Hindu Tamil Wedding,budget,0,4868000
-134,Galle,Poruwa Ceremony,standard,1,7362000
-280,Badulla,Church Wedding,standard,1,11541000
-123,Monaragala,Reception,budget,0,2688000
-327,Badulla,Church Wedding,standard,0,11156000
-239,Kandy,Church Wedding,luxury,1,26177000
-282,Colombo,Poruwa Ceremony,premium,1,27049000
-70,Gampaha,Reception,luxury,0,8509000
-336,Hambantota,Hindu Tamil Wedding,premium,0,17596000
-347,Monaragala,Poruwa Ceremony,standard,1,12048000
-272,Gampaha,Poruwa Ceremony,budget,0,8359000
-297,Ampara,Poruwa Ceremony,standard,0,11396000
-465,Jaffna,Poruwa Ceremony,luxury,0,35433000
-40,Batticaloa,Poruwa Ceremony,standard,1,2951000
-60,Kandy,Hindu Tamil Wedding,standard,0,3978000
-280,Anuradhapura,Hindu Tamil Wedding,standard,1,11449000
-342,Badulla,Poruwa Ceremony,standard,0,11811000
-127,Ampara,Church Wedding,luxury,0,12037000
-215,Mannar,Church Wedding,standard,1,7411000
-400,Gampaha,Church Wedding,premium,0,22991000
-256,Colombo,Church Wedding,standard,1,15626000
-185,Batticaloa,Poruwa Ceremony,premium,0,10757000
-178,Colombo,Poruwa Ceremony,standard,0,9868000
-176,Trincomalee,Hindu Tamil Wedding,budget,1,5003000
-331,Matara,Poruwa Ceremony,standard,1,12648000
-196,Kalutara,Poruwa Ceremony,budget,1,6987000
-268,Ratnapura,Muslim Nikah Ceremony,standard,1,12038000
-446,Hambantota,Reception,budget,0,8212000
-297,Puttalam,Reception,premium,0,15114000
-200,Puttalam,Poruwa Ceremony,budget,1,5020000
-344,Galle,Poruwa Ceremony,budget,0,9045000
-320,Monaragala,Hindu Tamil Wedding,luxury,0,24823000
-191,Kalutara,Church Wedding,premium,0,13544000
-189,Kandy,Church Wedding,premium,0,12804000
-304,Galle,Church Wedding,luxury,1,32700000
-248,Jaffna,Poruwa Ceremony,premium,0,15323000
-310,Badulla,Poruwa Ceremony,premium,0,16007000
-162,Vavuniya,Church Wedding,standard,0,5910000
-117,Kalutara,Church Wedding,budget,1,4255000
-233,Puttalam,Reception,luxury,0,16536000
-219,Ampara,Poruwa Ceremony,premium,0,11871000
-244,Nuwara Eliya,Church Wedding,standard,0,10396000
-266,Mullaitivu,Muslim Nikah Ceremony,budget,1,5668000
-40,Matale,Hindu Tamil Wedding,standard,0,3022000
-120,Monaragala,Hindu Tamil Wedding,standard,0,5302000
-141,Ratnapura,Poruwa Ceremony,luxury,0,14456000
-403,Nuwara Eliya,Church Wedding,standard,1,15887000
-40,Kandy,Reception,budget,0,1779000
-323,Monaragala,Reception,premium,1,15696000
-337,Ampara,Hindu Tamil Wedding,standard,0,11821000
-426,Polonnaruwa,Poruwa Ceremony,luxury,0,33766000
-231,Galle,Poruwa Ceremony,premium,0,15561000
-431,Puttalam,Poruwa Ceremony,luxury,0,37857000
-183,Kilinochchi,Reception,standard,1,6234000
-46,Ampara,Poruwa Ceremony,standard,1,2769000
-245,Nuwara Eliya,Church Wedding,luxury,0,25826000
-64,Batticaloa,Church Wedding,standard,0,3133000
-40,Kilinochchi,Muslim Nikah Ceremony,premium,1,3556000
-340,Ampara,Muslim Nikah Ceremony,premium,0,16411000
-345,Trincomalee,Poruwa Ceremony,luxury,1,34760000
-364,Nuwara Eliya,Reception,premium,1,23722000
-193,Polonnaruwa,Reception,standard,1,7264000
-378,Kandy,Church Wedding,budget,0,9119000
-193,Anuradhapura,Church Wedding,luxury,0,17110000
-401,Mullaitivu,Muslim Nikah Ceremony,standard,1,14206000
-66,Kandy,Reception,premium,0,5187000
-186,Puttalam,Church Wedding,budget,0,4368000
-139,Colombo,Church Wedding,budget,1,6082000
-262,Kalutara,Church Wedding,budget,0,7232000
-363,Kalutara,Church Wedding,standard,0,13753000
-314,Vavuniya,Hindu Tamil Wedding,premium,0,16317000
-264,Galle,Church Wedding,budget,0,6695000
-282,Kandy,Hindu Tamil Wedding,luxury,1,40287000
-192,Gampaha,Poruwa Ceremony,luxury,1,28548000
-232,Gampaha,Church Wedding,standard,0,11008000
-89,Gampaha,Hindu Tamil Wedding,budget,1,4657000
-259,Ratnapura,Hindu Tamil Wedding,premium,1,19437000
-240,Anuradhapura,Church Wedding,budget,0,5767000
-228,Vavuniya,Church Wedding,luxury,0,18051000
-132,Jaffna,Muslim Nikah Ceremony,luxury,1,17027000
-269,Puttalam,Poruwa Ceremony,budget,0,5360000
-373,Kandy,Church Wedding,standard,0,14201000
-308,Trincomalee,Muslim Nikah Ceremony,budget,0,6395000
-290,Gampaha,Hindu Tamil Wedding,budget,0,9249000
-40,Kandy,Hindu Tamil Wedding,premium,1,5846000
-256,Anuradhapura,Reception,premium,0,13253000
-442,Mannar,Muslim Nikah Ceremony,luxury,0,34152000
-350,Polonnaruwa,Poruwa Ceremony,premium,0,16189000
-191,Mullaitivu,Reception,luxury,1,17430000
-210,Vavuniya,Church Wedding,luxury,0,18524000
-176,Kalutara,Hindu Tamil Wedding,premium,0,15311000
-299,Kegalle,Poruwa Ceremony,luxury,1,29873000
-220,Kilinochchi,Muslim Nikah Ceremony,standard,1,8174000
-201,Mullaitivu,Hindu Tamil Wedding,premium,1,12850000
-273,Kegalle,Church Wedding,budget,0,5649000
-437,Gampaha,Hindu Tamil Wedding,luxury,0,47222000
-281,Hambantota,Muslim Nikah Ceremony,standard,0,9208000
-267,Vavuniya,Hindu Tamil Wedding,premium,1,17522000
-40,Matara,Poruwa Ceremony,standard,1,3081000
-103,Trincomalee,Hindu Tamil Wedding,budget,1,3380000
-134,Gampaha,Reception,budget,0,3755000
-189,Kilinochchi,Muslim Nikah Ceremony,budget,1,4205000
-125,Gampaha,Poruwa Ceremony,budget,0,4292000
-296,Batticaloa,Reception,premium,1,17888000
-245,Monaragala,Hindu Tamil Wedding,luxury,1,25331000
-532,Kandy,Hindu Tamil Wedding,premium,0,32912000
-389,Kandy,Poruwa Ceremony,standard,0,13541000
-289,Kandy,Muslim Nikah Ceremony,premium,1,21608000
-362,Galle,Muslim Nikah Ceremony,standard,0,13842000
-165,Hambantota,Poruwa Ceremony,luxury,0,14505000
-263,Kilinochchi,Church Wedding,premium,1,15556000
-212,Kandy,Church Wedding,budget,0,6058000
-302,Kandy,Poruwa Ceremony,luxury,0,34159000
-117,Ampara,Church Wedding,premium,1,6644000
-261,Gampaha,Poruwa Ceremony,budget,1,8480000
-183,Galle,Poruwa Ceremony,budget,0,6043000
-178,Ampara,Reception,standard,0,6072000
-40,Badulla,Reception,standard,1,2295000
-195,Gampaha,Reception,luxury,0,19231000
-237,Colombo,Hindu Tamil Wedding,budget,0,7924000
-192,Badulla,Church Wedding,budget,0,4402000
-391,Polonnaruwa,Poruwa Ceremony,standard,0,12355000
-196,Colombo,Church Wedding,luxury,0,25713000
-96,Kurunegala,Poruwa Ceremony,standard,0,4237000
-377,Gampaha,Hindu Tamil Wedding,budget,0,10269000
-67,Batticaloa,Muslim Nikah Ceremony,budget,0,1929000
-40,Hambantota,Muslim Nikah Ceremony,luxury,1,6398000
-138,Badulla,Reception,budget,0,2517000
-93,Puttalam,Reception,budget,0,2442000
-89,Colombo,Hindu Tamil Wedding,budget,0,4883000
-254,Vavuniya,Hindu Tamil Wedding,budget,0,5745000
-86,Jaffna,Poruwa Ceremony,premium,0,6947000
-76,Kalutara,Hindu Tamil Wedding,premium,1,9052000
-136,Galle,Hindu Tamil Wedding,luxury,1,18052000
-86,Colombo,Church Wedding,budget,1,3718000
-69,Anuradhapura,Reception,luxury,0,6767000
-292,Gampaha,Muslim Nikah Ceremony,budget,0,7515000
-104,Matara,Muslim Nikah Ceremony,luxury,1,12303000
-74,Puttalam,Muslim Nikah Ceremony,budget,1,2209000
-244,Vavuniya,Poruwa Ceremony,premium,0,13443000
-221,Anuradhapura,Reception,budget,0,3886000
-136,Kandy,Church Wedding,premium,0,9914000
-242,Nuwara Eliya,Muslim Nikah Ceremony,luxury,0,29334000
-232,Kandy,Poruwa Ceremony,standard,1,12954000
-214,Anuradhapura,Reception,premium,1,11510000
-482,Galle,Church Wedding,standard,1,17365000
-136,Gampaha,Poruwa Ceremony,premium,0,12203000
-367,Colombo,Church Wedding,budget,0,9548000
-105,Kandy,Hindu Tamil Wedding,budget,0,3959000
-407,Badulla,Reception,budget,0,7420000
-301,Colombo,Reception,standard,0,12097000
-131,Trincomalee,Hindu Tamil Wedding,standard,0,5268000
-251,Gampaha,Church Wedding,premium,0,19672000
-145,Kegalle,Poruwa Ceremony,premium,1,10692000
-318,Polonnaruwa,Poruwa Ceremony,premium,0,16326000
-185,Mannar,Muslim Nikah Ceremony,standard,0,6498000
-295,Hambantota,Hindu Tamil Wedding,luxury,0,30621000
-326,Ratnapura,Muslim Nikah Ceremony,standard,1,11349000
-50,Nuwara Eliya,Hindu Tamil Wedding,standard,0,4127000
-201,Kandy,Church Wedding,premium,0,14328000
-140,Batticaloa,Muslim Nikah Ceremony,premium,0,7562000
-200,Kandy,Poruwa Ceremony,premium,0,13562000
-203,Matale,Church Wedding,luxury,0,19121000
-209,Colombo,Muslim Nikah Ceremony,luxury,0,29240000
-298,Kandy,Poruwa Ceremony,budget,0,8947000
-148,Galle,Church Wedding,premium,0,9952000
-209,Galle,Poruwa Ceremony,luxury,0,25537000
-86,Kandy,Church Wedding,luxury,1,12300000
-163,Jaffna,Muslim Nikah Ceremony,luxury,0,17888000
-217,Matara,Church Wedding,standard,0,8537000
-470,Colombo,Reception,standard,1,19702000
-280,Kalutara,Reception,premium,1,20430000
-134,Colombo,Poruwa Ceremony,luxury,1,23921000
-381,Galle,Muslim Nikah Ceremony,budget,0,9276000
-131,Galle,Church Wedding,standard,0,5625000
-148,Colombo,Reception,standard,1,8169000
-331,Kalutara,Church Wedding,premium,0,19453000
-258,Galle,Reception,premium,0,16369000
-108,Kandy,Church Wedding,luxury,0,13072000
-178,Puttalam,Poruwa Ceremony,standard,0,7949000
-207,Kalutara,Reception,budget,0,4898000
-144,Batticaloa,Poruwa Ceremony,budget,1,4013000
-73,Puttalam,Reception,standard,0,2740000
-253,Kilinochchi,Reception,premium,0,12643000
-286,Kilinochchi,Hindu Tamil Wedding,luxury,0,22760000
-102,Gampaha,Hindu Tamil Wedding,standard,0,6049000
-352,Vavuniya,Poruwa Ceremony,budget,1,7873000
-263,Matale,Reception,budget,0,5987000
-310,Colombo,Muslim Nikah Ceremony,premium,0,24673000
-40,Colombo,Hindu Tamil Wedding,standard,0,4365000
-453,Monaragala,Muslim Nikah Ceremony,budget,1,10233000
-343,Nuwara Eliya,Reception,budget,0,7759000
-206,Kurunegala,Hindu Tamil Wedding,luxury,0,23033000
-177,Mannar,Reception,budget,1,3745000
-266,Colombo,Muslim Nikah Ceremony,standard,0,15862000
-297,Kalutara,Hindu Tamil Wedding,budget,1,10205000
-244,Puttalam,Hindu Tamil Wedding,luxury,1,23560000
-104,Jaffna,Reception,standard,0,4337000
-150,Galle,Muslim Nikah Ceremony,premium,0,9001000
-133,Anuradhapura,Muslim Nikah Ceremony,standard,0,5719000
-179,Trincomalee,Muslim Nikah Ceremony,luxury,1,20158000
-146,Galle,Hindu Tamil Wedding,budget,1,5135000
-80,Hambantota,Church Wedding,budget,0,2174000
-177,Galle,Poruwa Ceremony,luxury,1,25844000
-40,Jaffna,Hindu Tamil Wedding,standard,1,3880000
-141,Kurunegala,Church Wedding,standard,0,4674000
-124,Kandy,Muslim Nikah Ceremony,standard,0,5726000
-404,Kandy,Church Wedding,luxury,0,37546000
-221,Kegalle,Muslim Nikah Ceremony,budget,1,5965000
-40,Colombo,Reception,luxury,0,7279000
-216,Matara,Hindu Tamil Wedding,premium,0,17342000
-141,Colombo,Hindu Tamil Wedding,budget,1,5839000
-171,Vavuniya,Church Wedding,luxury,1,18779000
-88,Polonnaruwa,Church Wedding,budget,1,2631000
-236,Gampaha,Church Wedding,premium,1,20409000
-211,Ratnapura,Church Wedding,premium,1,12577000
-40,Matale,Muslim Nikah Ceremony,standard,1,2800000
-58,Galle,Reception,premium,0,4467000
-435,Kalutara,Poruwa Ceremony,premium,0,24040000
-326,Colombo,Reception,standard,0,15016000
-48,Badulla,Muslim Nikah Ceremony,luxury,0,4977000
-53,Galle,Reception,luxury,1,8743000
-254,Galle,Muslim Nikah Ceremony,standard,0,11270000
-287,Kalutara,Poruwa Ceremony,standard,1,14002000
-118,Galle,Reception,standard,0,4694000
-80,Kandy,Church Wedding,luxury,1,10922000
-359,Kandy,Muslim Nikah Ceremony,premium,0,19502000
-377,Galle,Church Wedding,luxury,0,32063000
-355,Hambantota,Reception,luxury,0,26768000
-304,Anuradhapura,Muslim Nikah Ceremony,luxury,0,25498000
-67,Galle,Reception,standard,0,2871000
-278,Kalutara,Poruwa Ceremony,standard,1,14426000
-309,Monaragala,Hindu Tamil Wedding,premium,0,16275000
-107,Gampaha,Church Wedding,budget,0,3674000
-374,Jaffna,Church Wedding,luxury,0,31145000
-284,Nuwara Eliya,Reception,budget,1,7919000
-243,Mannar,Muslim Nikah Ceremony,budget,0,5076000
-279,Ampara,Reception,budget,1,5764000
-252,Kalutara,Reception,standard,1,12549000
-248,Trincomalee,Reception,premium,0,11828000
-267,Matara,Poruwa Ceremony,luxury,1,33970000
-104,Gampaha,Poruwa Ceremony,luxury,0,13629000
-113,Ampara,Church Wedding,standard,0,4381000
-164,Trincomalee,Reception,luxury,1,16694000
-142,Batticaloa,Reception,budget,0,3007000
-191,Kandy,Hindu Tamil Wedding,premium,0,15989000
-309,Kegalle,Reception,luxury,1,24695000
-255,Gampaha,Poruwa Ceremony,standard,1,14554000
-240,Vavuniya,Poruwa Ceremony,budget,1,6425000
-55,Colombo,Hindu Tamil Wedding,standard,1,5006000
-295,Galle,Church Wedding,luxury,0,31326000
-222,Galle,Hindu Tamil Wedding,luxury,0,23808000
-329,Gampaha,Muslim Nikah Ceremony,luxury,0,39494000
-259,Ratnapura,Muslim Nikah Ceremony,luxury,1,28803000
-139,Vavuniya,Poruwa Ceremony,budget,1,2820000
-239,Galle,Reception,premium,1,15740000
-400,Trincomalee,Church Wedding,standard,1,14266000
-334,Nuwara Eliya,Muslim Nikah Ceremony,premium,0,23216000
-181,Gampaha,Hindu Tamil Wedding,standard,0,9728000
-271,Kegalle,Reception,luxury,1,25317000
-313,Kandy,Hindu Tamil Wedding,standard,1,16262000
-303,Colombo,Hindu Tamil Wedding,luxury,0,43370000
-427,Kandy,Hindu Tamil Wedding,standard,0,18358000
-240,Batticaloa,Muslim Nikah Ceremony,budget,1,5493000
-230,Anuradhapura,Muslim Nikah Ceremony,budget,0,5635000
-40,Hambantota,Church Wedding,premium,0,3232000
-215,Galle,Poruwa Ceremony,budget,0,5737000
-306,Galle,Poruwa Ceremony,premium,0,18690000
-90,Matale,Poruwa Ceremony,standard,0,4000000
-168,Kegalle,Hindu Tamil Wedding,standard,0,7515000
-215,Anuradhapura,Reception,premium,0,10850000
-194,Kandy,Hindu Tamil Wedding,premium,0,15244000
-210,Kandy,Muslim Nikah Ceremony,budget,0,5091000
-180,Nuwara Eliya,Muslim Nikah Ceremony,premium,0,14967000
-307,Vavuniya,Poruwa Ceremony,standard,0,9871000
-170,Kandy,Muslim Nikah Ceremony,standard,0,8372000
-307,Vavuniya,Poruwa Ceremony,premium,0,14810000
-151,Gampaha,Hindu Tamil Wedding,standard,0,8759000
-154,Polonnaruwa,Hindu Tamil Wedding,premium,0,9749000
-206,Kalutara,Reception,budget,1,5944000
-307,Ampara,Church Wedding,premium,1,17953000
+guest_count,venue_district,ceremony_type,wedding_scale,seasonal_indicator,total_cost_lkr
+152,Galle,Poruwa,premium,0,4084000
+264,Kandy,Christian,budget,1,212000
+307,Galle,Hindu,budget,0,1038000
+108,Gampaha,Islamic,premium,1,8274000
+70,Colombo,Hindu,budget,1,540000
+389,Galle,Islamic,premium,1,14134000
+99,Galle,Hindu,standard,1,1647000
+267,Galle,Hindu,standard,1,3612000
+264,Galle,Buddhist,standard,1,3126000
+102,Gampaha,Buddhist,budget,0,384000
+376,Colombo,Buddhist,premium,0,9655000
+310,Gampaha,Hindu,budget,1,1140000
+82,Kalutara,Poruwa,premium,1,5782000
+276,Kurunegala,Christian,budget,0,362000
+256,Gampaha,Hindu,budget,0,1116000
+145,Galle,Poruwa,premium,0,8181000
+209,Kandy,Christian,standard,1,2786000
+183,Galle,Islamic,standard,1,2686000
+274,Colombo,Buddhist,premium,1,10527000
+186,Kalutara,Poruwa,budget,0,868000
+209,Colombo,Islamic,budget,1,153000
+150,Colombo,Buddhist,premium,0,6710000
+273,Colombo,Buddhist,premium,1,18456000
+296,Galle,Christian,premium,0,9388000
+247,Kalutara,Christian,premium,1,8593000
+375,Kurunegala,Christian,premium,1,9257000
+197,Galle,Buddhist,budget,1,773000
+200,Kalutara,Hindu,premium,0,6382000
+109,Colombo,Hindu,budget,1,265000
+58,Colombo,Christian,premium,1,3693000
+169,Colombo,Islamic,premium,0,6762000
+303,Kandy,Buddhist,premium,0,9465000
+359,Kandy,Poruwa,budget,1,124000
+353,Galle,Christian,budget,1,2150000
+71,Kalutara,Poruwa,premium,1,3978000
+335,Colombo,Islamic,premium,1,19266000
+196,Galle,Christian,budget,1,1282000
+95,Kurunegala,Christian,budget,0,412000
+144,Kandy,Islamic,budget,1,867000
+372,Gampaha,Buddhist,standard,0,3534000
+337,Kalutara,Hindu,premium,0,12739000
+348,Kalutara,Poruwa,standard,0,3522000
+62,Galle,Hindu,premium,0,3446000
+191,Galle,Christian,premium,0,6343000
+391,Kandy,Buddhist,standard,0,4179000
+375,Kalutara,Christian,budget,0,1274000
+245,Kalutara,Poruwa,standard,0,2608000
+173,Gampaha,Christian,budget,1,1071000
+278,Gampaha,Poruwa,standard,0,2963000
+171,Colombo,Hindu,standard,1,2690000
+321,Kurunegala,Poruwa,standard,0,3070000
+135,Colombo,Poruwa,standard,1,2053000
+253,Gampaha,Hindu,budget,0,419000
+59,Kalutara,Poruwa,standard,1,1033000
+145,Colombo,Poruwa,budget,1,843000
+209,Kandy,Islamic,standard,0,2722000
+317,Kandy,Buddhist,budget,1,1306000
+61,Kalutara,Hindu,budget,0,328000
+142,Gampaha,Hindu,standard,1,1638000
+163,Kurunegala,Christian,budget,1,870000
+213,Gampaha,Poruwa,budget,1,1032000
+145,Kalutara,Poruwa,budget,0,617000
+335,Colombo,Buddhist,standard,1,4698000
+226,Galle,Islamic,budget,0,725000
+255,Galle,Christian,standard,0,2112000
+102,Colombo,Poruwa,budget,1,752000
+264,Kurunegala,Christian,premium,1,7432000
+302,Kalutara,Poruwa,standard,0,2156000
+388,Kurunegala,Buddhist,standard,1,4448000
+341,Kalutara,Islamic,premium,0,16249000
+68,Kalutara,Christian,budget,0,410000
+50,Kandy,Poruwa,standard,0,693000
+107,Galle,Poruwa,budget,0,524000
+301,Kurunegala,Islamic,premium,0,7614000
+63,Colombo,Poruwa,standard,1,1192000
+61,Gampaha,Islamic,budget,1,465000
+365,Gampaha,Islamic,budget,0,1642000
+250,Colombo,Poruwa,budget,1,1217000
+131,Kandy,Poruwa,premium,0,4740000
+300,Kurunegala,Poruwa,premium,1,9640000
+226,Kandy,Poruwa,standard,0,2848000
+147,Colombo,Christian,premium,0,7725000
+400,Kurunegala,Christian,budget,0,1187000
+194,Kurunegala,Buddhist,standard,0,1341000
+337,Gampaha,Islamic,premium,1,15821000
+167,Kandy,Christian,standard,1,1859000
+300,Colombo,Buddhist,premium,0,8671000
+115,Kandy,Christian,premium,1,8582000
+335,Kandy,Christian,premium,1,17682000
+79,Gampaha,Christian,budget,0,325000
+379,Colombo,Islamic,budget,1,1693000
+92,Kandy,Christian,premium,0,3474000
+57,Galle,Islamic,budget,0,353000
+110,Gampaha,Christian,premium,0,4982000
+71,Kurunegala,Buddhist,budget,0,269000
+127,Gampaha,Poruwa,premium,0,4431000
+156,Kurunegala,Buddhist,standard,1,1772000
+229,Kalutara,Hindu,premium,1,6995000
+236,Kandy,Christian,premium,0,11745000
+64,Colombo,Poruwa,standard,0,1142000
+349,Colombo,Buddhist,budget,1,1518000
+158,Gampaha,Islamic,premium,1,6508000
+132,Gampaha,Buddhist,budget,1,828000
+278,Colombo,Buddhist,budget,1,526000
+53,Kalutara,Christian,standard,1,1099000
+296,Kandy,Christian,premium,1,15635000
+371,Galle,Islamic,premium,1,13539000
+111,Colombo,Hindu,premium,0,5179000
+182,Kalutara,Hindu,standard,1,1785000
+189,Colombo,Hindu,standard,1,2987000
+382,Kandy,Christian,budget,1,2190000
+62,Gampaha,Islamic,budget,0,323000
+87,Kandy,Buddhist,budget,1,583000
+186,Gampaha,Islamic,premium,0,7574000
+398,Kandy,Buddhist,budget,1,2156000
+388,Kandy,Hindu,standard,1,5770000
+377,Kalutara,Christian,budget,1,1641000
+194,Colombo,Hindu,standard,0,2950000
+247,Kalutara,Christian,premium,0,9623000
+206,Colombo,Islamic,standard,0,2198000
+338,Kalutara,Islamic,standard,1,4551000
+167,Kalutara,Poruwa,premium,0,6310000
+206,Kurunegala,Poruwa,premium,1,7076000
+292,Galle,Islamic,standard,0,3351000
+379,Kalutara,Hindu,standard,0,3549000
+259,Colombo,Buddhist,premium,1,12975000
+373,Kurunegala,Poruwa,premium,1,12973000
+100,Kurunegala,Buddhist,standard,0,976000
+395,Kalutara,Islamic,standard,0,3783000
+358,Colombo,Hindu,budget,0,237000
+74,Gampaha,Christian,standard,1,1351000
+66,Kandy,Christian,premium,0,3016000
+393,Colombo,Buddhist,budget,0,2196000
+98,Colombo,Islamic,budget,0,636000
+98,Colombo,Poruwa,standard,0,1407000
+335,Kandy,Hindu,budget,1,1709000
+215,Kandy,Islamic,budget,1,201000
+211,Galle,Buddhist,premium,0,8098000
+57,Colombo,Buddhist,premium,0,3633000
+377,Kalutara,Buddhist,premium,0,13890000
+340,Kalutara,Christian,budget,1,1843000
+56,Gampaha,Buddhist,premium,0,2263000
+131,Gampaha,Buddhist,premium,0,4070000
+244,Galle,Islamic,budget,0,829000
+391,Galle,Buddhist,standard,1,4962000
+258,Kalutara,Buddhist,standard,0,2382000
+284,Kalutara,Islamic,standard,1,3869000
+375,Gampaha,Poruwa,standard,1,3282000
+202,Kalutara,Hindu,premium,0,8166000
+336,Kalutara,Christian,standard,1,3902000
+239,Gampaha,Hindu,standard,0,2809000
+198,Kandy,Christian,budget,0,196000
+104,Kalutara,Poruwa,budget,1,549000
+386,Kalutara,Christian,budget,0,1876000
+122,Colombo,Buddhist,budget,0,570000
+340,Kandy,Hindu,budget,1,658000
+324,Kurunegala,Islamic,premium,0,9484000
+352,Galle,Christian,premium,0,9184000
+247,Colombo,Hindu,budget,1,1157000
+96,Gampaha,Buddhist,premium,1,4867000
+384,Kurunegala,Buddhist,premium,1,14510000
+152,Colombo,Christian,budget,1,761000
+232,Galle,Buddhist,budget,1,1182000
+157,Kalutara,Hindu,premium,0,8768000
+190,Gampaha,Christian,premium,0,7656000
+321,Galle,Buddhist,standard,1,4474000
+226,Kandy,Poruwa,standard,1,2911000
+202,Colombo,Poruwa,standard,0,2508000
+189,Kandy,Hindu,budget,0,1087000
+368,Kalutara,Christian,standard,0,3026000
+108,Galle,Poruwa,premium,1,6083000
+290,Gampaha,Christian,standard,0,3277000
+69,Gampaha,Buddhist,budget,0,395000
+194,Kandy,Christian,standard,0,1791000
+147,Kandy,Buddhist,premium,0,5251000
+275,Galle,Hindu,budget,0,454000
+275,Galle,Christian,budget,1,522000
+225,Kurunegala,Islamic,budget,0,694000
+398,Kandy,Hindu,premium,1,15773000
+286,Colombo,Christian,budget,0,1133000
+230,Gampaha,Islamic,premium,0,7354000
+363,Colombo,Christian,premium,0,13135000
+88,Gampaha,Islamic,standard,1,1271000
+273,Kurunegala,Christian,budget,0,109000
+393,Kurunegala,Christian,standard,0,3287000
+368,Galle,Islamic,premium,1,16587000
+291,Galle,Christian,budget,1,1151000
+71,Gampaha,Christian,standard,1,1193000
+276,Galle,Poruwa,premium,0,7368000
+107,Gampaha,Hindu,standard,1,1584000
+88,Kurunegala,Poruwa,premium,1,3805000
+71,Kandy,Christian,premium,0,8776000
+133,Kalutara,Christian,budget,0,677000
+64,Gampaha,Poruwa,premium,1,3257000
+257,Kandy,Islamic,standard,0,3144000
+76,Kalutara,Hindu,premium,0,7509000
+95,Colombo,Buddhist,standard,1,1564000
+368,Kalutara,Poruwa,budget,1,1258000
+258,Kurunegala,Hindu,standard,1,2216000
+350,Colombo,Buddhist,standard,0,4693000
+90,Colombo,Islamic,budget,1,605000
+141,Galle,Buddhist,standard,1,1546000
+282,Kurunegala,Buddhist,budget,1,417000
+139,Kalutara,Hindu,standard,0,1846000
+366,Kandy,Christian,standard,0,3098000
+90,Gampaha,Islamic,standard,1,1275000
+363,Kalutara,Hindu,premium,0,12769000
+61,Galle,Poruwa,budget,0,273000
+168,Kurunegala,Christian,standard,1,2201000
+361,Colombo,Christian,premium,1,20863000
+256,Colombo,Islamic,budget,1,1827000
+342,Galle,Islamic,standard,1,3937000
+166,Gampaha,Islamic,standard,0,1568000
+292,Kandy,Hindu,standard,0,3065000
+70,Colombo,Christian,standard,1,1629000
+63,Kalutara,Hindu,premium,0,3696000
+365,Kurunegala,Buddhist,standard,0,3607000
+77,Gampaha,Christian,budget,0,332000
+350,Kandy,Hindu,premium,1,11236000
+381,Kalutara,Buddhist,budget,0,1139000
+362,Kalutara,Islamic,budget,0,1201000
+169,Galle,Islamic,premium,0,10039000
+383,Gampaha,Buddhist,premium,0,14743000
+84,Kalutara,Poruwa,budget,0,365000
+61,Gampaha,Islamic,budget,1,134000
+334,Colombo,Christian,standard,0,4705000
+175,Kurunegala,Islamic,standard,1,1506000
+206,Kalutara,Poruwa,premium,1,8567000
+163,Gampaha,Buddhist,standard,1,2546000
+351,Galle,Buddhist,budget,0,1294000
+118,Colombo,Hindu,standard,1,1800000
+138,Kurunegala,Buddhist,budget,0,454000
+151,Kalutara,Islamic,standard,0,1760000
+328,Kandy,Poruwa,premium,0,10900000
+114,Galle,Hindu,premium,0,5450000
+354,Colombo,Christian,standard,1,4796000
+379,Gampaha,Buddhist,premium,0,11079000
+166,Kurunegala,Hindu,budget,1,757000
+349,Galle,Christian,premium,1,19589000
+156,Kurunegala,Islamic,premium,0,5272000
+326,Kurunegala,Christian,standard,1,3529000
+185,Gampaha,Islamic,standard,1,1851000
+399,Kandy,Islamic,standard,0,3256000
+290,Gampaha,Poruwa,standard,1,2576000
+359,Colombo,Islamic,budget,1,2265000
+269,Colombo,Hindu,budget,0,1590000
+219,Colombo,Hindu,premium,0,8322000
+216,Gampaha,Buddhist,standard,0,1731000
+118,Colombo,Christian,standard,0,1867000
+192,Kandy,Islamic,premium,1,6247000
+303,Colombo,Hindu,premium,0,8400000
+174,Colombo,Buddhist,premium,0,5391000
+91,Kurunegala,Islamic,budget,0,297000
+119,Colombo,Islamic,budget,0,487000
+198,Kalutara,Hindu,premium,1,11976000
+264,Galle,Hindu,standard,0,3307000
+313,Kalutara,Islamic,standard,1,3513000
+257,Gampaha,Buddhist,premium,1,8995000
+52,Kalutara,Poruwa,premium,1,4372000
+370,Colombo,Poruwa,standard,1,3899000
+321,Galle,Islamic,standard,0,2510000
+286,Gampaha,Buddhist,budget,1,115000
+229,Kalutara,Hindu,standard,0,2680000
+391,Galle,Poruwa,standard,1,4918000
+207,Gampaha,Christian,premium,1,7449000
+115,Kandy,Hindu,premium,1,5287000
+74,Gampaha,Buddhist,budget,1,420000
+385,Kalutara,Poruwa,premium,0,13132000
+74,Galle,Poruwa,budget,0,346000
+209,Kurunegala,Christian,standard,1,2663000
+315,Colombo,Hindu,standard,0,3644000
+148,Kurunegala,Buddhist,standard,1,1684000
+309,Galle,Buddhist,budget,0,1604000
+227,Kurunegala,Islamic,premium,1,9409000
+63,Kurunegala,Poruwa,standard,0,755000
+128,Kurunegala,Hindu,premium,1,4873000
+291,Kurunegala,Poruwa,budget,1,177000
+237,Kandy,Poruwa,premium,0,5232000
+301,Gampaha,Christian,budget,0,1050000
+162,Colombo,Buddhist,budget,0,913000
+146,Gampaha,Hindu,standard,1,2450000
+339,Kandy,Buddhist,premium,0,9127000
+136,Kurunegala,Poruwa,budget,0,429000
+201,Colombo,Poruwa,budget,1,954000
+260,Kandy,Islamic,premium,0,8638000
+369,Gampaha,Islamic,budget,0,1738000
+98,Galle,Islamic,standard,0,1483000
+304,Gampaha,Hindu,budget,1,1126000
+318,Kurunegala,Islamic,standard,0,3026000
+232,Colombo,Buddhist,premium,1,10669000
+262,Galle,Christian,standard,0,3495000
+168,Colombo,Islamic,budget,0,699000
+175,Kalutara,Islamic,premium,1,5879000
+397,Kurunegala,Poruwa,standard,1,3785000
+99,Kandy,Islamic,budget,1,171000
+240,Kalutara,Christian,premium,0,8874000
+177,Kurunegala,Hindu,standard,1,1910000
+153,Kandy,Hindu,standard,0,2080000
+280,Kandy,Christian,standard,0,3471000
+283,Gampaha,Hindu,standard,1,3488000
+69,Kandy,Christian,premium,0,2597000
+160,Kurunegala,Islamic,standard,1,1520000
+359,Kurunegala,Hindu,standard,1,3991000
+53,Kurunegala,Christian,budget,1,74000
+208,Galle,Islamic,premium,0,7521000
+79,Gampaha,Poruwa,premium,1,5152000
+195,Galle,Buddhist,premium,1,8337000
+197,Kandy,Islamic,premium,0,6555000
+110,Gampaha,Hindu,premium,0,7436000
+386,Kandy,Poruwa,premium,0,9968000
+118,Kurunegala,Poruwa,budget,0,65000
+309,Kalutara,Hindu,premium,0,8341000
+223,Galle,Islamic,budget,0,1090000
+155,Kalutara,Islamic,premium,0,6035000
+231,Gampaha,Buddhist,budget,1,974000
+156,Galle,Hindu,standard,0,1885000
+56,Kalutara,Hindu,premium,1,3109000
+203,Galle,Buddhist,budget,1,373000
+267,Kurunegala,Buddhist,premium,0,6316000
+210,Gampaha,Poruwa,premium,1,7850000
+201,Kurunegala,Poruwa,standard,1,1806000
+66,Gampaha,Hindu,budget,1,81000
+106,Gampaha,Hindu,standard,1,1545000
+343,Galle,Christian,standard,0,4103000
+117,Kalutara,Islamic,standard,0,1418000
+141,Kalutara,Christian,budget,0,771000
+115,Colombo,Christian,budget,1,331000
+138,Kandy,Hindu,premium,0,5175000
+57,Galle,Islamic,budget,1,322000
+96,Kalutara,Hindu,standard,1,1277000
+385,Kandy,Poruwa,premium,0,12775000
+178,Kurunegala,Islamic,premium,0,4681000
+324,Colombo,Islamic,premium,1,11873000
+70,Kalutara,Poruwa,standard,1,1215000
+296,Kandy,Poruwa,budget,0,1365000
+203,Kalutara,Poruwa,premium,0,5949000
+183,Kandy,Islamic,budget,0,687000
+265,Gampaha,Christian,standard,1,3792000
+212,Galle,Hindu,budget,0,1015000
+199,Colombo,Poruwa,premium,1,6785000
+321,Gampaha,Hindu,premium,1,12120000
+173,Colombo,Christian,standard,0,2617000
+166,Kurunegala,Islamic,standard,1,1516000
+301,Kurunegala,Hindu,premium,0,8567000
+95,Kalutara,Islamic,budget,1,481000
+330,Kalutara,Hindu,standard,0,3293000
+324,Colombo,Islamic,budget,0,1884000
+170,Galle,Christian,premium,1,9064000
+335,Colombo,Buddhist,budget,1,1434000
+271,Colombo,Islamic,premium,1,8734000
+159,Kalutara,Buddhist,premium,0,5232000
+317,Kandy,Christian,standard,1,3194000
+221,Colombo,Poruwa,budget,0,122000
+265,Colombo,Poruwa,premium,0,11266000
+96,Colombo,Christian,standard,1,1692000
+87,Galle,Buddhist,budget,0,449000
+125,Kurunegala,Christian,standard,1,1176000
+306,Kalutara,Buddhist,standard,0,3493000
+142,Kurunegala,Buddhist,premium,1,5808000
+361,Colombo,Poruwa,budget,1,2113000
+139,Kurunegala,Poruwa,budget,1,726000
+314,Kurunegala,Buddhist,budget,0,1156000
+232,Colombo,Poruwa,premium,1,8610000
+94,Colombo,Islamic,premium,1,5880000
+317,Kurunegala,Buddhist,budget,1,1620000
+202,Kandy,Poruwa,premium,0,6311000
+210,Galle,Hindu,budget,0,1077000
+381,Gampaha,Christian,premium,0,16627000
+356,Kandy,Poruwa,standard,1,4658000
+308,Galle,Christian,budget,1,232000
+345,Gampaha,Buddhist,budget,1,1276000
+350,Gampaha,Poruwa,budget,1,1824000
+343,Galle,Poruwa,standard,0,2494000
+122,Kurunegala,Hindu,standard,1,1271000
+221,Colombo,Christian,standard,0,3340000
+205,Kurunegala,Islamic,budget,1,750000
+206,Gampaha,Islamic,standard,1,2678000
+175,Kandy,Buddhist,budget,1,83000
+253,Kalutara,Buddhist,premium,1,10378000
+116,Kandy,Poruwa,standard,0,1370000
+311,Kandy,Poruwa,premium,0,9960000
+86,Gampaha,Islamic,budget,0,85000
+250,Colombo,Poruwa,budget,0,1195000
+118,Kurunegala,Buddhist,budget,0,518000
+91,Gampaha,Poruwa,premium,1,8642000
+373,Kandy,Buddhist,premium,1,14211000
+322,Kandy,Islamic,standard,1,4785000
+390,Galle,Poruwa,budget,0,1898000
+316,Kalutara,Poruwa,premium,1,8033000
+233,Galle,Buddhist,standard,1,3099000
+203,Galle,Islamic,standard,0,2166000
+265,Kandy,Christian,budget,0,1412000
+224,Galle,Poruwa,premium,1,7849000
+386,Colombo,Buddhist,premium,0,16330000
+238,Gampaha,Poruwa,standard,0,2171000
+326,Galle,Hindu,budget,1,1894000
+212,Kandy,Hindu,standard,0,1894000
+341,Colombo,Poruwa,budget,0,1238000
+237,Colombo,Buddhist,premium,1,11091000
+309,Kalutara,Christian,premium,1,13709000
+339,Kurunegala,Poruwa,premium,0,6705000
+211,Gampaha,Islamic,standard,1,2988000
+160,Galle,Hindu,premium,0,5168000
+104,Kandy,Poruwa,premium,0,5166000
+318,Kurunegala,Christian,budget,0,1190000
+81,Kalutara,Hindu,standard,1,1215000
+102,Kalutara,Islamic,budget,0,449000
+339,Gampaha,Hindu,premium,0,11493000
+290,Gampaha,Poruwa,standard,1,2729000
+137,Gampaha,Buddhist,standard,0,1871000
+114,Kandy,Christian,budget,0,170000
+356,Kurunegala,Christian,budget,1,1572000
+267,Kurunegala,Buddhist,premium,0,7358000
+62,Kurunegala,Buddhist,premium,0,2050000
+260,Galle,Poruwa,standard,0,3296000
+352,Gampaha,Christian,budget,1,1457000
+149,Gampaha,Buddhist,budget,1,91000
+392,Kurunegala,Poruwa,standard,0,2444000
+52,Galle,Islamic,budget,1,115000
+284,Kandy,Poruwa,budget,0,1090000
+95,Kurunegala,Poruwa,standard,1,1131000
+187,Kandy,Buddhist,premium,0,7095000
+73,Kurunegala,Christian,budget,1,117000
+205,Colombo,Islamic,standard,1,3677000
+282,Gampaha,Poruwa,standard,0,3147000
+104,Gampaha,Islamic,budget,1,541000
+184,Galle,Christian,budget,1,91000
+94,Kalutara,Christian,premium,0,4881000
+254,Galle,Islamic,standard,1,3036000
+361,Galle,Hindu,premium,0,12987000
+108,Gampaha,Islamic,premium,1,4772000
+388,Kandy,Poruwa,budget,1,1637000
+370,Colombo,Islamic,standard,1,5075000
+290,Gampaha,Poruwa,budget,0,1414000
+273,Kurunegala,Hindu,budget,1,396000
+259,Kalutara,Hindu,standard,0,2003000
+142,Galle,Poruwa,premium,1,6768000
+99,Kandy,Islamic,standard,0,972000
+233,Kandy,Hindu,standard,0,2002000
+68,Kalutara,Hindu,standard,1,1221000
+174,Gampaha,Buddhist,premium,0,3903000
+190,Gampaha,Islamic,premium,1,8867000
+133,Gampaha,Poruwa,standard,1,1656000
+205,Gampaha,Christian,budget,1,181000
+140,Kalutara,Poruwa,premium,0,4175000
+59,Galle,Buddhist,standard,1,1149000
+138,Kurunegala,Buddhist,premium,1,4360000
+140,Gampaha,Buddhist,standard,0,1775000
+373,Colombo,Hindu,budget,1,2319000
+364,Kandy,Buddhist,budget,0,1706000
+286,Colombo,Poruwa,budget,1,176000
+158,Galle,Hindu,budget,0,767000
+291,Galle,Poruwa,budget,1,1424000
+373,Gampaha,Christian,budget,0,1921000
+238,Galle,Hindu,budget,1,197000
+230,Galle,Poruwa,budget,0,352000
+217,Kalutara,Poruwa,budget,1,847000
+381,Kalutara,Christian,premium,1,13157000
+355,Kalutara,Poruwa,budget,1,1705000
+96,Kalutara,Islamic,premium,1,4555000
+290,Kandy,Hindu,standard,1,4094000
+59,Kalutara,Buddhist,budget,1,159000
+370,Colombo,Christian,budget,0,1363000
+247,Colombo,Hindu,premium,0,11776000
+122,Kurunegala,Islamic,budget,0,463000
+232,Colombo,Buddhist,premium,1,9024000
+388,Kandy,Islamic,premium,1,14746000
+296,Galle,Christian,budget,0,1298000
+242,Kurunegala,Christian,standard,1,3012000
+92,Gampaha,Buddhist,premium,1,7866000
+362,Kurunegala,Christian,standard,1,4383000
+173,Colombo,Buddhist,standard,0,2486000
+146,Kurunegala,Buddhist,standard,0,1642000
+96,Galle,Buddhist,budget,1,547000
+177,Kalutara,Poruwa,budget,1,632000
+267,Kalutara,Poruwa,standard,0,2796000
+367,Colombo,Poruwa,standard,1,5205000
+253,Kandy,Christian,standard,1,3694000
+329,Gampaha,Hindu,premium,0,15349000
+69,Kandy,Buddhist,standard,1,1296000
+371,Kalutara,Poruwa,standard,1,3934000
+122,Colombo,Buddhist,premium,1,5206000
+203,Colombo,Hindu,budget,0,1256000
+147,Kalutara,Buddhist,budget,1,245000
+213,Kandy,Buddhist,standard,1,2293000
+194,Gampaha,Hindu,premium,1,9952000
+320,Galle,Poruwa,premium,0,9915000
+322,Kandy,Buddhist,budget,1,590000
+200,Galle,Buddhist,budget,1,1050000
+252,Kurunegala,Hindu,premium,1,8586000
+353,Gampaha,Hindu,standard,0,4278000
+223,Kandy,Hindu,standard,0,2849000
+258,Colombo,Poruwa,standard,0,3338000
+231,Kurunegala,Buddhist,standard,1,2778000
+237,Kalutara,Hindu,standard,1,2940000
+112,Kalutara,Christian,standard,0,1440000
+110,Kandy,Islamic,premium,0,3326000
+151,Kalutara,Poruwa,budget,0,662000
+158,Galle,Christian,premium,1,4762000
+332,Gampaha,Buddhist,budget,0,1091000
+81,Kurunegala,Islamic,standard,1,1268000
+262,Kurunegala,Buddhist,standard,0,2712000
+310,Gampaha,Buddhist,premium,1,12468000
+334,Kurunegala,Poruwa,standard,1,3624000
+183,Galle,Hindu,standard,1,2642000
+171,Gampaha,Islamic,premium,1,7102000
+255,Kalutara,Christian,standard,0,2527000
+186,Colombo,Buddhist,premium,0,8550000
+190,Kalutara,Buddhist,standard,0,1527000
+331,Colombo,Poruwa,budget,1,2107000
+358,Colombo,Buddhist,standard,0,5043000
+256,Kurunegala,Poruwa,premium,1,9019000
+122,Colombo,Poruwa,budget,1,754000
+167,Colombo,Poruwa,premium,0,7107000
+188,Kurunegala,Buddhist,standard,0,1610000
+253,Colombo,Islamic,premium,1,9580000
+384,Galle,Poruwa,premium,1,12659000
+255,Kandy,Islamic,premium,1,9631000
+284,Gampaha,Buddhist,budget,1,1554000
+185,Colombo,Hindu,standard,0,2969000
+260,Galle,Poruwa,premium,0,10081000
+264,Kandy,Poruwa,standard,1,3794000
+381,Gampaha,Poruwa,budget,0,1087000
+89,Kurunegala,Christian,standard,1,1139000
+256,Colombo,Hindu,standard,1,4371000
+273,Colombo,Buddhist,premium,0,13640000
+222,Galle,Poruwa,standard,1,2158000
+123,Kurunegala,Islamic,premium,0,3959000
+389,Galle,Buddhist,budget,0,1767000
+128,Kurunegala,Islamic,standard,1,1660000
+281,Kurunegala,Poruwa,standard,1,2624000
+305,Kalutara,Christian,premium,0,13202000
+396,Kandy,Poruwa,budget,0,1962000
+353,Kurunegala,Christian,standard,1,4373000
+232,Kandy,Hindu,premium,0,7823000
+388,Colombo,Islamic,budget,0,165000
+202,Galle,Christian,premium,1,9852000
+240,Kandy,Poruwa,premium,0,7644000
+215,Colombo,Christian,premium,0,9659000
+124,Kurunegala,Islamic,budget,0,392000
+388,Colombo,Islamic,budget,0,2089000
+258,Kurunegala,Hindu,standard,1,2976000
+167,Galle,Christian,standard,1,1765000
+279,Gampaha,Islamic,standard,1,3229000
+199,Galle,Poruwa,standard,1,2663000
+367,Kandy,Poruwa,premium,0,12696000
+122,Kandy,Christian,budget,1,791000
+256,Kurunegala,Islamic,premium,0,6092000
+60,Gampaha,Hindu,premium,1,4593000
+101,Kurunegala,Islamic,premium,0,4033000
+159,Kurunegala,Islamic,standard,0,1517000
+150,Gampaha,Islamic,premium,1,8194000
+179,Kandy,Islamic,standard,1,2294000
+287,Kandy,Islamic,standard,0,3570000
+362,Gampaha,Poruwa,standard,0,3962000
+155,Kurunegala,Buddhist,budget,1,810000
+382,Colombo,Islamic,standard,0,4806000
+344,Galle,Christian,budget,1,1510000
+278,Kalutara,Christian,budget,0,1247000
+88,Colombo,Poruwa,premium,1,7100000
+180,Kurunegala,Hindu,standard,1,2338000
+234,Kalutara,Christian,standard,0,1890000
+394,Colombo,Poruwa,standard,1,3979000
+176,Gampaha,Hindu,budget,1,980000
+322,Gampaha,Hindu,premium,0,8474000
+160,Kandy,Poruwa,premium,0,7145000
+51,Kalutara,Hindu,premium,0,4511000
+270,Kalutara,Hindu,budget,0,1176000
+386,Kandy,Islamic,premium,0,15874000
+229,Kalutara,Buddhist,budget,1,825000
+147,Colombo,Islamic,budget,0,590000
+317,Colombo,Christian,standard,1,4525000
+270,Kurunegala,Poruwa,premium,1,7750000
+241,Kandy,Buddhist,budget,0,1019000
+112,Kandy,Islamic,premium,0,4492000
+87,Kurunegala,Christian,standard,1,1453000
+107,Colombo,Buddhist,premium,1,6657000
+333,Colombo,Hindu,standard,1,4731000
+257,Gampaha,Islamic,standard,1,3109000
+125,Kalutara,Poruwa,budget,0,582000
+167,Gampaha,Buddhist,standard,1,2461000
+54,Kandy,Hindu,premium,1,4461000
+93,Gampaha,Hindu,premium,0,3760000
+225,Colombo,Buddhist,standard,1,3749000
+165,Kalutara,Poruwa,standard,0,1774000
+351,Colombo,Poruwa,budget,1,1804000
+352,Galle,Christian,standard,0,4371000
+241,Kandy,Hindu,standard,0,2001000
+230,Kurunegala,Christian,budget,1,801000
+51,Colombo,Islamic,premium,1,3611000
+139,Kurunegala,Christian,premium,1,5418000
+235,Kurunegala,Hindu,premium,0,4607000
+89,Kurunegala,Buddhist,budget,0,440000
+71,Kalutara,Christian,budget,1,395000
+190,Colombo,Buddhist,standard,0,2307000
+121,Kurunegala,Poruwa,premium,0,5827000
+107,Colombo,Buddhist,standard,1,1901000
+108,Gampaha,Hindu,budget,0,405000
+93,Kandy,Christian,premium,1,5192000
+149,Kandy,Hindu,budget,0,542000
+337,Galle,Poruwa,standard,1,4102000
+373,Kandy,Islamic,standard,1,4643000
+308,Kalutara,Christian,premium,0,8895000
+152,Gampaha,Poruwa,budget,1,613000
+246,Kurunegala,Poruwa,premium,1,10042000
+399,Kalutara,Hindu,budget,1,2089000
+155,Gampaha,Hindu,budget,0,251000
+372,Gampaha,Christian,premium,0,8968000
+263,Kalutara,Christian,standard,0,2909000
+300,Gampaha,Christian,budget,1,1370000
+162,Kandy,Buddhist,budget,0,640000
+305,Kalutara,Buddhist,standard,0,2901000
+363,Kalutara,Buddhist,budget,1,1289000
+60,Kurunegala,Poruwa,standard,0,558000
+347,Gampaha,Christian,premium,1,14916000
+193,Kalutara,Buddhist,premium,0,8775000
+295,Gampaha,Hindu,premium,0,8298000
+112,Galle,Islamic,budget,1,634000
+57,Kurunegala,Hindu,standard,0,815000
+120,Kurunegala,Islamic,budget,0,419000
+324,Kurunegala,Hindu,budget,1,1537000
+197,Colombo,Islamic,standard,1,3101000
+79,Kurunegala,Christian,premium,1,6060000
+71,Galle,Islamic,premium,1,5359000
+119,Galle,Buddhist,budget,1,233000
+175,Kandy,Poruwa,standard,1,2122000
+347,Colombo,Hindu,premium,0,10808000
+212,Colombo,Poruwa,budget,0,1131000
+236,Galle,Hindu,standard,1,3270000
+294,Kandy,Buddhist,premium,0,7130000
+355,Galle,Buddhist,budget,0,132000
+230,Gampaha,Hindu,standard,1,3231000
+345,Gampaha,Christian,premium,0,7719000
+231,Gampaha,Buddhist,standard,1,2231000
+145,Kurunegala,Hindu,standard,1,1977000
+91,Kurunegala,Poruwa,standard,0,1141000
+211,Gampaha,Buddhist,standard,1,2506000
+59,Colombo,Hindu,premium,1,3190000
+208,Colombo,Hindu,budget,0,1268000
+329,Kurunegala,Hindu,standard,1,3989000
+177,Gampaha,Islamic,standard,1,2224000
+255,Kurunegala,Islamic,budget,1,1263000
+244,Kurunegala,Christian,premium,0,5519000
+280,Kalutara,Islamic,budget,0,385000
+64,Galle,Buddhist,budget,1,233000
+392,Kandy,Christian,budget,0,1779000
+159,Kalutara,Poruwa,premium,1,5927000
+144,Kalutara,Hindu,budget,0,481000
+261,Galle,Christian,premium,0,10579000
+65,Kandy,Islamic,standard,0,880000
+389,Kalutara,Poruwa,premium,0,9183000
+253,Galle,Poruwa,budget,0,338000
+220,Kurunegala,Poruwa,budget,1,691000
+249,Gampaha,Hindu,premium,1,11352000
+69,Kandy,Christian,premium,0,3320000
+60,Kalutara,Hindu,premium,0,3855000
+114,Kandy,Christian,standard,0,1137000
+203,Kalutara,Islamic,premium,0,7331000
+138,Kurunegala,Buddhist,standard,1,1682000
+171,Kandy,Islamic,standard,0,2134000
+362,Gampaha,Buddhist,standard,0,2754000
+84,Kalutara,Islamic,budget,0,419000
+128,Kalutara,Buddhist,premium,1,8606000
+56,Kalutara,Buddhist,standard,0,744000
+355,Kalutara,Christian,budget,0,214000
+267,Galle,Buddhist,premium,1,9310000
+341,Gampaha,Islamic,premium,0,10644000
+205,Galle,Poruwa,premium,0,5603000
+353,Kalutara,Hindu,premium,0,11237000
+157,Galle,Islamic,standard,1,2417000
+139,Kurunegala,Islamic,standard,0,1108000
+82,Gampaha,Poruwa,standard,1,1237000
+381,Kurunegala,Buddhist,premium,1,11182000
+221,Kalutara,Hindu,premium,0,8615000
+235,Colombo,Islamic,premium,0,9756000
+147,Kurunegala,Hindu,premium,1,7472000
+104,Kandy,Islamic,premium,0,3442000
+91,Kurunegala,Christian,standard,0,890000
+388,Gampaha,Islamic,budget,0,1297000
+126,Kurunegala,Christian,premium,1,4458000
+134,Kandy,Poruwa,premium,1,4933000
+383,Kurunegala,Poruwa,budget,0,424000
+327,Colombo,Poruwa,budget,1,1622000
+355,Galle,Buddhist,budget,1,1278000
+328,Kandy,Poruwa,premium,0,8466000
+195,Kandy,Islamic,premium,0,7162000
+269,Colombo,Islamic,standard,0,3889000
+329,Kalutara,Poruwa,budget,0,1361000
+387,Gampaha,Hindu,premium,0,11429000
+252,Kandy,Christian,premium,0,9370000
+265,Colombo,Buddhist,premium,0,10869000
+387,Galle,Islamic,premium,0,13705000
+175,Colombo,Poruwa,standard,0,2053000
+382,Kalutara,Islamic,standard,1,4700000
+222,Kalutara,Islamic,premium,0,7941000
+114,Kalutara,Christian,premium,0,6308000
+392,Colombo,Poruwa,budget,0,1445000
+137,Kandy,Christian,standard,0,1397000
+294,Kurunegala,Buddhist,premium,0,8792000
+226,Galle,Poruwa,standard,0,2778000
+74,Gampaha,Hindu,budget,1,207000
+191,Gampaha,Christian,premium,0,9000000
+290,Galle,Poruwa,budget,0,1247000
+175,Kandy,Hindu,budget,1,1032000
+74,Kalutara,Christian,budget,0,106000
+285,Gampaha,Hindu,budget,0,1388000
+97,Kandy,Hindu,standard,1,1661000
+64,Galle,Buddhist,budget,0,308000
+148,Colombo,Islamic,budget,0,686000
+307,Kurunegala,Poruwa,standard,0,2452000
+240,Kalutara,Buddhist,standard,0,1821000
+213,Kurunegala,Islamic,budget,1,73000
+109,Kurunegala,Poruwa,standard,1,1375000
+325,Galle,Buddhist,budget,1,1893000
+155,Kalutara,Christian,standard,0,1894000
+374,Kandy,Christian,premium,1,11862000
+266,Galle,Christian,premium,1,9467000
+354,Colombo,Christian,standard,1,4864000
+222,Kurunegala,Christian,standard,1,2076000
+264,Kalutara,Poruwa,standard,0,2359000
+164,Kalutara,Hindu,premium,0,6801000
+70,Kalutara,Christian,premium,1,5048000
+158,Colombo,Poruwa,premium,1,9336000
+286,Kandy,Buddhist,premium,1,10632000
+172,Kandy,Hindu,budget,0,654000
+258,Kandy,Poruwa,premium,1,10449000
+144,Colombo,Islamic,premium,1,6632000
+320,Gampaha,Islamic,premium,1,10666000
+238,Kalutara,Islamic,budget,0,855000
+398,Gampaha,Hindu,standard,0,4604000
+396,Kalutara,Hindu,budget,0,1741000
+389,Kurunegala,Poruwa,budget,1,1601000
+177,Colombo,Christian,budget,1,1174000
+399,Kalutara,Buddhist,premium,0,10821000
+356,Colombo,Poruwa,budget,0,1250000
+391,Kalutara,Hindu,premium,0,13579000
+146,Colombo,Islamic,budget,1,1129000
+333,Gampaha,Buddhist,premium,1,7607000
+105,Colombo,Poruwa,standard,1,1670000
+128,Gampaha,Christian,standard,1,1448000
+195,Gampaha,Hindu,budget,1,1149000
+58,Kandy,Islamic,standard,0,907000
+377,Colombo,Buddhist,budget,1,2323000
+365,Kandy,Poruwa,standard,0,4058000
+147,Colombo,Hindu,premium,1,8993000
+256,Kalutara,Christian,premium,0,10958000
+357,Kurunegala,Poruwa,standard,0,3432000
+65,Galle,Christian,budget,1,441000
+149,Gampaha,Christian,budget,0,553000
+157,Gampaha,Poruwa,standard,1,2152000
+174,Colombo,Poruwa,standard,1,2929000
+288,Kurunegala,Hindu,standard,0,2478000
+72,Gampaha,Poruwa,premium,0,7261000
+85,Kurunegala,Christian,budget,0,372000
+168,Kalutara,Poruwa,standard,0,1866000
+146,Colombo,Buddhist,premium,0,6603000
+154,Colombo,Poruwa,standard,1,1838000
+139,Gampaha,Islamic,budget,1,599000
+219,Kandy,Islamic,budget,1,1355000
+236,Gampaha,Hindu,standard,0,2464000
+264,Galle,Hindu,budget,0,393000
+166,Kalutara,Buddhist,budget,1,828000
+362,Gampaha,Buddhist,standard,1,4318000
+355,Kalutara,Hindu,premium,0,10851000
+123,Kurunegala,Buddhist,standard,1,1446000
+122,Kalutara,Buddhist,budget,0,602000
+96,Kandy,Islamic,budget,0,426000
+296,Kandy,Hindu,standard,0,3317000
+387,Kurunegala,Christian,standard,0,3716000
+125,Colombo,Christian,premium,0,6615000
+167,Kalutara,Islamic,budget,1,605000
+193,Gampaha,Poruwa,premium,1,6898000
+282,Kalutara,Christian,standard,1,2571000
+350,Galle,Christian,budget,1,1604000
+98,Galle,Hindu,budget,0,85000
+198,Galle,Islamic,standard,1,2530000
+386,Kalutara,Islamic,standard,1,5021000
+371,Galle,Christian,standard,1,3475000
+61,Galle,Christian,standard,1,1159000
+133,Kandy,Poruwa,premium,0,3713000
+118,Kurunegala,Poruwa,budget,0,169000
+377,Kurunegala,Buddhist,premium,1,14056000
+168,Kalutara,Hindu,standard,1,2134000
+194,Kandy,Christian,budget,1,824000
+155,Kurunegala,Buddhist,standard,0,1426000
+311,Kurunegala,Christian,premium,0,5700000
+188,Galle,Poruwa,standard,0,1483000
+302,Kalutara,Hindu,budget,1,1469000
+69,Colombo,Buddhist,standard,1,1570000
+194,Kandy,Hindu,standard,1,2909000
+390,Colombo,Buddhist,premium,1,15238000
+332,Gampaha,Buddhist,standard,1,4460000
+275,Colombo,Islamic,standard,0,2715000
+262,Gampaha,Hindu,premium,0,11139000
+295,Gampaha,Poruwa,standard,1,3872000
+243,Gampaha,Hindu,budget,0,1156000
+259,Kurunegala,Christian,standard,0,2376000
+358,Colombo,Hindu,budget,1,2264000
+334,Kandy,Hindu,premium,1,10683000
+131,Kurunegala,Poruwa,standard,1,1218000

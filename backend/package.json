@@ -5,7 +5,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "db:init": "node scripts/init-db.js"
+    "db:init": "node scripts/init-db.js",
+    "vendors:media": "node scripts/attachVendorMedia.js",
+    "vendors:sri-lanka": "node scripts/seedSriLankaVendors.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

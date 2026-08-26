@@ -1,74 +1,109 @@
 import { api } from '../services/api';
 
-/** Client-side fallback if the Random Forest API is offline */
-const districtMultiplier = {
-  Colombo: 1.25, Gampaha: 1.1, Kalutara: 1.08, Kandy: 1.05, Galle: 1.04,
-  'Nuwara Eliya': 1.08, Matara: 0.95, Jaffna: 0.94, Kurunegala: 0.9,
+export const MODEL_ACCURACY = {
+  r2: 0.9066,
+  percent: '90.66%',
 };
-const ceremonyMultiplier = {
-  Poruwa: 1.1,
-  'Poruwa Ceremony': 1.1,
-  Christian: 1.0,
-  'Church Wedding': 1.0,
-  Muslim: 1.05,
-  'Muslim Nikah Ceremony': 1.05,
-  'Hindu Tamil Wedding': 1.08,
-  Civil: 0.85,
-  Reception: 0.85,
-};
-const scaleMultiplier = { budget: 0.72, standard: 1.0, premium: 1.45, luxury: 1.85 };
 
-export function localPredictWeddingCost({ guestCount, district, ceremonyType, scale, weddingMonth }) {
-  const guests = Number(guestCount) || 150;
-  const basePerGuest = 26000;
-  const dm = districtMultiplier[district] || 1.0;
-  const cm = ceremonyMultiplier[ceremonyType] || 1.0;
-  const sm = scaleMultiplier[scale] || 1.0;
-  const month = weddingMonth ? new Date(weddingMonth).getMonth() : 6;
-  const seasonal = [11, 0, 1, 6, 7].includes(month) ? 1.12 : 1.0;
+export const COST_DISTRICTS = [
+  'Colombo', 'Gampaha', 'Kalutara', 'Kandy', 'Matale', 'Nuwara Eliya',
+  'Galle', 'Matara', 'Hambantota', 'Kurunegala', 'Puttalam',
+  'Anuradhapura', 'Polonnaruwa', 'Batticaloa', 'Ampara', 'Trincomalee',
+  'Jaffna', 'Kilinochchi', 'Mannar', 'Mullaitivu', 'Vavuniya',
+  'Badulla', 'Monaragala', 'Ratnapura', 'Kegalle',
+];
 
-  const estimate = Math.round(guests * basePerGuest * dm * cm * sm * seasonal);
-  const margin = Math.round(estimate * 0.12);
+export const COST_CEREMONIES = [
+  { value: 'Poruwa', label: 'Poruwa ceremony' },
+  { value: 'Buddhist', label: 'Buddhist' },
+  { value: 'Hindu', label: 'Hindu / Tamil wedding' },
+  { value: 'Christian', label: 'Church wedding' },
+  { value: 'Islamic', label: 'Muslim Nikah' },
+];
+
+export const COST_SCALES = [
+  { value: 'budget', label: 'Budget', hint: 'Simple packages' },
+  { value: 'standard', label: 'Standard', hint: 'Most couples' },
+  { value: 'premium', label: 'Premium', hint: 'Larger celebration' },
+];
+
+const PEAK_MONTHS = [0, 3, 6, 7, 11];
+
+export function isPeakWeddingMonth(dateValue) {
+  if (!dateValue) return false;
+  const month = new Date(dateValue).getMonth();
+  return Number.isFinite(month) && PEAK_MONTHS.includes(month);
+}
+
+export function scaleFromBudget(amount) {
+  const n = Number(amount) || 0;
+  if (n >= 6000000) return 'premium';
+  if (n >= 2500000) return 'standard';
+  if (n > 0) return 'budget';
+  return 'standard';
+}
+
+export function predictionFormFromProfile(profile, extras = {}) {
+  const ceremony = String(profile?.ceremonyType || extras.ceremonyType || '').toLowerCase();
+  let ceremonyType = 'Poruwa';
+  if (ceremony.includes('hindu') || ceremony.includes('tamil')) ceremonyType = 'Hindu';
+  else if (ceremony.includes('church') || ceremony.includes('christian')) ceremonyType = 'Christian';
+  else if (ceremony.includes('muslim') || ceremony.includes('islam') || ceremony.includes('nikah')) ceremonyType = 'Islamic';
+  else if (ceremony.includes('buddhist')) ceremonyType = 'Buddhist';
+  else if (ceremony.includes('poruwa')) ceremonyType = 'Poruwa';
+
+  const savedBudget = Number(profile?.budget) || Number(extras.budgetTotal) || 0;
+  let scale = String(profile?.scale || '').toLowerCase();
+  if (scale === 'luxury') scale = 'premium';
+  if (savedBudget) {
+    scale = scaleFromBudget(savedBudget);
+  } else if (!['budget', 'standard', 'premium'].includes(scale)) {
+    scale = 'standard';
+  }
+
+  const rawDistrict = profile?.district || extras.district || 'Colombo';
+  const district = COST_DISTRICTS.includes(rawDistrict) ? rawDistrict : 'Colombo';
+  const guestCount = Number(profile?.guestCount) || Number(extras.guestListCount) || 150;
+
   return {
-    estimate,
-    low: estimate - margin,
-    high: estimate + margin,
-    confidence: '±12%',
-    source: 'local',
-    factors: { guests, district, ceremonyType, scale, seasonal: seasonal > 1 ? 'Peak season' : 'Standard season' },
+    guestCount,
+    district,
+    ceremonyType,
+    scale,
+    seasonal: isPeakWeddingMonth(profile?.weddingDate || extras.weddingDate) ? 1 : 0,
   };
 }
 
-export async function predictWeddingCost(profile) {
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function predictWeddingCost(form) {
   const payload = {
-    guestCount: Number(profile?.guestCount) || 150,
-    district: profile?.district || 'Colombo',
-    ceremonyType: profile?.ceremonyType || 'Poruwa Ceremony',
-    scale: profile?.scale || 'standard',
-    weddingDate: profile?.weddingDate || profile?.weddingMonth || '',
-    weddingMonth: profile?.weddingMonth,
+    guestCount: Number(form?.guestCount) || 150,
+    district: form?.district || 'Colombo',
+    ceremonyType: form?.ceremonyType || 'Poruwa',
+    scale: form?.scale || 'standard',
+    weddingDate: form?.weddingDate || '',
+    seasonal: Number(form?.seasonal) ? 1 : 0,
   };
 
-  try {
-    const result = await api.predictCost(payload);
-    if (result?.estimate) return { ...result, source: result.source || 'RandomForestRegression.pkl' };
-  } catch {
-    /* fall through to local estimate */
-  }
-
-  try {
-    const res = await fetch('http://127.0.0.1:8001/predict', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) {
-      const result = await res.json();
-      if (result?.estimate) return { ...result, source: result.source || 'RandomForestRegression.pkl' };
+  let lastError = 'The cost model is starting. Please try again in a moment.';
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      const result = await api.predictCost(payload);
+      if (result?.estimate) {
+        return {
+          ...result,
+          source: result.source || 'RandomForestRegression.pkl',
+          metrics: result.metrics || MODEL_ACCURACY,
+        };
+      }
+    } catch (err) {
+      lastError = err.message || lastError;
     }
-  } catch {
-    /* fall through */
+    await sleep(700);
   }
 
-  return localPredictWeddingCost({ ...profile, weddingMonth: profile?.weddingDate || profile?.weddingMonth });
+  throw new Error(lastError);
 }

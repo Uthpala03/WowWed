@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { getBudget, getWeddingProfile, saveBudget } from '../../utils/storage';
-import { predictWeddingCost } from '../../utils/costPrediction';
+import {
+  COST_CEREMONIES,
+  COST_DISTRICTS,
+  COST_SCALES,
+  MODEL_ACCURACY,
+  predictWeddingCost,
+  predictionFormFromProfile,
+} from '../../utils/costPrediction';
 import PageHeader from '../../components/ui/PageHeader';
 
 const categoryColors = ['#e8a88c', '#7a9eb8', '#b8a0c8', '#d4b85c', '#c96a5a', '#6b9e78', '#5c6d8a', '#8a7268'];
@@ -9,14 +16,22 @@ const sortOptions = ['Default', 'Name', 'Remaining budget', 'Budget allocated'];
 
 function BudgetPage() {
   const coupleData = useOutletContext();
-  const profileBudget = Number(coupleData?.profile?.budget) || 0;
+  const profile = coupleData?.profile || getWeddingProfile();
+  const onboarding = coupleData?.onboarding;
+  const profileBudget = Number(profile?.budget) || 0;
   const emptyBudget = { total: profileBudget, categories: [], expenses: [] };
-  const [budget, setBudget] = useState(() => coupleData?.budget || getBudget() || emptyBudget);
 
-  useEffect(() => {
-    const next = coupleData?.budget || getBudget();
-    if (next) setBudget(next);
-  }, [coupleData]);
+  const budgetFromCouple = () => {
+    const stored = coupleData?.budget || getBudget() || emptyBudget;
+    return {
+      ...stored,
+      total: profileBudget || Number(stored.total) || 0,
+      categories: stored.categories || [],
+      expenses: stored.expenses || [],
+    };
+  };
+
+  const [budget, setBudget] = useState(budgetFromCouple);
   const [showCategory, setShowCategory] = useState(false);
   const [showExpense, setShowExpense] = useState(false);
   const [showEditBudget, setShowEditBudget] = useState(false);
@@ -27,25 +42,60 @@ function BudgetPage() {
   const [prediction, setPrediction] = useState(null);
   const [predicting, setPredicting] = useState(false);
   const [predictError, setPredictError] = useState('');
-  const profile = coupleData?.profile || getWeddingProfile();
+  const [costForm, setCostForm] = useState(() => predictionFormFromProfile(profile, {
+    ceremonyType: onboarding?.ceremonyType,
+    district: onboarding?.location,
+    weddingDate: profile?.weddingDate || onboarding?.weddingDate,
+    guestListCount: (coupleData?.guests || []).length,
+    budgetTotal: profileBudget,
+  }));
+
+  useEffect(() => {
+    const next = budgetFromCouple();
+    setBudget(next);
+    setEditTotal(next.total);
+    const form = predictionFormFromProfile(profile, {
+      ceremonyType: onboarding?.ceremonyType,
+      district: onboarding?.location,
+      weddingDate: profile?.weddingDate || onboarding?.weddingDate,
+      guestListCount: (coupleData?.guests || []).length,
+      budgetTotal: profileBudget || next.total,
+    });
+    setCostForm(form);
+
+    let cancelled = false;
+    (async () => {
+      setPredicting(true);
+      setPredictError('');
+      try {
+        const result = await predictWeddingCost({
+          ...form,
+          weddingDate: profile?.weddingDate || onboarding?.weddingDate,
+        });
+        if (!cancelled) setPrediction(result);
+      } catch (err) {
+        if (!cancelled) setPredictError(err.message || 'Could not run cost prediction.');
+      } finally {
+        if (!cancelled) setPredicting(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [coupleData]);
 
   const runPrediction = async () => {
     setPredicting(true);
     setPredictError('');
     try {
-      const result = await predictWeddingCost({ ...profile, weddingMonth: profile?.weddingDate });
+      const result = await predictWeddingCost({
+        ...costForm,
+        weddingDate: profile?.weddingDate || onboarding?.weddingDate,
+      });
       setPrediction(result);
     } catch (err) {
       setPredictError(err.message || 'Could not run cost prediction.');
     } finally {
       setPredicting(false);
     }
-  };
-
-  const applyEstimate = () => {
-    if (!prediction?.estimate) return;
-    persist({ ...budget, total: Number(prediction.estimate) });
-    setEditTotal(prediction.estimate);
   };
 
   const spent = useMemo(() => (budget.expenses || []).reduce((s, e) => s + Number(e.amount || 0), 0), [budget]);
@@ -122,26 +172,82 @@ function BudgetPage() {
             <h3>AI cost prediction</h3>
             <p>Random Forest estimate from guests, district, ceremony, scale, and season</p>
           </div>
-          <button type="button" className="dash-btn dash-btn--primary" onClick={runPrediction} disabled={predicting}>
-            {predicting ? 'Predicting…' : 'Run prediction'}
-          </button>
+          <span className="ai-prediction__badge">Accuracy {MODEL_ACCURACY.percent} · R² {MODEL_ACCURACY.r2}</span>
         </div>
+
+        <div className="ai-prediction__form">
+          <label className="dash-field">
+            <span>Guest count</span>
+            <input
+              type="number"
+              min="50"
+              max="800"
+              value={costForm.guestCount}
+              onChange={(e) => setCostForm({ ...costForm, guestCount: e.target.value })}
+            />
+          </label>
+          <label className="dash-field">
+            <span>Venue district</span>
+            <select value={costForm.district} onChange={(e) => setCostForm({ ...costForm, district: e.target.value })}>
+              {COST_DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </label>
+          <label className="dash-field">
+            <span>Ceremony</span>
+            <select value={costForm.ceremonyType} onChange={(e) => setCostForm({ ...costForm, ceremonyType: e.target.value })}>
+              {COST_CEREMONIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+          </label>
+          <label className="dash-field">
+            <span>Season</span>
+            <select value={costForm.seasonal} onChange={(e) => setCostForm({ ...costForm, seasonal: Number(e.target.value) })}>
+              <option value={0}>Regular season</option>
+              <option value={1}>Peak season</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="ai-prediction__scales">
+          {COST_SCALES.map((s) => (
+            <button
+              key={s.value}
+              type="button"
+              className={`ai-prediction__scale${costForm.scale === s.value ? ' is-active' : ''}`}
+              onClick={() => setCostForm({ ...costForm, scale: s.value })}
+            >
+              <strong>{s.label}</strong>
+              <small>{s.hint}</small>
+            </button>
+          ))}
+        </div>
+
+        <button type="button" className="dash-btn dash-btn--primary" onClick={runPrediction} disabled={predicting}>
+          {predicting ? 'Predicting…' : 'Run prediction'}
+        </button>
+
         {predictError && <p className="ai-prediction__error">{predictError}</p>}
+
         {prediction && (
           <div className="ai-prediction__result">
-            <p><strong>Estimated total:</strong> Rs. {Number(prediction.estimate).toLocaleString()}</p>
-            <p><strong>Range:</strong> Rs. {Number(prediction.low).toLocaleString()} – Rs. {Number(prediction.high).toLocaleString()} ({prediction.confidence})</p>
-            <p className="ai-prediction__note">
-              Based on {prediction.factors.guests} guests · {prediction.factors.district} · {prediction.factors.ceremonyType || 'Standard'} · {prediction.factors.scale || profile?.scale} · {prediction.factors.seasonal}
+            <small>Estimated wedding cost</small>
+            <p className="ai-prediction__total">Rs. {Number(prediction.estimate).toLocaleString()}</p>
+            <p>
+              Likely range Rs. {Number(prediction.low).toLocaleString()} – Rs. {Number(prediction.high).toLocaleString()}
+              {prediction.confidence ? ` (${prediction.confidence} interval)` : ''}
             </p>
             <p className="ai-prediction__note">
-              {prediction.source === 'local'
-                ? 'Using the on-page estimate until the cost model API is running.'
-                : `Model ${prediction.source}${prediction.metrics?.r2 != null ? ` · R² ${prediction.metrics.r2}` : ''}`}
+              {prediction.factors?.guests} guests · {prediction.factors?.district} · {prediction.factors?.ceremonyType} · {prediction.factors?.scale} · {prediction.factors?.seasonal}
             </p>
-            <button type="button" className="dash-btn dash-btn--white" onClick={applyEstimate}>
-              Use estimate as total budget
-            </button>
+            <p className="ai-prediction__note">
+              Random Forest model · accuracy {prediction.metrics?.accuracy || MODEL_ACCURACY.percent} (R² = {prediction.metrics?.r2 || MODEL_ACCURACY.r2})
+            </p>
+            {budget.total > 0 && (
+              <p className={`ai-prediction__compare${Number(prediction.estimate) > budget.total ? ' is-over' : ' is-ok'}`}>
+                {Number(prediction.estimate) > budget.total
+                  ? `About Rs. ${(Number(prediction.estimate) - budget.total).toLocaleString()} over your saved budget of Rs. ${Number(budget.total).toLocaleString()}.`
+                  : `Fits your saved budget of Rs. ${Number(budget.total).toLocaleString()} with Rs. ${(budget.total - Number(prediction.estimate)).toLocaleString()} remaining.`}
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -149,10 +255,10 @@ function BudgetPage() {
       <div className="budget-top">
         <div className="dash-card budget-summary">
           <div className="budget-summary__row">
-            <div><small>Left to Spend</small><strong>Rs. {left.toLocaleString()}</strong></div>
+            <div><small>Left to Spend</small><strong>Rs. {Number(left || 0).toLocaleString()}</strong></div>
             <div>
               <small>Total Budget</small>
-              <strong>Rs. {budget.total.toLocaleString()}</strong>
+              <strong>Rs. {Number(budget.total || 0).toLocaleString()}</strong>
               <button type="button" className="budget-edit-btn" onClick={() => { setEditTotal(budget.total); setShowEditBudget(true); }}>✏️</button>
             </div>
           </div>

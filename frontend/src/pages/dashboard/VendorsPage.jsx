@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { vendorCategories } from '../../data/dashboardData';
 import { addBooking, getUser, getWeddingProfile, getVendorListings, refreshVendorListings } from '../../utils/storage';
-import { quoteHasPdf } from '../../utils/uploadUrl';
+import { quoteHasPdf, resolveUploadUrl } from '../../utils/uploadUrl';
 import {
   formatVendorCategories,
   formatVendorDistricts,
+  locationSearchText,
+  vendorLocations,
   vendorMatchesCategory,
   vendorMatchesDistrict,
   vendorMatchesLocation,
@@ -49,7 +51,11 @@ function VendorsPage() {
     const list = allVendors.filter((v) => {
       const matchCat = vendorMatchesCategory(v, category);
       const matchCity = vendorMatchesDistrict(v, city);
-      const matchSearch = !search || v.name.toLowerCase().includes(search.toLowerCase());
+      const matchSearch = !search || (
+        v.name.toLowerCase().includes(search.toLowerCase())
+        || locationSearchText(v).includes(search.toLowerCase())
+        || (v.description || '').toLowerCase().includes(search.toLowerCase())
+      );
       return matchCat && matchCity && matchSearch;
     });
     return recommendVendors(list, profile);
@@ -91,32 +97,44 @@ function VendorsPage() {
         <select value={category} onChange={(e) => setCategory(e.target.value)}>
           {vendorCategories.map((c) => <option key={c}>{c}</option>)}
         </select>
-        <input placeholder="Search by city" value={city} onChange={(e) => setCity(e.target.value)} />
-        <input placeholder="Search vendors..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        <input placeholder="Search by city or branch" value={city} onChange={(e) => setCity(e.target.value)} />
+        <input placeholder="Search vendors, places…" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
       {profile && <p className="vendor-rec-note">✨ Recommended for {profile.district} · {profile.ceremonyType}</p>}
 
       <section className="vendors-section">
         <div className="vendor-grid">
-          {filtered.map((vendor) => (
+          {filtered.map((vendor) => {
+            const cover = vendor.portfolioImages?.[0];
+            const photoCount = vendor.portfolioImages?.length || 0;
+            const places = vendorLocations(vendor);
+            return (
             <article
               key={vendor.id}
-              className="vendor-card vendor-card--clickable"
+              className="vendor-card vendor-card--clickable vendor-card--gallery"
               onClick={() => setSelectedVendor(vendor)}
               onKeyDown={(e) => e.key === 'Enter' && setSelectedVendor(vendor)}
               role="button"
               tabIndex={0}
             >
-              <div
-                className="vendor-card__image"
-                style={vendor.portfolioImages?.[0] ? {
-                  backgroundImage: `url(${vendor.portfolioImages[0]})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                } : undefined}
-              >
+              <div className="vendor-card__image">
+                {cover ? (
+                  <img
+                    src={resolveUploadUrl(cover)}
+                    alt=""
+                    className="vendor-card__photo"
+                  />
+                ) : (
+                  <span className="vendor-card__photo-fallback">{vendor.name[0]}</span>
+                )}
+                <div className="vendor-card__image-fade" />
                 {vendor.spotlight && <span className="vendor-spotlight">💍 Spotlight</span>}
+                {photoCount > 0 && (
+                  <span className="vendor-card__photo-count">
+                    {photoCount} photo{photoCount === 1 ? '' : 's'}
+                  </span>
+                )}
               </div>
               <div className="vendor-card__body">
                 <div className="vendor-avatar">{vendor.name[0]}</div>
@@ -126,6 +144,18 @@ function VendorsPage() {
                   <small>{formatVendorDistricts(vendor)} {vendor.rating ? `· ★ ${vendor.rating}` : ''}</small>
                 </div>
               </div>
+              {places.length > 0 && (
+                <div className="vendor-card__places">
+                  {places.slice(0, 2).map((place) => (
+                    <span key={`${place.name}-${place.city}`} className="vendor-place-chip">
+                      {place.city || place.name}
+                    </span>
+                  ))}
+                  {places.length > 2 && (
+                    <span className="vendor-place-chip vendor-place-chip--more">+{places.length - 2} more</span>
+                  )}
+                </div>
+              )}
               {(vendor.quotationPdf?.url
                 || vendor.quotations?.some((q) => quoteHasPdf(q))
                 || vendor.quotations?.length > 0) && (
@@ -147,7 +177,8 @@ function VendorsPage() {
                 View details
               </button>
             </article>
-          ))}
+            );
+          })}
         </div>
       </section>
 

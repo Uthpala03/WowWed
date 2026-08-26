@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { quoteHasPdf, quotePdfHref, resolveUploadUrl } from '../../utils/uploadUrl';
-import { formatVendorCategories, formatVendorDistricts } from '../../utils/vendorMeta';
+import { formatVendorCategories, formatVendorDistricts, vendorLocations } from '../../utils/vendorMeta';
 
 function formatQuotePrice(price) {
   const n = Number(String(price || '').replace(/,/g, ''));
@@ -53,6 +53,7 @@ function VendorDetailModal({ vendor, onClose, onRequestBooking }) {
   const mainPdf = vendor.quotationPdf;
   const hasAnyPdf = mainPdf?.url || pdfQuotes.length > 0;
   const cover = images[activeImage] || images[0];
+  const places = vendorLocations(vendor);
 
   return (
     <div className="vendor-detail-overlay" onClick={onClose} role="presentation">
@@ -62,7 +63,7 @@ function VendorDetailModal({ vendor, onClose, onRequestBooking }) {
         <div className="vendor-detail__hero">
           {cover ? (
             <img
-              src={cover}
+              src={resolveUploadUrl(cover)}
               alt={`${vendor.name} portfolio`}
               className="vendor-detail__hero-img"
             />
@@ -70,6 +71,9 @@ function VendorDetailModal({ vendor, onClose, onRequestBooking }) {
             <span className="vendor-detail__hero-placeholder">{vendor.name[0]}</span>
           )}
           {vendor.spotlight && <span className="vendor-detail__spotlight">💍 Spotlight vendor</span>}
+          {images.length > 0 && (
+            <span className="vendor-detail__photo-count">{images.length} photo{images.length === 1 ? '' : 's'}</span>
+          )}
         </div>
 
         {images.length > 1 && (
@@ -81,7 +85,7 @@ function VendorDetailModal({ vendor, onClose, onRequestBooking }) {
                 className={`vendor-detail__thumb${activeImage === i ? ' is-on' : ''}`}
                 onClick={() => setActiveImage(i)}
               >
-                <img src={src} alt="" />
+                <img src={resolveUploadUrl(src)} alt="" />
               </button>
             ))}
           </div>
@@ -99,6 +103,22 @@ function VendorDetailModal({ vendor, onClose, onRequestBooking }) {
             </div>
           </div>
 
+          {places.length > 0 && (
+            <section className="vendor-detail__section">
+              <h3>Branches &amp; locations</h3>
+              <div className="vendor-detail__places">
+                {places.map((place) => (
+                  <article key={`${place.name}-${place.city}`} className="vendor-detail__place">
+                    <strong>{place.name}</strong>
+                    <small>
+                      {[place.city, place.district].filter(Boolean).join(' · ')}
+                      {place.type === 'hall' ? ' · venue space' : place.type === 'branch' && places.length > 1 ? ' · branch' : ''}
+                    </small>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
           {hasAnyPdf && (
             <section className="vendor-detail__section vendor-detail__section--pdf">
               <h3>📄 Quotation &amp; package PDFs</h3>
@@ -127,6 +147,25 @@ function VendorDetailModal({ vendor, onClose, onRequestBooking }) {
             <section className="vendor-detail__section">
               <h3>About</h3>
               <p>{vendor.description}</p>
+            </section>
+          )}
+
+          {(vendor.phone || vendor.ownerEmail || vendor.website || vendor.address) && (
+            <section className="vendor-detail__section">
+              <h3>Contact</h3>
+              {vendor.address ? <p>{vendor.address}</p> : null}
+              {vendor.phone ? <p>Phone: {vendor.phone}</p> : null}
+              {vendor.ownerEmail ? (
+                <p>Email: <a href={`mailto:${vendor.ownerEmail}`}>{vendor.ownerEmail}</a></p>
+              ) : null}
+              {vendor.website ? (
+                <p>
+                  Web:{' '}
+                  <a href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`} target="_blank" rel="noopener noreferrer">
+                    {vendor.website}
+                  </a>
+                </p>
+              ) : null}
             </section>
           )}
 

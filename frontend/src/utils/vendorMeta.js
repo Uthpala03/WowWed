@@ -4,10 +4,31 @@ export function vendorCategories(vendor) {
   return [];
 }
 
+export function vendorLocations(vendor) {
+  if (vendor?.locations?.length) return vendor.locations;
+  return [];
+}
+
 export function vendorDistricts(vendor) {
-  if (vendor?.districts?.length) return vendor.districts;
+  const fromLocations = vendorLocations(vendor)
+    .map((loc) => loc.district)
+    .filter(Boolean);
+  if (vendor?.districts?.length) {
+    return [...new Set([...vendor.districts, ...fromLocations])];
+  }
   const single = vendor?.district || vendor?.city;
-  return single ? [single] : [];
+  const list = [single, ...fromLocations].filter(Boolean);
+  return [...new Set(list)];
+}
+
+export function locationSearchText(vendor) {
+  const bits = [
+    vendor?.city,
+    vendor?.address,
+    ...(vendorDistricts(vendor) || []),
+    ...vendorLocations(vendor).flatMap((loc) => [loc.name, loc.city, loc.district]),
+  ];
+  return bits.filter(Boolean).join(' ').toLowerCase();
 }
 
 export function formatVendorCategories(vendor) {
@@ -28,12 +49,13 @@ export function vendorMatchesCategory(vendor, category) {
 export function vendorMatchesDistrict(vendor, city) {
   if (!city) return true;
   const needle = city.toLowerCase();
-  return vendorDistricts(vendor).some((d) => d.toLowerCase().includes(needle));
+  return locationSearchText(vendor).includes(needle);
 }
 
 export function vendorMatchesLocation(vendor, profileDistrict) {
   if (!profileDistrict) return false;
-  return vendorDistricts(vendor).includes(profileDistrict);
+  const needle = String(profileDistrict).toLowerCase();
+  return locationSearchText(vendor).includes(needle);
 }
 
 export function normalizeStringList(values, fallback = []) {
