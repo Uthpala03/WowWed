@@ -19,6 +19,8 @@ function BudgetPage() {
   const profile = coupleData?.profile || getWeddingProfile();
   const onboarding = coupleData?.onboarding;
   const profileBudget = Number(profile?.budget) || 0;
+  const bookings = coupleData?.bookings || [];
+  const hiredBookings = bookings.filter((b) => b.status === 'Hired' || b.status === 'Confirmed');
   const emptyBudget = { total: profileBudget, categories: [], expenses: [] };
 
   const budgetFromCouple = () => {
@@ -98,7 +100,13 @@ function BudgetPage() {
     }
   };
 
-  const spent = useMemo(() => (budget.expenses || []).reduce((s, e) => s + Number(e.amount || 0), 0), [budget]);
+  const spent = useMemo(() => {
+    const expenseTotal = (budget.expenses || []).reduce((s, e) => s + Number(e.amount || 0), 0);
+    const missingHires = hiredBookings.filter((b) => !(budget.expenses || []).some(
+      (e) => e.bookingId === b.id || e.id === `hire-${b.id}`,
+    ));
+    return expenseTotal + missingHires.reduce((s, b) => s + Number(b.amount || 0), 0);
+  }, [budget, hiredBookings]);
   const overspent = spent > budget.total;
   const left = budget.total - spent;
   const pct = budget.total ? Math.round((spent / budget.total) * 100) : 0;
@@ -248,9 +256,34 @@ function BudgetPage() {
                   : `Fits your saved budget of Rs. ${Number(budget.total).toLocaleString()} with Rs. ${(budget.total - Number(prediction.estimate)).toLocaleString()} remaining.`}
               </p>
             )}
+            {hiredBookings.length > 0 && (
+              <p className="ai-prediction__note">
+                After hiring {hiredBookings.length} vendor{hiredBookings.length === 1 ? '' : 's'}
+                {' '}(Rs. {hiredBookings.reduce((s, b) => s + Number(b.amount || 0), 0).toLocaleString()}),
+                {' '}Rs. {Number(left || 0).toLocaleString()} of your budget remains.
+              </p>
+            )}
           </div>
         )}
       </div>
+
+      {hiredBookings.length > 0 && (
+        <div className="dash-card hired-vendors">
+          <h3>Hired vendors</h3>
+          <p>These bookings were confirmed and are included in your spent total and cost comparison.</p>
+          <ul className="hired-vendors__list">
+            {hiredBookings.map((b) => (
+              <li key={b.id}>
+                <span>
+                  <strong>{b.vendorName}</strong>
+                  <small>{b.category || 'Vendor'} · {b.date || 'Date TBC'}</small>
+                </span>
+                <em>Rs. {Number(b.amount || 0).toLocaleString()}</em>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="budget-top">
         <div className="dash-card budget-summary">

@@ -19,6 +19,7 @@ import SeatingChartPage from './pages/dashboard/SeatingChartPage';
 import BudgetPage from './pages/dashboard/BudgetPage';
 import ExpenseOverviewPage from './pages/dashboard/ExpenseOverviewPage';
 import VendorsPage from './pages/dashboard/VendorsPage';
+import CoupleBookingsPage from './pages/dashboard/CoupleBookingsPage';
 import WeddingCrewPage from './pages/dashboard/WeddingCrewPage';
 import SettingsPage from './pages/dashboard/SettingsPage';
 import InvitationsPage from './pages/dashboard/InvitationsPage';
@@ -59,6 +60,7 @@ function AppShell() {
             <Route path="budget" element={<BudgetPage />} />
             <Route path="budget/expenses" element={<ExpenseOverviewPage />} />
             <Route path="vendors" element={<VendorsPage />} />
+            <Route path="bookings" element={<CoupleBookingsPage />} />
             <Route path="invitations" element={<InvitationsPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="reports" element={<ReportsPage />} />

@@ -55,6 +55,14 @@ export const api = {
   getBookings: () => fetchApi('/api/bookings'),
   createBooking: (booking) => fetchApi('/api/bookings', { method: 'POST', body: JSON.stringify(booking) }),
   updateBooking: (id, payload) => fetchApi(`/api/bookings/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  getAvailability: (listingId, date) => fetchApi(`/api/bookings/availability?listingId=${encodeURIComponent(listingId)}&date=${encodeURIComponent(date)}`),
+
+  getReviews: (listingId) => fetchApi(listingId ? `/api/reviews?listingId=${encodeURIComponent(listingId)}` : '/api/reviews'),
+  createReview: (payload) => fetchApi('/api/reviews', { method: 'POST', body: JSON.stringify(payload) }),
+
+  getNotifications: () => fetchApi('/api/notifications'),
+  markNotificationRead: (id) => fetchApi(`/api/notifications/${id}/read`, { method: 'PUT' }),
+  markAllNotificationsRead: () => fetchApi('/api/notifications/read-all', { method: 'PUT' }),
 
   predictCost: (payload) => fetchApi('/api/ml/cost', { method: 'POST', body: JSON.stringify(payload) }),
 };

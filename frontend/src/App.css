@@ -1628,6 +1628,22 @@
 .form-page__header p { color: var(--color-text-muted); margin: 0; }
 .form-page__footer { text-align: center; margin-top: 1rem; color: var(--color-text-muted); font-size: 0.92rem; }
 .form-page__footer a { color: var(--color-peach-dark); font-weight: 600; }
+.form-page__hint {
+  margin-top: 1.25rem;
+  padding: 0.85rem 1rem;
+  background: #fdf6ef;
+  border: 1px solid #ead9cc;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+.form-page__hint code {
+  font-size: 0.78rem;
+  background: #fff;
+  padding: 0.05rem 0.35rem;
+  border-radius: 6px;
+}
 
 .form { display: grid; gap: 1rem; }
 .form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }

@@ -53,19 +53,71 @@ function tableNameFromStatement(statement) {
   return match ? match[1] : null;
 }
 
-async function migrateSchema(connection, database) {
+async function migrateSchema(connection, database, log = console.log) {
   await connection.query(`USE \`${database}\``);
   const alters = [
     'ALTER TABLE vendor_profiles ADD COLUMN portfolio_json JSON DEFAULT NULL',
     'ALTER TABLE vendor_listings ADD COLUMN portfolio_json JSON DEFAULT NULL',
     "ALTER TABLE checklist_templates ADD COLUMN ceremony VARCHAR(30) NOT NULL DEFAULT 'all'",
+    'ALTER TABLE bookings ADD COLUMN vendor_listing_id VARCHAR(50) DEFAULT NULL',
+    'ALTER TABLE bookings ADD COLUMN vendor_user_id INT DEFAULT NULL',
+    'ALTER TABLE bookings ADD COLUMN category VARCHAR(100) DEFAULT NULL',
+    'ALTER TABLE bookings ADD COLUMN vendor_note TEXT DEFAULT NULL',
+    'ALTER TABLE bookings ADD COLUMN couple_note TEXT DEFAULT NULL',
+    'ALTER TABLE bookings ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+    'ALTER TABLE bookings MODIFY COLUMN status VARCHAR(30) DEFAULT \'Pending\'',
   ];
   for (const sql of alters) {
     try {
       await connection.query(sql);
     } catch (err) {
-      if (err.code !== 'ER_DUP_FIELDNAME') throw err;
+      if (err.code !== 'ER_DUP_FIELDNAME') {
+        log(`  ! Schema alter skipped: ${err.message}`);
+      }
     }
+  }
+
+  try {
+    await connection.query(`
+      UPDATE bookings b
+      INNER JOIN vendor_listings l ON LOWER(l.name) = LOWER(b.vendor_name)
+      INNER JOIN (
+        SELECT name FROM vendor_listings GROUP BY name HAVING COUNT(*) = 1
+      ) uniq ON LOWER(uniq.name) = LOWER(l.name)
+      SET b.vendor_listing_id = l.id,
+          b.vendor_user_id = l.user_id
+      WHERE (b.vendor_listing_id IS NULL OR b.vendor_listing_id = '')
+        AND b.vendor_name IS NOT NULL AND b.vendor_name != ''
+    `);
+    await connection.query(`
+      UPDATE bookings b
+      INNER JOIN vendor_listings l ON l.id = b.vendor_listing_id
+      SET b.vendor_user_id = l.user_id
+      WHERE l.user_id IS NOT NULL
+        AND (b.vendor_user_id IS NULL OR b.vendor_user_id != l.user_id)
+    `);
+    await connection.query(`
+      UPDATE bookings b
+      INNER JOIN vendor_listings l ON LOWER(l.owner_email) = LOWER(b.vendor_email)
+      INNER JOIN (
+        SELECT owner_email FROM vendor_listings
+        WHERE owner_email IS NOT NULL AND owner_email != ''
+        GROUP BY owner_email HAVING COUNT(*) = 1
+      ) uniq ON LOWER(uniq.owner_email) = LOWER(l.owner_email)
+      SET b.vendor_listing_id = l.id,
+          b.vendor_user_id = COALESCE(l.user_id, b.vendor_user_id)
+      WHERE (b.vendor_listing_id IS NULL OR b.vendor_listing_id = '')
+        AND b.vendor_email IS NOT NULL AND b.vendor_email != ''
+    `);
+    await connection.query(`
+      UPDATE bookings b
+      INNER JOIN users u ON u.id = b.vendor_user_id
+      SET b.vendor_email = u.email
+      WHERE b.vendor_user_id IS NOT NULL
+        AND (b.vendor_email IS NULL OR b.vendor_email = '' OR b.vendor_email != u.email)
+    `);
+  } catch (err) {
+    log(`  ! Booking listing repair skipped: ${err.message}`);
   }
 }
 
@@ -128,7 +180,7 @@ async function initDatabase(options = {}) {
       }
     }
 
-    await migrateSchema(connection, database);
+    await migrateSchema(connection, database, log);
 
     for (const statement of statements) {
       const upper = statement.toUpperCase();
@@ -157,6 +209,13 @@ async function initDatabase(options = {}) {
       await seedSriLankaVendors(connection, log);
     } catch (err) {
       log(`  ! Extra Sri Lankan vendors skipped: ${err.message}`);
+    }
+
+    try {
+      const { seedVendorAccounts } = require('../scripts/seedVendorAccounts');
+      await seedVendorAccounts(connection, log);
+    } catch (err) {
+      log(`  ! Vendor account seed skipped: ${err.message}`);
     }
 
     return { ok: true, database, tableCount: tableNames.length, tables: tableNames };

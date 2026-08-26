@@ -37,7 +37,12 @@ export function buildNotifications() {
 
   const pendingBookings = bookings.filter((b) => b.status === 'Pending').length;
   if (pendingBookings > 0) {
-    list.push({ id: 'bookings', type: 'info', text: `${pendingBookings} vendor booking request(s) awaiting response`, link: '/dashboard/vendors' });
+    list.push({ id: 'bookings', type: 'info', text: `${pendingBookings} vendor request(s) waiting for a reply`, link: '/dashboard/bookings' });
+  }
+
+  const readyToHire = bookings.filter((b) => b.status === 'Accepted' || b.status === 'Updated').length;
+  if (readyToHire > 0) {
+    list.push({ id: 'hire', type: 'warning', text: `${readyToHire} vendor(s) ready to hire — confirm to update your budget`, link: '/dashboard/bookings' });
   }
 
   return list;

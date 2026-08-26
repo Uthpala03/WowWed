@@ -42,8 +42,8 @@ function LoginPage() {
     <FormLayout title="Welcome back" subtitle="Log in to continue planning your wedding.">
       <form className="form" onSubmit={handleSubmit}>
         <label className="form__field">
-          <span>Email</span>
-          <input type="email" value={form.email} onChange={update('email')} placeholder="you@email.com" />
+          <span>Email or vendor ID</span>
+          <input type="text" value={form.email} onChange={update('email')} placeholder="you@email.com or vw-01" autoComplete="username" />
         </label>
 
         <label className="form__field">
@@ -60,6 +60,11 @@ function LoginPage() {
 
       <p className="form-page__footer">
         <Link to="/password-reset">Forgot password?</Link> · New to WowWed? <Link to={coupleOnboarding.freshRoute}>Get started</Link>
+      </p>
+      <p className="form-page__hint">
+        Catalogue vendors: username <strong>vw-01</strong> (or <strong>vw-01@vendors.wowwed.lk</strong>),
+        password <strong>WowWed@vw-01</strong>. All 200 logins are in MySQL table
+        {' '}<code>vendor_demo_logins</code>.
       </p>
     </FormLayout>
   );

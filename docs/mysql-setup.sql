@@ -86,16 +86,61 @@ CREATE TABLE IF NOT EXISTS user_data (
 CREATE TABLE IF NOT EXISTS bookings (
   id VARCHAR(50) PRIMARY KEY,
   couple_user_id INT NOT NULL,
+  vendor_listing_id VARCHAR(50) DEFAULT NULL,
+  vendor_user_id INT DEFAULT NULL,
   vendor_name VARCHAR(150) NOT NULL,
   vendor_email VARCHAR(100) DEFAULT NULL,
+  category VARCHAR(100) DEFAULT NULL,
   couple_name VARCHAR(150) DEFAULT NULL,
   couple_email VARCHAR(100) DEFAULT NULL,
   booking_date DATE DEFAULT NULL,
   amount DECIMAL(15, 2) DEFAULT NULL,
   message TEXT DEFAULT NULL,
-  status VARCHAR(20) DEFAULT 'Pending',
+  vendor_note TEXT DEFAULT NULL,
+  couple_note TEXT DEFAULT NULL,
+  status VARCHAR(30) DEFAULT 'Pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (couple_user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS vendor_reviews (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  booking_id VARCHAR(50) NOT NULL UNIQUE,
+  couple_user_id INT NOT NULL,
+  vendor_listing_id VARCHAR(50) DEFAULT NULL,
+  vendor_user_id INT DEFAULT NULL,
+  vendor_name VARCHAR(150) DEFAULT NULL,
+  couple_name VARCHAR(150) DEFAULT NULL,
+  rating TINYINT NOT NULL,
+  comment TEXT DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (couple_user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  type VARCHAR(30) DEFAULT 'info',
+  title VARCHAR(200) NOT NULL,
+  message TEXT DEFAULT NULL,
+  link VARCHAR(200) DEFAULT NULL,
+  booking_id VARCHAR(50) DEFAULT NULL,
+  is_read TINYINT(1) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS vendor_demo_logins (
+  listing_id VARCHAR(50) PRIMARY KEY,
+  vendor_name VARCHAR(150) NOT NULL,
+  category VARCHAR(100) DEFAULT NULL,
+  city VARCHAR(50) DEFAULT NULL,
+  username VARCHAR(50) NOT NULL,
+  email VARCHAR(100) NOT NULL,
+  password_plain VARCHAR(100) NOT NULL,
+  user_id INT DEFAULT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Seed vendor listings extracted from Desktop/Vendors (complete one-to-one 2026-2027 set)

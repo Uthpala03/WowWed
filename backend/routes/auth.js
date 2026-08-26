@@ -111,7 +111,11 @@ router.post('/login', async (req, res) => {
       return;
     }
 
-    const rows = await query('SELECT * FROM users WHERE email = :email', { email: email.trim().toLowerCase() });
+    let normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail.includes('@')) {
+      normalizedEmail = `${normalizedEmail}@vendors.wowwed.lk`;
+    }
+    const rows = await query('SELECT * FROM users WHERE email = :email', { email: normalizedEmail });
     if (!rows.length) {
       res.status(401).json({ error: 'Email not found. Check your details or create an account.' });
       return;

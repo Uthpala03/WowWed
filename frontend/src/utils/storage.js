@@ -165,6 +165,7 @@ export async function hydrateUserData() {
 
   cache.ownerId = cache.user.id;
   cache.hydrated = true;
+  notifyDataChanged();
 }
 
 export function readCoupleSnapshot() {
@@ -342,6 +343,7 @@ export async function saveBudget(budget) {
   if (cache.weddingProfile && budget?.total != null) {
     cache.weddingProfile = { ...cache.weddingProfile, budget: Number(budget.total) };
   }
+  notifyDataChanged();
   if (cache.user) await api.saveData('budget', budget);
 }
 
@@ -373,23 +375,61 @@ export async function saveBookings(bookings) {
 }
 
 export async function addBooking(booking) {
+  if (!booking?.vendorListingId && !booking?.vendorId) {
+    throw new Error('This request is not tied to a vendor listing.');
+  }
   if (cache.user) {
     const { booking: saved } = await api.createBooking(booking);
     cache.bookings = [...cache.bookings, saved];
+    notifyDataChanged();
     return saved;
   }
   cache.bookings = [...cache.bookings, booking];
+  notifyDataChanged();
   return booking;
 }
 
-export async function updateBookingStatus(id, status) {
+export async function refreshBookings() {
+  if (!cache.user) return cache.bookings;
+  const { bookings } = await api.getBookings();
+  cache.bookings = bookings || [];
+  notifyDataChanged();
+  return cache.bookings;
+}
+
+export async function updateBookingStatus(id, status, extra = {}) {
   if (cache.user) {
-    const { booking } = await api.updateBooking(id, { status });
-    cache.bookings = cache.bookings.map((b) => (b.id === id ? booking : b));
+    const { booking } = await api.updateBooking(id, { status, ...extra });
+    cache.bookings = cache.bookings.map((item) => (item.id === id ? booking : item));
+    if (booking.status === 'Hired' || booking.status === 'Paid') {
+      try {
+        const data = await api.getAllData();
+        cache.budget = data.budget || cache.budget;
+      } catch {
+        /* keep local budget if refresh fails */
+      }
+    }
+    notifyDataChanged();
     return booking;
   }
-  cache.bookings = cache.bookings.map((b) => (b.id === id ? { ...b, status } : b));
-  return cache.bookings.find((b) => b.id === id);
+  cache.bookings = cache.bookings.map((item) => (item.id === id ? { ...item, status, ...extra } : item));
+  notifyDataChanged();
+  return cache.bookings.find((item) => item.id === id);
+}
+
+export async function getAvailability(listingId, date) {
+  if (!listingId || !date) return { available: true, bookings: [] };
+  return api.getAvailability(listingId, date);
+}
+
+export async function loadReviews(listingId) {
+  const { reviews } = await api.getReviews(listingId);
+  return reviews || [];
+}
+
+export async function addReview(payload) {
+  const { review } = await api.createReview(payload);
+  return review;
 }
 
 export function getInvitation() {

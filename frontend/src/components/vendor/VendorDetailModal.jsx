@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { quoteHasPdf, quotePdfHref, resolveUploadUrl } from '../../utils/uploadUrl';
 import { formatVendorCategories, formatVendorDistricts, vendorLocations } from '../../utils/vendorMeta';
+import { displayStatus } from '../../utils/bookingStatus';
 
 function formatQuotePrice(price) {
   const n = Number(String(price || '').replace(/,/g, ''));
@@ -43,7 +45,7 @@ function PdfCard({ href, title, subtitle }) {
   );
 }
 
-function VendorDetailModal({ vendor, onClose, onRequestBooking }) {
+function VendorDetailModal({ vendor, onClose, onRequestBooking, existingBooking }) {
   const [activeImage, setActiveImage] = useState(0);
   if (!vendor) return null;
 
@@ -199,9 +201,15 @@ function VendorDetailModal({ vendor, onClose, onRequestBooking }) {
 
         <div className="vendor-detail__footer">
           <button type="button" className="dash-btn dash-btn--ghost" onClick={onClose}>Close</button>
-          <button type="button" className="dash-btn dash-btn--primary" onClick={() => onRequestBooking(vendor)}>
-            Send booking request →
-          </button>
+          {existingBooking && !['Rejected', 'Cancelled'].includes(existingBooking.status) ? (
+            <Link to="/dashboard/bookings" className="dash-btn dash-btn--primary">
+              Request {existingBooking.status === 'Pending' ? 'sent' : displayStatus(existingBooking.status)} — open Requests
+            </Link>
+          ) : (
+            <button type="button" className="dash-btn dash-btn--primary" onClick={() => onRequestBooking(vendor)}>
+              Send booking request →
+            </button>
+          )}
         </div>
       </div>
     </div>

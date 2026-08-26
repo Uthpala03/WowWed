@@ -1,16 +1,45 @@
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { vendorNav } from '../../data/dashboardData';
-import { getVendorProfile } from '../../utils/storage';
+import { getBookings, getVendorProfile, hydrateUserData, refreshBookings } from '../../utils/storage';
 import { formatVendorCategories } from '../../utils/vendorMeta';
+import { resolveUploadUrl } from '../../utils/uploadUrl';
+import { needsVendorReply } from '../../utils/bookingStatus';
 import { useAuth } from '../../context/AuthContext';
 import { vendorOnboarding } from '../../models/OnboardingPath';
+import { useInboxNotifications } from '../../hooks/useInboxNotifications';
 import AppIcon from '../ui/AppIcon';
+import NotificationsPanel from '../dashboard/NotificationsPanel';
 import '../../styles/dashboard.css';
 
 function VendorLayout() {
   const navigate = useNavigate();
   const { user, loading, logout } = useAuth();
-  const profile = getVendorProfile();
+  const [profile, setProfile] = useState(() => getVendorProfile());
+  const [pendingCount, setPendingCount] = useState(() => (getBookings() || []).filter((b) => needsVendorReply(b.status)).length);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const inbox = useInboxNotifications(8000);
+
+  useEffect(() => {
+    if (loading || !user || user.role !== 'vendor') return undefined;
+    hydrateUserData()
+      .then(() => {
+        setProfile(getVendorProfile());
+        setPendingCount((getBookings() || []).filter((b) => needsVendorReply(b.status)).length);
+      })
+      .catch(() => {});
+    const sync = () => {
+      setPendingCount((getBookings() || []).filter((b) => needsVendorReply(b.status)).length);
+    };
+    const poll = setInterval(() => {
+      refreshBookings().then(sync).catch(() => {});
+    }, 8000);
+    window.addEventListener('wowwed-data-changed', sync);
+    return () => {
+      clearInterval(poll);
+      window.removeEventListener('wowwed-data-changed', sync);
+    };
+  }, [user, loading]);
 
   if (loading) {
     return (
@@ -37,12 +66,31 @@ function VendorLayout() {
       <aside className="dash-sidebar dash-sidebar--vendor">
         <div className="dash-sidebar__brand">
           <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="WowWed" />
-          <span className="dash-sidebar__badge">Vendor</span>
+          <button type="button" className="dash-notif-btn" onClick={() => setNotifOpen(!notifOpen)} aria-label="Notifications">
+            🔔{inbox.unread > 0 && <span>{inbox.unread}</span>}
+          </button>
         </div>
+        <NotificationsPanel
+          open={notifOpen}
+          onClose={() => setNotifOpen(false)}
+          inbox={inbox.items}
+          unread={inbox.unread}
+          includeLocal={false}
+          onMarkRead={inbox.markRead}
+          onMarkAllRead={inbox.markAllRead}
+        />
         {profile && (
-          <div className="dash-sidebar__couple">
-            <span className="dash-sidebar__avatar">🏪</span>
-            <div><strong>{profile.businessName}</strong><small>{formatVendorCategories(profile)}</small></div>
+          <div className="dash-sidebar__couple vendor-side-profile">
+            {profile.portfolioImages?.[0] ? (
+              <img src={resolveUploadUrl(profile.portfolioImages[0])} alt="" className="vendor-side-profile__photo" />
+            ) : (
+              <span className="dash-sidebar__avatar">🏪</span>
+            )}
+            <div>
+              <strong>{profile.businessName || profile.name}</strong>
+              <small>{formatVendorCategories(profile)}</small>
+              <em className="vendor-side-profile__live">Live listing</em>
+            </div>
           </div>
         )}
         <nav className="dash-sidebar__nav">
@@ -52,6 +100,9 @@ function VendorLayout() {
                 <AppIcon name={item.icon} size={18} />
               </span>
               {item.label}
+              {item.to === '/vendor/bookings' && pendingCount > 0 && (
+                <em className="dash-nav-count">{pendingCount}</em>
+              )}
             </NavLink>
           ))}
         </nav>

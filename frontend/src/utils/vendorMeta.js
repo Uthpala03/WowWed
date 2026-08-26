@@ -52,6 +52,15 @@ export function vendorMatchesDistrict(vendor, city) {
   return locationSearchText(vendor).includes(needle);
 }
 
+export function formatPriceRange(range) {
+  if (!range) return 'Price on request';
+  const [min, max] = String(range).split('-').map((n) => Number(String(n).replace(/,/g, '').trim()));
+  if (!min && !max) return 'Price on request';
+  const fmt = (n) => (n ? `Rs. ${n.toLocaleString()}` : '');
+  if (min && max) return `${fmt(min)} – ${fmt(max)}`;
+  return fmt(min || max);
+}
+
 export function vendorMatchesLocation(vendor, profileDistrict) {
   if (!profileDistrict) return false;
   const needle = String(profileDistrict).toLowerCase();

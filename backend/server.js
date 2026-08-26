@@ -9,6 +9,8 @@ const authRoutes = require('./routes/auth');
 const dataRoutes = require('./routes/data');
 const profileRoutes = require('./routes/profiles');
 const bookingRoutes = require('./routes/bookings');
+const reviewRoutes = require('./routes/reviews');
+const notificationRoutes = require('./routes/notifications');
 const mlRoutes = require('./routes/ml');
 
 const app = express();
@@ -39,6 +41,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/ml', mlRoutes);
 
 const PORT = process.env.PORT || 5002;

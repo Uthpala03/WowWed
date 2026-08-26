@@ -8,12 +8,11 @@ import { getOnboarding, getVendorProfile, saveVendorProfile } from '../../utils/
 import { api } from '../../services/api';
 import { quoteHasPdf, quotePdfHref, resolveUploadUrl } from '../../utils/uploadUrl';
 import {
-  formatVendorCategories,
-  formatVendorDistricts,
   normalizeStringList,
   toggleListItem,
 } from '../../utils/vendorMeta';
 import PageHeader from '../../components/ui/PageHeader';
+import VendorCard from '../../components/vendor/VendorCard';
 
 const MAX_IMAGES = 6;
 const MAX_IMAGE_BYTES = 900000;
@@ -54,11 +53,6 @@ function formatPriceRange(range) {
   return fmt(min || max);
 }
 
-function formatQuotePrice(price) {
-  const n = Number(String(price).replace(/,/g, ''));
-  return n ? `Rs. ${n.toLocaleString()}` : 'Price on request';
-}
-
 function newQuotation() {
   return { id: `q-${Date.now()}`, title: '', price: '', details: '', pdfName: '', pdfUrl: '' };
 }
@@ -90,6 +84,7 @@ function emptyForm(onboarding, user, existing) {
     quotations: [],
     ownerEmail: user?.email,
     ...existing,
+    businessName: existing?.businessName || existing?.name || '',
     categories: categoriesFromSources(onboarding, existing),
     districts: districtsFromSources(onboarding, existing),
     portfolioImages: existing?.portfolioImages || [],
@@ -99,72 +94,28 @@ function emptyForm(onboarding, user, existing) {
 }
 
 function ListingPreview({ form }) {
-  const initial = form.businessName?.trim()?.[0]?.toUpperCase() || 'V';
-  const categories = normalizeStringList(form.categories);
-  const emoji = CATEGORY_EMOJI[categories[0]] || '🏪';
-  const cover = form.portfolioImages?.[0];
-  const quotes = activeQuotes(form.quotations || []);
-  const mainPdf = form.quotationPdf;
+  const vendor = {
+    name: form.businessName?.trim() || 'Your business name',
+    businessName: form.businessName,
+    categories: normalizeStringList(form.categories),
+    districts: normalizeStringList(form.districts),
+    rating: form.rating || 4.5,
+    portfolioImages: form.portfolioImages || [],
+    quotations: form.quotations || [],
+    quotationPdf: form.quotationPdf,
+    description: form.description,
+    priceRange: form.priceRange,
+    spotlight: form.spotlight,
+  };
 
   return (
     <div className="vendor-listing-preview">
       <p className="vendor-listing-preview__label">How couples will see you</p>
-      <article className="vendor-card vendor-listing-preview__card">
-        <div
-          className="vendor-listing-preview__banner"
-          style={cover ? { backgroundImage: `url(${cover})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
-        >
-          {!cover && emoji}
-        </div>
-
-        {form.portfolioImages?.length > 1 && (
-          <div className="vendor-listing-preview__thumbs">
-            {form.portfolioImages.slice(0, 4).map((src, i) => (
-              <img key={src.slice(0, 32) + i} src={src} alt="" />
-            ))}
-            {form.portfolioImages.length > 4 && (
-              <span>+{form.portfolioImages.length - 4}</span>
-            )}
-          </div>
-        )}
-
-        <div className="vendor-card__body">
-          <div className="vendor-avatar">{initial}</div>
-          <div>
-            <strong>{form.businessName?.trim() || 'Your business name'}</strong>
-            <small>{formatVendorCategories({ categories })}</small>
-            <small>{formatVendorDistricts({ districts: form.districts })} · ★ 4.5</small>
-          </div>
-        </div>
-
-        <p className="vendor-listing-preview__desc">
-          {form.description?.trim() || 'Your description will appear here.'}
-        </p>
-
-        {mainPdf?.url && (
-          <p className="vendor-listing-preview__pdf">📄 {mainPdf.name} · Full quotation</p>
-        )}
-
-        {quotes.length > 0 ? (
-          <div className="vendor-listing-preview__quotes">
-            <p className="vendor-listing-preview__quotes-title">Packages &amp; quotations</p>
-            {quotes.slice(0, 3).map((q) => (
-              <div key={q.id} className="vendor-listing-preview__quote">
-                <strong>{q.title || 'Package'}</strong>
-                <em>{formatQuotePrice(q.price)}</em>
-                {q.details?.trim() && <small>{q.details}</small>}
-                {quoteHasPdf(q) && (
-                  <span className="vendor-listing-preview__pdf">📄 {q.pdfName}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="vendor-listing-preview__price">{formatPriceRange(form.priceRange)}</p>
-        )}
-
-        <span className="vendor-listing-preview__cta">Send booking request</span>
-      </article>
+      <VendorCard
+        preview
+        vendor={vendor}
+        ctaLabel="Send booking request"
+      />
     </div>
   );
 }
@@ -343,7 +294,8 @@ function VendorSetupPage() {
     try {
       await saveVendorProfile({
         ...form,
-        id: existing?.id || `vp-${user?.id || Date.now()}`,
+        id: existing?.listingId || existing?.id || `vp-${user?.id || Date.now()}`,
+        listingId: existing?.listingId || existing?.id,
         category: form.categories[0],
         categories: form.categories,
         district: form.districts[0],
@@ -370,7 +322,11 @@ function VendorSetupPage() {
 
   return (
     <div className="dash-page vendor-listing-page">
-      <PageHeader moduleId="vendor-profile" title="Vendor listing" />
+      <PageHeader
+        moduleId="vendor-profile"
+        title="Your public listing"
+        tagline="This is what couples see when they search vendors. Keep photos and packages current."
+      />
 
       <div className="vendor-listing-layout">
         <form className="vendor-listing-form" onSubmit={submit}>
@@ -414,8 +370,8 @@ function VendorSetupPage() {
 
             <div className="vendor-listing-gallery">
               {images.map((src, i) => (
-                <div key={src.slice(0, 40) + i} className="vendor-listing-gallery__item">
-                  <img src={src} alt={`Portfolio ${i + 1}`} />
+                <div key={`${i}-${String(src).slice(-24)}`} className="vendor-listing-gallery__item">
+                  <img src={resolveUploadUrl(src)} alt={`Portfolio ${i + 1}`} />
                   <button type="button" onClick={() => removeImage(i)} aria-label="Remove photo">×</button>
                 </div>
               ))}

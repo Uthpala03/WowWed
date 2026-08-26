@@ -104,6 +104,26 @@ router.get('/', authRequired, async (req, res) => {
       }
     }
 
+    if (req.user.role === 'couple') {
+      try {
+        const { applyHiredVendorToBudget } = require('../utils/budgetHire');
+        const hiredRows = await query(
+          "SELECT * FROM bookings WHERE couple_user_id = :userId AND status IN ('Hired', 'Confirmed')",
+          { userId },
+        );
+        for (const row of hiredRows) {
+          data.budget = await applyHiredVendorToBudget(userId, {
+            id: row.id,
+            vendorName: row.vendor_name,
+            category: row.category,
+            amount: row.amount,
+          });
+        }
+      } catch (hireErr) {
+        console.error('Hired vendor budget sync skipped:', hireErr.message);
+      }
+    }
+
     res.json(data);
   } catch (err) {
     console.error('Get data error:', err);

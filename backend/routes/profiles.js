@@ -301,13 +301,30 @@ router.put('/onboarding', authRequired, async (req, res) => {
 
 router.get('/vendor', authRequired, async (req, res) => {
   try {
+    const listingRows = await query(
+      'SELECT * FROM vendor_listings WHERE user_id = :userId LIMIT 1',
+      { userId: req.user.id },
+    );
+    if (listingRows[0]) {
+      const listing = listingFromRow(listingRows[0]);
+      res.json({
+        profile: {
+          ...listing,
+          businessName: listing.name,
+          listingId: listing.id,
+        },
+      });
+      return;
+    }
+
     const rows = await query(
       `SELECT vp.*, u.email FROM vendor_profiles vp
        JOIN users u ON u.id = vp.user_id
        WHERE vp.user_id = :userId`,
       { userId: req.user.id },
     );
-    res.json({ profile: vendorFromRow(rows[0]) });
+    const profile = vendorFromRow(rows[0]);
+    res.json({ profile: profile ? { ...profile, listingId: profile.id } : null });
   } catch (err) {
     console.error('Get vendor profile error:', err);
     res.status(500).json({ error: 'Could not load vendor profile.' });
@@ -344,7 +361,11 @@ router.put('/vendor', authRequired, async (req, res) => {
       },
     );
 
-    const listingId = p.id || `vp-${userId}`;
+    const existingListing = await query(
+      'SELECT id FROM vendor_listings WHERE user_id = :userId LIMIT 1',
+      { userId },
+    );
+    const listingId = existingListing[0]?.id || p.listingId || p.id || `vp-${userId}`;
     await query(
       `INSERT INTO vendor_listings
        (id, user_id, name, category, city, district, price_range, description, portfolio_json, rating, owner_email)
