@@ -1,37 +1,5 @@
 /* WowWed Dashboard — warm wedding journal aesthetic */
 
-:root {
-  --color-cream: #fdf8f4;
-  --color-white: #fff;
-  --color-brown: #5c3d2e;
-  --color-brown-light: #7a5c4a;
-  --color-text: #4a3428;
-  --color-text-muted: #8a7568;
-  --color-border: #edd9cc;
-  --color-peach: #e8a88c;
-  --color-peach-light: #f5d4c4;
-  --color-peach-dark: #c45c26;
-  --color-success: #3d6b4a;
-  --color-warning: #d4a84b;
-  --color-danger: #9b3b2e;
-  --color-grid-bg: #faf6f2;
-  --color-grid-line: rgba(92, 61, 46, 0.06);
-  --font-serif: Georgia, 'Times New Roman', serif;
-  --font-sans: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-}
-
-*, *::before, *::after { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: var(--font-sans);
-  color: var(--color-text);
-  background: var(--color-cream);
-}
-
-#root {
-  min-height: 100vh;
-}
-
 .dash {
   display: flex;
   min-height: 100vh;
@@ -42,13 +10,11 @@ body {
     var(--color-cream);
 }
 
-.app > main.app-main--dash,
-.dash > main.app-main--dash {
+.app > main.app-main--dash {
   padding: 0;
   width: 100%;
   max-width: none;
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 1 0 auto;
 }
 
 /* ── Sidebar ── */
@@ -2927,9 +2893,8 @@ body {
 
 .seating-layout {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr 300px;
   gap: 1rem;
-  align-items: stretch;
 }
 
 .seating-toolbar {
@@ -3387,16 +3352,9 @@ body {
   color: var(--color-text-muted);
 }
 
-.seating-sidebar {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
 .seating-sidebar h3 {
   font-family: var(--font-serif);
   margin-bottom: 0.75rem;
-  flex-shrink: 0;
 }
 
 .seating-sidebar input {
@@ -3426,115 +3384,6 @@ body {
   font-size: 0.75rem;
   color: var(--color-text-muted);
   margin: 0 0 0.5rem;
-}
-
-.seating-sidebar--table-focus .seating-sidebar__tip {
-  flex-shrink: 0;
-}
-
-.seating-sidebar--table-focus .seating-table-focus {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  margin-bottom: 0;
-}
-
-.seating-table-focus {
-  border: 1px solid var(--color-peach-dark);
-  border-radius: 14px;
-  padding: 0.85rem;
-  background: linear-gradient(180deg, rgba(255, 244, 236, 0.95), rgba(255, 250, 246, 0.98));
-  margin-bottom: 0.75rem;
-}
-
-.seating-table-focus__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-  flex-shrink: 0;
-}
-
-.seating-table-focus__head h4 {
-  margin: 0 0 0.2rem;
-  font-size: 1rem;
-}
-
-.seating-table-focus__head small {
-  color: var(--color-text-muted);
-  font-size: 0.75rem;
-}
-
-.seating-table-focus__clear {
-  border: 1px solid var(--color-border);
-  background: #fff;
-  border-radius: 999px;
-  padding: 0.25rem 0.65rem;
-  font-size: 0.72rem;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.seating-table-focus__label {
-  display: block;
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted);
-  margin-bottom: 0.4rem;
-}
-
-.seating-table-focus__groups ul {
-  list-style: none;
-  margin: 0 0 0.75rem;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.seating-table-focus__groups {
-  flex-shrink: 0;
-}
-
-.seating-table-focus__groups li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.45rem 0.6rem;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid var(--color-border);
-  font-size: 0.82rem;
-}
-
-.seating-table-focus__groups li span {
-  color: var(--color-text-muted);
-  font-size: 0.75rem;
-}
-
-.seating-table-focus__empty {
-  margin: 0 0 0.5rem;
-  color: var(--color-text-muted);
-  font-size: 0.82rem;
-}
-
-.seating-table-focus__people {
-  flex: 1 1 auto;
-  min-height: 0;
-  max-height: none;
-  overflow-y: auto;
-}
-
-.seating-sidebar--table-focus .seating-table-focus__people.seating-guest-list {
-  max-height: none;
-}
-
-.seating-table-focus__person {
-  background: #fff;
 }
 
 .seating-guest-list {
@@ -3630,38 +3479,6 @@ body {
 
 .seating-canvas-wrap {
   position: relative;
-}
-
-.seating-group-filter-banner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  padding: 0.65rem 0.85rem;
-  margin-bottom: 0.75rem;
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(255, 244, 236, 0.95), rgba(255, 250, 246, 0.98));
-  border: 1px solid var(--color-peach-dark);
-  font-size: 0.85rem;
-}
-
-.seating-group-filter-banner strong {
-  color: var(--color-text);
-}
-
-.seating-group-filter-banner__clear {
-  border: 1px solid var(--color-border);
-  background: #fff;
-  border-radius: 999px;
-  padding: 0.25rem 0.65rem;
-  font-size: 0.75rem;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.seating-group-filter-banner__clear:hover {
-  border-color: var(--color-peach-dark);
 }
 
 .seating-modal-preview {

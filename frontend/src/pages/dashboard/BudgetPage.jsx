@@ -1,77 +1,240 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
-import PageHeader from '../../components/ui/PageHeader';
-import PrettySelect from '../../components/ui/PrettySelect';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useOutletContext } from 'react-router-dom';
+import { getBudget, getBookings, getWeddingProfile, saveBudget, saveWeddingProfile } from '../../utils/storage';
 import {
-  COST_CATEGORIES,
+  COST_CEREMONIES,
   COST_DISTRICTS,
-  COST_TIERS,
-  MODEL_ACCURACY,
-  MODEL_NAME,
-  comparePredictionToBudget,
-  formatLkr,
+  COST_SCALES,
   predictWeddingCost,
   predictionFormFromProfile,
 } from '../../utils/costPrediction';
-import { getBudget, getWeddingProfile, saveBudget } from '../../utils/storage';
+import PageHeader from '../../components/ui/PageHeader';
+import PrettySelect from '../../components/ui/PrettySelect';
+import AppIcon from '../../components/ui/AppIcon';
+import { isPaid } from '../../utils/bookingStatus';
 
-const SUGGESTED_CATEGORIES = [
-  'Venue & Catering',
-  'Photography & Videography',
-  'Attire & Jewellery',
-  'Floral & Decor',
-  'Entertainment',
-  'Miscellaneous',
+const CEREMONY_ICONS = {
+  Poruwa: 'poruwa',
+  Buddhist: 'poruwa',
+  Hindu: 'hindu',
+  Christian: 'church',
+  Islamic: 'nikah',
+};
+
+const categoryColors = ['#e8a88c', '#7a9eb8', '#b8a0c8', '#d4b85c', '#c96a5a', '#6b9e78', '#5c6d8a', '#8a7268'];
+const sortOptions = ['Default', 'Name', 'Remaining budget', 'Budget allocated'];
+const DEFAULT_BUDGET_CATEGORIES = [
+  { name: 'Venue', icon: 'venue' },
+  { name: 'Catering', icon: 'catering' },
+  { name: 'Photography', icon: 'camera' },
+  { name: 'Videography', icon: 'camera' },
+  { name: 'Attire', icon: 'bridal' },
+  { name: 'Decorations', icon: 'floral' },
+  { name: 'Entertainment', icon: 'reception' },
+  { name: 'Transport', icon: 'pin' },
+  { name: 'Beauty', icon: 'ring' },
+  { name: 'Ceremony', icon: 'poruwa' },
+  { name: 'Invitations', icon: 'invitations' },
+  { name: 'Vendors', icon: 'vendors' },
 ];
+const ADD_CATEGORY_VALUE = '__add_category__';
 
-function emptyBudget(profile) {
-  const total = Number(profile?.budget) || 0;
-  return { total, categories: [], expenses: [] };
+function categoryIconFor(name) {
+  const raw = String(name || '').toLowerCase();
+  const match = DEFAULT_BUDGET_CATEGORIES.find((item) => (
+    raw === item.name.toLowerCase() || raw.includes(item.name.toLowerCase())
+  ));
+  return match?.icon || 'budget';
 }
 
-function normalizeBudget(raw, profile) {
-  const base = emptyBudget(profile);
-  if (!raw || typeof raw !== 'object') return base;
-  return {
-    total: Number(raw.total ?? base.total) || 0,
-    categories: Array.isArray(raw.categories) ? raw.categories : [],
-    expenses: Array.isArray(raw.expenses) ? raw.expenses : [],
-  };
+function money(n) {
+  return `Rs. ${Number(n || 0).toLocaleString()}`;
 }
 
-function uid(prefix) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+function costFit(estimate, total) {
+  const est = Number(estimate);
+  const tot = Number(total);
+  if (!tot) return null;
+  if (est > tot) return { kind: 'over', word: 'Over', detail: money(est - tot) };
+  if (est / tot >= 0.85) return { kind: 'tight', word: 'Tight', detail: `${money(tot - est)} left` };
+  return { kind: 'ok', word: 'Good', detail: `${money(tot - est)} under` };
 }
 
 function BudgetPage() {
-  const coupleData = useOutletContext() || {};
-  const profile = coupleData.profile || getWeddingProfile() || {};
+  const coupleData = useOutletContext();
+  const profile = coupleData?.profile || getWeddingProfile();
+  const onboarding = coupleData?.onboarding;
+  const profileBudget = Number(profile?.budget) || 0;
+  const bookings = useMemo(() => {
+    const merged = new Map();
+    [...(getBookings() || []), ...(coupleData?.bookings || [])].forEach((booking) => {
+      if (booking?.id) merged.set(booking.id, booking);
+    });
+    return [...merged.values()];
+  }, [coupleData]);
+  const hiredBookings = useMemo(
+    () => bookings.filter((booking) => isPaid(booking.status)),
+    [bookings],
+  );
+  const emptyBudget = { total: profileBudget, categories: [], expenses: [] };
 
-  const [budget, setBudget] = useState(() => normalizeBudget(coupleData.budget || getBudget(), profile));
-  const [totalDraft, setTotalDraft] = useState(String(budget.total || ''));
-  const [showTotalEdit, setShowTotalEdit] = useState(false);
-  const [newCategory, setNewCategory] = useState('');
-  const [expenseForm, setExpenseForm] = useState({ label: '', amount: '', categoryId: '' });
-  const [showExpenseForm, setShowExpenseForm] = useState(false);
-  const [sort, setSort] = useState('spent-desc');
+  const budgetFromCouple = () => {
+    const stored = coupleData?.budget || getBudget() || emptyBudget;
+    return {
+      ...stored,
+      total: profileBudget || Number(stored.total) || 0,
+      categories: stored.categories || [],
+      expenses: stored.expenses || [],
+    };
+  };
 
-  const [costForm, setCostForm] = useState(() => predictionFormFromProfile(profile));
+  const [budget, setBudget] = useState(budgetFromCouple);
+  const [showCategory, setShowCategory] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+  const [showExpense, setShowExpense] = useState(false);
+  const [showEditBudget, setShowEditBudget] = useState(false);
+  const [sortBy, setSortBy] = useState(() => {
+    try {
+      return localStorage.getItem('wowwed_budget_sort') || 'Default';
+    } catch {
+      return 'Default';
+    }
+  });
+  const [catForm, setCatForm] = useState({ name: '', allocated: 0 });
+  const [expForm, setExpForm] = useState({ name: '', amount: '', categoryId: '', date: new Date().toISOString().slice(0, 10), notes: '' });
+  const [expenseError, setExpenseError] = useState('');
+  const [editTotal, setEditTotal] = useState(budget.total);
   const [prediction, setPrediction] = useState(null);
   const [predicting, setPredicting] = useState(false);
   const [predictError, setPredictError] = useState('');
-  const [toast, setToast] = useState('');
+  const [costForm, setCostForm] = useState(() => predictionFormFromProfile(profile, {
+    ceremonyType: onboarding?.ceremonyType,
+    district: onboarding?.location,
+    weddingDate: profile?.weddingDate || onboarding?.weddingDate,
+    guestListCount: (coupleData?.guests || []).length,
+    budgetTotal: profileBudget,
+  }));
+  const userPickedScale = useRef(false);
+
+  const loadPrediction = async (form) => {
+    setPredicting(true);
+    setPredictError('');
+    try {
+      const result = await predictWeddingCost({
+        ...form,
+        weddingDate: profile?.weddingDate || onboarding?.weddingDate,
+      });
+      setPrediction(result);
+    } catch (err) {
+      setPredictError(err.message || 'Could not run cost prediction.');
+    } finally {
+      setPredicting(false);
+    }
+  };
 
   useEffect(() => {
-    setBudget(normalizeBudget(coupleData.budget || getBudget(), coupleData.profile || getWeddingProfile() || {}));
-  }, [coupleData.budget, coupleData.profile]);
+    const next = budgetFromCouple();
+    setBudget((current) => {
+      const incoming = next.expenses?.length || 0;
+      const local = current.expenses?.length || 0;
+      if (local > incoming) return current;
+      return next;
+    });
+    setEditTotal(next.total);
+  }, [coupleData]);
 
   useEffect(() => {
-    setCostForm(predictionFormFromProfile(coupleData.profile || getWeddingProfile() || {}));
-  }, [coupleData.profile]);
+    const timer = window.setTimeout(() => {
+      loadPrediction(costForm);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [costForm.guestCount, costForm.district, costForm.ceremonyType, costForm.scale, costForm.seasonal]);
 
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 3500);
+  const runPrediction = () => loadPrediction(costForm);
+
+  const chooseScale = (scale) => {
+    userPickedScale.current = true;
+    setCostForm((prev) => ({ ...prev, scale }));
+    const current = coupleData?.profile || getWeddingProfile() || {};
+    saveWeddingProfile({ ...current, scale }).catch(() => {});
+  };
+
+  const spent = useMemo(() => {
+    const expenseTotal = (budget.expenses || []).reduce((s, e) => s + Number(e.amount || 0), 0);
+    const missingHires = hiredBookings.filter((b) => !(budget.expenses || []).some(
+      (e) => e.bookingId === b.id || e.id === `hire-${b.id}`,
+    ));
+    return expenseTotal + missingHires.reduce((s, b) => s + Number(b.amount || 0), 0);
+  }, [budget, hiredBookings]);
+  const spentInCategory = (categoryId) => {
+    const fromExpenses = (budget.expenses || [])
+      .filter((item) => item.categoryId === categoryId)
+      .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    const fromHires = hiredBookings
+      .filter((booking) => {
+        const already = (budget.expenses || []).some(
+          (item) => item.bookingId === booking.id || item.id === `hire-${booking.id}`,
+        );
+        if (already) return false;
+        const cat = (budget.categories || []).find((item) => item.id === categoryId);
+        return cat && String(booking.category || 'Vendors').toLowerCase() === String(cat.name).toLowerCase();
+      })
+      .reduce((sum, booking) => sum + Number(booking.amount || 0), 0);
+    return fromExpenses + fromHires;
+  };
+  const categoryName = (id) => (budget.categories || []).find((item) => item.id === id)?.name || '';
+  const payments = useMemo(() => {
+    const rows = (budget.expenses || []).map((item) => ({
+      id: item.id,
+      name: item.name,
+      amount: Number(item.amount || 0),
+      detail: item.hired || item.bookingId
+        ? 'Hired in WowWed'
+        : (categoryName(item.categoryId) || 'Paid yourself'),
+    }));
+    hiredBookings.forEach((booking) => {
+      const exists = (budget.expenses || []).some(
+        (item) => item.bookingId === booking.id || item.id === `hire-${booking.id}`,
+      );
+      if (exists) return;
+      rows.push({
+        id: booking.id,
+        name: booking.vendorName,
+        amount: Number(booking.amount || 0),
+        detail: 'Hired in WowWed',
+      });
+    });
+    return rows;
+  }, [budget.expenses, budget.categories, hiredBookings]);
+  const overspent = spent > budget.total;
+  const left = budget.total - spent;
+  const pct = budget.total ? Math.min(100, Math.round((spent / budget.total) * 100)) : 0;
+
+  const sortedCategories = useMemo(() => {
+    const cats = [...(budget.categories || [])];
+    if (sortBy === 'Name') cats.sort((a, b) => a.name.localeCompare(b.name));
+    if (sortBy === 'Budget allocated') cats.sort((a, b) => Number(b.allocated) - Number(a.allocated));
+    if (sortBy === 'Remaining budget') {
+      cats.sort((a, b) => {
+        const spentA = budget.expenses.filter((e) => e.categoryId === a.id).reduce((s, e) => s + Number(e.amount), 0);
+        const spentB = budget.expenses.filter((e) => e.categoryId === b.id).reduce((s, e) => s + Number(e.amount), 0);
+        return (Number(b.allocated) - spentB) - (Number(a.allocated) - spentA);
+      });
+    }
+    return cats;
+  }, [budget, sortBy]);
+
+  const changeSort = (value) => {
+    setSortBy(value);
+    try {
+      localStorage.setItem('wowwed_budget_sort', value);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const closeIfBackdrop = (close) => (event) => {
+    if (event.target === event.currentTarget) close();
   };
 
   const persist = (next) => {
@@ -79,483 +242,452 @@ function BudgetPage() {
     saveBudget(next);
   };
 
-  const spentTotal = useMemo(
-    () => budget.expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0),
-    [budget.expenses],
-  );
-
-  const allocatedTotal = useMemo(
-    () => budget.categories.reduce((sum, item) => sum + (Number(item.allocated) || 0), 0),
-    [budget.categories],
-  );
-
-  const remaining = Math.max(0, (Number(budget.total) || 0) - spentTotal);
-
-  const categoriesWithStats = useMemo(() => {
-    return budget.categories.map((cat) => {
-      const spent = budget.expenses
-        .filter((exp) => exp.categoryId === cat.id)
-        .reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
-      const allocated = Number(cat.allocated) || 0;
-      const pct = allocated > 0 ? Math.min(100, Math.round((spent / allocated) * 100)) : 0;
-      return { ...cat, spent, pct, over: allocated > 0 && spent > allocated };
-    }).sort((a, b) => {
-      if (sort === 'name') return a.name.localeCompare(b.name);
-      if (sort === 'allocated-desc') return b.allocated - a.allocated;
-      return b.spent - a.spent;
+  const createCategory = (name, allocated = 0) => {
+    const label = String(name || '').trim();
+    if (!label) return null;
+    const existing = (budget.categories || []).find(
+      (item) => String(item.name).toLowerCase() === label.toLowerCase(),
+    );
+    if (existing) return existing;
+    const category = {
+      id: `c${Date.now()}`,
+      name: label,
+      allocated: Number(allocated) || 0,
+      color: categoryColors[budget.categories.length % categoryColors.length],
+    };
+    persist({
+      ...budget,
+      categories: [...budget.categories, category],
     });
-  }, [budget.categories, budget.expenses, sort]);
-
-  const saveTotal = () => {
-    const total = Math.max(0, Number(totalDraft) || 0);
-    persist({ ...budget, total });
-    setShowTotalEdit(false);
-    showToast('Total budget updated');
+    return category;
   };
 
-  const addCategory = (name) => {
-    const label = (name || newCategory).trim();
+  const addCategory = (e) => {
+    e.preventDefault();
+    const label = String(catForm.name || '').trim();
     if (!label) return;
-    if (budget.categories.some((cat) => cat.name.toLowerCase() === label.toLowerCase())) {
-      showToast('Category already exists');
-      return;
+    if (editingCategoryId) {
+      persist({
+        ...budget,
+        categories: budget.categories.map((item) => (
+          item.id === editingCategoryId
+            ? { ...item, name: label, allocated: Number(catForm.allocated) || 0 }
+            : item
+        )),
+      });
+    } else {
+      const category = createCategory(label, catForm.allocated);
+      if (!category) return;
+      setExpForm((form) => ({ ...form, categoryId: category.id }));
     }
-    persist({
-      ...budget,
-      categories: [...budget.categories, { id: uid('cat'), name: label, allocated: 0 }],
-    });
-    setNewCategory('');
-    showToast(`Added ${label}`);
+    setCatForm({ name: '', allocated: 0 });
+    setEditingCategoryId(null);
+    setShowCategory(false);
   };
 
-  const updateAllocated = (id, value) => {
+  const openAddExpense = (categoryId = '') => {
+    setExpenseError('');
+    setExpForm({
+      name: '',
+      amount: '',
+      categoryId: categoryId || '',
+      date: new Date().toISOString().slice(0, 10),
+      notes: '',
+    });
+    setShowExpense(true);
+  };
+
+  const openCreateCategory = () => {
+    setEditingCategoryId(null);
+    setCatForm({ name: '', allocated: 0 });
+    setShowCategory(true);
+  };
+
+  const openEditCategory = (cat) => {
+    setEditingCategoryId(cat.id);
+    setCatForm({ name: cat.name, allocated: Number(cat.allocated) || 0 });
+    setShowCategory(true);
+  };
+
+  const deleteCategory = (cat) => {
+    const ok = window.confirm(`Delete “${cat.name}”? Expenses in this category stay, but become uncategorized.`);
+    if (!ok) return;
     persist({
       ...budget,
-      categories: budget.categories.map((cat) => (
-        cat.id === id ? { ...cat, allocated: Math.max(0, Number(value) || 0) } : cat
+      categories: budget.categories.filter((item) => item.id !== cat.id),
+      expenses: (budget.expenses || []).map((item) => (
+        item.categoryId === cat.id ? { ...item, categoryId: '' } : item
       )),
     });
   };
 
-  const removeCategory = (id) => {
-    persist({
-      ...budget,
-      categories: budget.categories.filter((cat) => cat.id !== id),
-      expenses: budget.expenses.filter((exp) => exp.categoryId !== id),
-    });
-  };
-
-  const submitExpense = (e) => {
-    e.preventDefault();
-    const amount = Number(expenseForm.amount);
-    if (!expenseForm.label.trim() || !amount) return;
-    persist({
-      ...budget,
-      expenses: [
-        {
-          id: uid('exp'),
-          label: expenseForm.label.trim(),
-          amount,
-          categoryId: expenseForm.categoryId || '',
-          date: new Date().toISOString().slice(0, 10),
-        },
-        ...budget.expenses,
-      ],
-    });
-    setExpenseForm({ label: '', amount: '', categoryId: '' });
-    setShowExpenseForm(false);
-    showToast('Expense logged');
-  };
-
-  const removeExpense = (id) => {
-    persist({ ...budget, expenses: budget.expenses.filter((exp) => exp.id !== id) });
-  };
-
-  const runPrediction = async () => {
-    setPredicting(true);
-    setPredictError('');
-    try {
-      const result = await predictWeddingCost(costForm);
-      setPrediction(result);
-    } catch (err) {
-      setPrediction(null);
-      setPredictError(err.message || 'Cost model unavailable. Start the backend to load the ML API.');
-    } finally {
-      setPredicting(false);
+  const chooseExpenseCategory = (categoryId) => {
+    if (categoryId === ADD_CATEGORY_VALUE) {
+      openCreateCategory();
+      return;
     }
+    if (String(categoryId).startsWith('__new__:')) {
+      const category = createCategory(String(categoryId).slice(8));
+      setExpForm((form) => ({ ...form, categoryId: category?.id || '' }));
+      return;
+    }
+    setExpForm((form) => ({ ...form, categoryId }));
   };
 
-  const applyEstimateToBudget = () => {
-    if (!prediction?.estimated_total_lkr) return;
-    persist({ ...budget, total: prediction.estimated_total_lkr });
-    setTotalDraft(String(prediction.estimated_total_lkr));
-    showToast('Total budget set from ML estimate');
+  const expenseCategoryOptions = useMemo(() => {
+    const existing = budget.categories || [];
+    const existingNames = new Set(existing.map((item) => String(item.name).toLowerCase()));
+    const suggestions = DEFAULT_BUDGET_CATEGORIES
+      .filter((item) => !existingNames.has(item.name.toLowerCase()))
+      .map((item) => ({
+        value: `__new__:${item.name}`,
+        label: item.name,
+        icon: item.icon,
+      }));
+    return [
+      { value: '', label: 'No category', icon: 'budget' },
+      ...existing.map((item) => ({
+        value: item.id,
+        label: item.name,
+        icon: categoryIconFor(item.name),
+      })),
+      ...suggestions,
+      { value: ADD_CATEGORY_VALUE, label: '+ Add category', icon: 'sparkle' },
+    ];
+  }, [budget.categories]);
+
+  const addExpense = (e) => {
+    e.preventDefault();
+    const amount = Number(expForm.amount);
+    if (!expForm.name.trim() || !(amount > 0)) {
+      setExpenseError('Enter a name and an amount you already paid.');
+      return;
+    }
+    setBudget((current) => {
+      const expense = {
+        id: `e${Date.now()}`,
+        name: expForm.name.trim(),
+        amount,
+        categoryId: expForm.categoryId || '',
+        date: expForm.date,
+        notes: expForm.notes,
+        hired: false,
+      };
+      const expenses = [...(current.expenses || []), expense];
+      const categories = (current.categories || []).map((item) => {
+        if (item.id !== expense.categoryId) return item;
+        const catSpent = expenses
+          .filter((row) => row.categoryId === item.id)
+          .reduce((sum, row) => sum + Number(row.amount || 0), 0);
+        return { ...item, allocated: Math.max(Number(item.allocated) || 0, catSpent) };
+      });
+      const next = { ...current, expenses, categories };
+      saveBudget(next);
+      return next;
+    });
+    setExpForm({ name: '', amount: '', categoryId: '', date: new Date().toISOString().slice(0, 10), notes: '' });
+    setExpenseError('');
+    setShowExpense(false);
   };
 
-  const budgetCompare = prediction
-    ? comparePredictionToBudget(prediction.estimated_total_lkr, budget.total)
-    : null;
-
-  const spentPct = budget.total > 0 ? Math.min(100, Math.round((spentTotal / budget.total) * 100)) : 0;
-  const allocPct = budget.total > 0 ? Math.min(100, Math.round((allocatedTotal / budget.total) * 100)) : 0;
+  const saveBudgetTotal = (e) => {
+    e.preventDefault();
+    persist({ ...budget, total: Number(editTotal) });
+    setShowEditBudget(false);
+  };
 
   return (
-    <div className="dash-page dash-page--budget">
-      <PageHeader moduleId="budget">
-        <div className="dash-page__actions">
-          <button type="button" className="dash-btn dash-btn--outline" onClick={() => setShowExpenseForm(true)}>
-            + Log expense
-          </button>
-          <button type="button" className="dash-btn dash-btn--primary" onClick={() => setShowTotalEdit(true)}>
-            Edit total
-          </button>
+    <div className="dash-page">
+      <PageHeader moduleId="budget" />
+
+      {overspent && (
+        <div className="dash-alert dash-alert--danger">
+          <strong>Budget overspend alert</strong>
+          <p>You have exceeded your total budget by Rs. {(spent - budget.total).toLocaleString()}. Review expenses or adjust your budget.</p>
         </div>
-      </PageHeader>
+      )}
 
-      {toast && <div className="guest-import-toast">{toast}</div>}
-
-      <section className="dash-card ai-prediction">
+      <div className="dash-card ai-prediction">
         <div className="ai-prediction__head">
           <div>
-            <p className="ai-prediction__kicker">ML cost prediction</p>
-            <h3>Predict vendor cost tier</h3>
-            <p>Enter a quote to see if it fits budget, mid-range, premium, or luxury.</p>
+            <h3>Likely cost</h3>
+            <p>Cost prediction</p>
           </div>
-          <span className="ai-prediction__status">
-            {MODEL_NAME} · {MODEL_ACCURACY} accuracy
-          </span>
+          {predicting && <span className="ai-prediction__status">Updating…</span>}
         </div>
 
         <div className="ai-prediction__form">
-          <label className="dash-field">
-            <span>Guest count</span>
-            <input
-              type="number"
-              min="50"
-              max="800"
-              value={costForm.guest_count}
-              onChange={(e) => setCostForm({ ...costForm, guest_count: e.target.value })}
-            />
+          <label className="cost-guest-field">
+            <span className="pretty-select__icon" aria-hidden="true"><AppIcon name="guests" size={16} /></span>
+            <span className="pretty-select__copy">
+              <small>Guests</small>
+              <input
+                type="number"
+                min="50"
+                max="800"
+                value={costForm.guestCount}
+                onChange={(e) => setCostForm({ ...costForm, guestCount: e.target.value })}
+              />
+            </span>
           </label>
-
-          <PrettySelect
-            label="Vendor category"
-            icon="vendors"
-            value={costForm.category}
-            options={COST_CATEGORIES.map((label) => ({ value: label, label, icon: 'vendors' }))}
-            onChange={(value) => setCostForm({ ...costForm, category: value })}
-          />
-
-          <PrettySelect
-            label="District"
-            icon="vendors"
-            value={costForm.district}
-            options={COST_DISTRICTS.map((label) => ({ value: label, label, icon: 'vendors' }))}
-            onChange={(value) => setCostForm({ ...costForm, district: value })}
-          />
-
-          <PrettySelect
-            label="Pricing type"
-            icon="budget"
-            value={String(costForm.per_person_pricing)}
-            options={[
-              { value: '1', label: 'Per person (pp)', icon: 'budget' },
-              { value: '0', label: 'Flat package', icon: 'budget' },
-            ]}
-            onChange={(value) => setCostForm({ ...costForm, per_person_pricing: Number(value) })}
-          />
-
-          <label className="dash-field">
-            <span>{costForm.per_person_pricing ? 'Price per guest (LKR)' : 'Package price (LKR)'}</span>
-            <input
-              type="number"
-              min="0"
-              value={costForm.base_unit_price}
-              onChange={(e) => setCostForm({ ...costForm, base_unit_price: e.target.value })}
+          <div className="dash-field">
+            <PrettySelect
+              label="District"
+              icon="pin"
+              value={costForm.district}
+              options={COST_DISTRICTS.map((d) => ({ value: d, label: d, icon: 'pin' }))}
+              onChange={(district) => setCostForm({ ...costForm, district })}
             />
-          </label>
-
-          <label className="dash-field">
-            <span>Vendor rating</span>
-            <input
-              type="number"
-              min="1"
-              max="5"
-              step="0.1"
-              value={costForm.vendor_rating}
-              onChange={(e) => setCostForm({ ...costForm, vendor_rating: e.target.value })}
+          </div>
+          <div className="dash-field">
+            <PrettySelect
+              label="Ceremony"
+              icon="poruwa"
+              value={costForm.ceremonyType}
+              options={COST_CEREMONIES.map((c) => ({ value: c.value, label: c.label, icon: CEREMONY_ICONS[c.value] || 'poruwa' }))}
+              onChange={(ceremonyType) => setCostForm({ ...costForm, ceremonyType })}
             />
-          </label>
-
-          <PrettySelect
-            label="Package detail"
-            icon="analytics"
-            value={String(costForm.package_complexity)}
-            options={[1, 2, 3, 4, 5].map((n) => ({
-              value: String(n),
-              label: n === 1 ? 'Simple quote' : n === 5 ? 'Very detailed' : `Level ${n}`,
-              icon: 'analytics',
-            }))}
-            onChange={(value) => setCostForm({ ...costForm, package_complexity: Number(value) })}
-          />
-
-          <PrettySelect
-            label="Spotlight vendor"
-            icon="sparkle"
-            value={String(costForm.is_spotlight)}
-            options={[
-              { value: '0', label: 'No', icon: 'sparkle' },
-              { value: '1', label: 'Yes', icon: 'sparkle' },
-            ]}
-            onChange={(value) => setCostForm({ ...costForm, is_spotlight: Number(value) })}
-          />
+          </div>
+          <div className="dash-field">
+            <PrettySelect
+              label="Season"
+              icon="calendar"
+              value={costForm.seasonal}
+              options={[
+                { value: 0, label: 'Regular', icon: 'calendar' },
+                { value: 1, label: 'Peak', icon: 'hearts' },
+              ]}
+              onChange={(seasonal) => setCostForm({ ...costForm, seasonal: Number(seasonal) })}
+            />
+          </div>
         </div>
 
         <div className="ai-prediction__scales">
-          {COST_TIERS.map((tier) => (
-            <div
-              key={tier.id}
-              className={`ai-prediction__scale${prediction?.cost_tier === tier.id ? ' is-active' : ''}`}
+          {COST_SCALES.map((s) => (
+            <button
+              key={s.value}
+              type="button"
+              className={`ai-prediction__scale${costForm.scale === s.value ? ' is-active' : ''}`}
+              onClick={() => chooseScale(s.value)}
             >
-              <strong>{tier.label}</strong>
-              <small>{tier.hint}</small>
-            </div>
+              <strong>{s.label}</strong>
+              <small>{s.hint}</small>
+            </button>
           ))}
         </div>
 
-        <div style={{ marginTop: '0.65rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <button type="button" className="dash-btn dash-btn--primary" onClick={runPrediction} disabled={predicting}>
-            {predicting ? 'Predicting…' : 'Run prediction'}
-          </button>
-          {prediction && (
-            <button type="button" className="dash-btn dash-btn--outline" onClick={applyEstimateToBudget}>
-              Use estimate as total budget
-            </button>
+        {predictError && (
+          <p className="ai-prediction__error">
+            {predictError}
+            {' '}
+            <button type="button" className="ai-prediction__retry" onClick={runPrediction}>Try again</button>
+          </p>
+        )}
+
+        <div className="ai-prediction__result">
+          {prediction ? (
+            <>
+              <p className="ai-prediction__kicker">Likely total</p>
+              <p className="ai-prediction__total">{money(prediction.estimate)}</p>
+              <p className="ai-prediction__range-copy">
+                Usually {money(prediction.low)} – {money(prediction.high)}
+              </p>
+              {budget.total > 0 && (() => {
+                const fit = costFit(prediction.estimate, budget.total);
+                return (
+                  <p className={`ai-prediction__compare is-${fit.kind}`}>
+                    <strong>{fit.word}</strong>
+                    <span>{fit.detail}</span>
+                  </p>
+                );
+              })()}
+            </>
+          ) : (
+            <p className="ai-prediction__note">{predicting ? 'Updating…' : 'Pick your details to see a total.'}</p>
           )}
         </div>
+      </div>
 
-        {predictError && <p className="ai-prediction__error">{predictError}</p>}
-
-        {prediction && (
-          <div className="ai-prediction__result">
-            <p className="ai-prediction__total">
-              {prediction.cost_tier_label || prediction.cost_tier}
-              {' · '}
-              {formatLkr(prediction.estimated_total_lkr)}
-            </p>
-            <p className="ai-prediction__range-copy">
-              Typical range for this tier: {formatLkr(prediction.min_total_lkr)} – {formatLkr(prediction.max_total_lkr)}
-              {prediction.confidence ? ` · ${Math.round(prediction.confidence * 100)}% confidence` : ''}
-            </p>
-            {budgetCompare && budgetCompare !== 'unknown' && (
-              <div className={`ai-prediction__compare is-${budgetCompare}`}>
-                <strong>
-                  {budgetCompare === 'ok' && 'Within your budget'}
-                  {budgetCompare === 'tight' && 'Close to your budget limit'}
-                  {budgetCompare === 'over' && 'Above your set budget'}
-                </strong>
+      {payments.length > 0 && (
+        <div className="dash-card hired-vendors">
+          <h3>Paid so far</h3>
+          <ul className="hired-vendors__list">
+            {payments.map((item) => (
+              <li key={item.id}>
                 <span>
-                  Your budget: {formatLkr(budget.total)} · Estimate: {formatLkr(prediction.estimated_total_lkr)}
+                  <strong>{item.name}</strong>
+                  <small>{item.detail}</small>
                 </span>
-              </div>
-            )}
-            <p className="ai-prediction__note">
-              Powered by {MODEL_NAME} ({MODEL_ACCURACY}). Trained on Sri Lankan wedding vendor quotes.
-            </p>
-          </div>
-        )}
-      </section>
+                <em>{money(item.amount)}</em>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="budget-top">
-        <section className="dash-card">
-          <div className="budget-summary__row">
-            <strong>Budget overview</strong>
-            <button type="button" className="budget-edit-btn" onClick={() => setShowTotalEdit(true)} title="Edit total">✏️</button>
-          </div>
+        <div className="dash-card budget-summary">
           <div className="budget-summary__stats budget-summary__stats--three">
             <div>
-              <small>Total budget</small>
-              <strong>{formatLkr(budget.total)}</strong>
-            </div>
-            <div>
               <small>Spent</small>
-              <strong>{formatLkr(spentTotal)}</strong>
+              <strong>{money(spent)}</strong>
             </div>
             <div>
-              <small>Remaining</small>
-              <strong>{formatLkr(remaining)}</strong>
+              <small>Left</small>
+              <strong>{money(left)}</strong>
+            </div>
+            <div>
+              <small>Your budget</small>
+              <strong>{money(budget.total)}</strong>
+              <button type="button" className="budget-edit-btn" onClick={() => { setEditTotal(budget.total); setShowEditBudget(true); }} title="Edit total budget">
+                <AppIcon name="edit" size={14} />
+              </button>
             </div>
           </div>
-          <div
-            className="budget-bar"
-            style={{ '--alloc': `${allocPct}%`, '--spent': `${spentPct}%` }}
-            aria-hidden
-          />
-          <p className="dash-panel__hint">
-            {allocatedTotal > 0
-              ? `${formatLkr(allocatedTotal)} allocated across ${budget.categories.length} categories`
-              : 'Add categories below to plan your spending.'}
-          </p>
-        </section>
-
-        <section className="dash-card budget-actions-card">
-          <strong>Quick add category</strong>
-          <div className="budget-cat-suggest">
-            {SUGGESTED_CATEGORIES.map((name) => (
-              <button
-                key={name}
-                type="button"
-                className={`budget-cat-suggest__chip${budget.categories.some((c) => c.name === name) ? ' is-on' : ''}`}
-                onClick={() => addCategory(name)}
-              >
-                {name}
-              </button>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
-            <input
-              placeholder="Custom category…"
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              style={{ flex: 1, padding: '0.5rem 0.65rem', borderRadius: 10, border: '1px solid var(--color-border)' }}
-            />
-            <button type="button" className="dash-btn dash-btn--outline" onClick={() => addCategory()}>Add</button>
-          </div>
-        </section>
+          <div className="budget-bar" style={{ '--spent': `${pct}%`, '--alloc': `${pct}%` }} />
+          <small>{pct}% of your budget is already spent</small>
+        </div>
+        <div className="dash-card budget-actions-card">
+          <h3>Paid a salon or shop?</h3>
+          <p>Add it here. It comes out of your budget, same as a hired vendor.</p>
+          <button type="button" className="dash-btn dash-btn--primary" onClick={() => openAddExpense()}>+ Add a payment</button>
+          <Link to="/dashboard/budget/expenses" className="dash-btn dash-btn--white">See all payments »</Link>
+        </div>
       </div>
 
       <div className="budget-toolbar">
-        <strong>Categories ({budget.categories.length})</strong>
         <div className="budget-sort">
-          <span>Sort</span>
-          <select value={sort} onChange={(e) => setSort(e.target.value)}>
-            <option value="spent-desc">Most spent</option>
-            <option value="allocated-desc">Highest allocation</option>
-            <option value="name">Name</option>
-          </select>
+          <PrettySelect
+            label="Sort"
+            icon="budget"
+            value={sortBy}
+            options={sortOptions.map((o) => ({ value: o, label: o, icon: 'budget' }))}
+            onChange={changeSort}
+          />
         </div>
+        <button type="button" className="dash-btn dash-btn--primary" onClick={openCreateCategory}>+ Add a budget category</button>
       </div>
 
-      <div className="budget-categories">
-        {categoriesWithStats.length === 0 ? (
-          <div className="dash-empty dash-card">
-            <p>No categories yet. Tap a suggestion above or add your own.</p>
+      <div className="dash-card budget-cat-wrap">
+        {budget.categories.length === 0 ? (
+          <div className="dash-empty">
+            <p>No categories yet</p>
+            <button type="button" className="dash-btn dash-btn--primary" onClick={openCreateCategory}>Create Your First Category</button>
           </div>
-        ) : categoriesWithStats.map((cat) => (
-          <article key={cat.id} className="dash-card budget-cat-card">
-            <div className="budget-cat-card__head">
-              <h4>{cat.name}</h4>
-              <button type="button" className="budget-cat-card__btn budget-cat-card__btn--danger" onClick={() => removeCategory(cat.id)}>Remove</button>
-            </div>
-            <label className="budget-cat-card__amount">
-              Allocated (LKR)
-              <input
-                type="number"
-                min="0"
-                value={cat.allocated || ''}
-                onChange={(e) => updateAllocated(cat.id, e.target.value)}
-              />
-            </label>
-            <div className="budget-cat-card__bar" style={{ width: `${cat.pct}%` }} />
-            <div className="budget-cat-card__meta">
-              <span>Spent {formatLkr(cat.spent)}</span>
-              <span className={cat.over ? 'is-over' : ''}>
-                {cat.allocated > 0 ? `${cat.pct}% of allocation` : 'No allocation set'}
-              </span>
-            </div>
-            <button
-              type="button"
-              className="budget-cat-card__spend"
-              onClick={() => {
-                setExpenseForm({ label: '', amount: '', categoryId: cat.id });
-                setShowExpenseForm(true);
-              }}
-            >
-              + Log expense in {cat.name}
-            </button>
-          </article>
-        ))}
-      </div>
-
-      <section className="dash-card" style={{ marginTop: '0.75rem' }}>
-        <div className="budget-summary__row">
-          <strong>Recent expenses ({budget.expenses.length})</strong>
-        </div>
-        {budget.expenses.length === 0 ? (
-          <p className="dash-panel__hint">No expenses logged yet.</p>
         ) : (
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-            {budget.expenses.slice(0, 12).map((exp) => {
-              const cat = budget.categories.find((c) => c.id === exp.categoryId);
+          <div className="budget-categories">
+            {sortedCategories.map((cat) => {
+              const catSpent = spentInCategory(cat.id);
+              const catAlloc = Number(cat.allocated) || 0;
+              const catLeft = catAlloc - catSpent;
+              const catPct = catAlloc ? Math.min(100, Math.round((catSpent / catAlloc) * 100)) : (catSpent ? 100 : 0);
               return (
-                <li
-                  key={exp.id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '0.55rem 0',
-                    borderBottom: '1px solid var(--color-border)',
-                  }}
-                >
-                  <div>
-                    <strong>{exp.label}</strong>
-                    <small style={{ display: 'block', color: 'var(--color-text-muted)' }}>
-                      {cat?.name || 'Uncategorised'} · {exp.date}
-                    </small>
+                <article key={cat.id} className="budget-cat-card" style={{ '--cat-color': cat.color, borderTopColor: cat.color }}>
+                  <div className="budget-cat-card__head">
+                    <h4>{cat.name}</h4>
+                    <div className="budget-cat-card__actions">
+                      <button type="button" className="budget-cat-card__btn" title="Edit category" onClick={() => openEditCategory(cat)}>
+                        <AppIcon name="edit" size={15} />
+                      </button>
+                      <button type="button" className="budget-cat-card__btn budget-cat-card__btn--danger" title="Delete category" onClick={() => deleteCategory(cat)}>
+                        <AppIcon name="trash" size={15} />
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <strong>{formatLkr(exp.amount)}</strong>
-                    <button type="button" className="budget-cat-card__btn budget-cat-card__btn--danger" onClick={() => removeExpense(exp.id)}>✕</button>
+                  <p className="budget-cat-card__amount">{money(catSpent)} spent</p>
+                  <div className="budget-cat-card__bar" style={{ '--cat-pct': `${catPct}%` }} />
+                  <div className="budget-cat-card__meta">
+                    <span>Set aside {money(catAlloc)}</span>
+                    <span className={catLeft < 0 ? 'is-over' : ''}>
+                      {catLeft < 0 ? `${money(Math.abs(catLeft))} over` : `${money(catLeft)} left`}
+                    </span>
                   </div>
-                </li>
+                  <button type="button" className="budget-cat-card__spend" onClick={() => openAddExpense(cat.id)}>
+                    + Add a payment
+                  </button>
+                </article>
               );
             })}
-          </ul>
+          </div>
         )}
-      </section>
+      </div>
 
-      {showTotalEdit && (
-        <div className="dash-overlay" onClick={() => setShowTotalEdit(false)}>
-          <form className="dash-panel dash-panel--center" onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); saveTotal(); }}>
-            <h3>Total wedding budget (LKR)</h3>
+      {showEditBudget && (
+        <div className="dash-overlay" onMouseDown={closeIfBackdrop(() => setShowEditBudget(false))}>
+          <form className="dash-panel dash-panel--center" onSubmit={saveBudgetTotal} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+            <h2>Edit Budget</h2>
             <label className="dash-field">
-              <span>Amount</span>
-              <input type="number" min="0" value={totalDraft} onChange={(e) => setTotalDraft(e.target.value)} autoFocus />
+              <span>Total Budget (Rs.)</span>
+              <input type="number" required value={editTotal} onChange={(e) => setEditTotal(e.target.value)} />
             </label>
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-              <button type="button" className="dash-btn dash-btn--outline" onClick={() => setShowTotalEdit(false)}>Cancel</button>
+            <div className="dash-panel__actions">
+              <button type="button" className="dash-btn dash-btn--ghost" onClick={() => setShowEditBudget(false)}>Cancel</button>
               <button type="submit" className="dash-btn dash-btn--primary">Save</button>
             </div>
           </form>
         </div>
       )}
 
-      {showExpenseForm && (
-        <div className="dash-overlay" onClick={() => setShowExpenseForm(false)}>
-          <form className="dash-panel dash-panel--center dash-panel--expense" onClick={(e) => e.stopPropagation()} onSubmit={submitExpense}>
-            <h3>Log expense</h3>
+      {showCategory && (
+        <div className="dash-overlay" onMouseDown={closeIfBackdrop(() => setShowCategory(false))}>
+          <form className="dash-panel dash-panel--center" onSubmit={addCategory} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+            <h2>{editingCategoryId ? 'Edit category' : 'Create Category'}</h2>
+            <div className="budget-cat-suggest">
+              {DEFAULT_BUDGET_CATEGORIES.map((item) => (
+                <button
+                  key={item.name}
+                  type="button"
+                  className={`budget-cat-suggest__chip${catForm.name === item.name ? ' is-on' : ''}`}
+                  onClick={() => setCatForm((form) => ({ ...form, name: item.name }))}
+                >
+                  {item.name}
+                </button>
+              ))}
+            </div>
+            <label className="dash-field"><span>Category Name *</span><input required placeholder="e.g., Venue, Catering" value={catForm.name} onChange={(e) => setCatForm({ ...catForm, name: e.target.value })} /></label>
+            <label className="dash-field"><span>Allocated Amount</span><input type="number" value={catForm.allocated} onChange={(e) => setCatForm({ ...catForm, allocated: e.target.value })} /></label>
+            <div className="dash-panel__actions">
+              <button type="button" className="dash-btn dash-btn--ghost" onClick={() => { setShowCategory(false); setEditingCategoryId(null); }}>Cancel</button>
+              <button type="submit" className="dash-btn dash-btn--primary">{editingCategoryId ? 'Save' : 'Create'}</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {showExpense && (
+        <div className="dash-overlay" onMouseDown={closeIfBackdrop(() => setShowExpense(false))}>
+          <form className="dash-panel dash-panel--side dash-panel--expense" onSubmit={addExpense} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+            <h2>Add a payment</h2>
+            <p className="dash-panel__hint">Salon, shop, or anyone you paid yourself — it comes out of your budget.</p>
             <label className="dash-field">
-              <span>Description</span>
-              <input value={expenseForm.label} onChange={(e) => setExpenseForm({ ...expenseForm, label: e.target.value })} required />
+              <span>What did you pay for? *</span>
+              <input required placeholder="e.g., Bridal salon" value={expForm.name} onChange={(e) => setExpForm({ ...expForm, name: e.target.value })} />
             </label>
             <label className="dash-field">
-              <span>Amount (LKR)</span>
-              <input type="number" min="1" value={expenseForm.amount} onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })} required />
+              <span>Amount you paid *</span>
+              <input type="number" min="1" required placeholder="Rs." value={expForm.amount} onChange={(e) => setExpForm({ ...expForm, amount: e.target.value })} />
             </label>
-            <PrettySelect
-              label="Category"
-              icon="budget"
-              value={expenseForm.categoryId}
-              options={[
-                { value: '', label: 'Uncategorised', icon: 'budget' },
-                ...budget.categories.map((cat) => ({ value: cat.id, label: cat.name, icon: 'budget' })),
-              ]}
-              onChange={(value) => setExpenseForm({ ...expenseForm, categoryId: value })}
-            />
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-              <button type="button" className="dash-btn dash-btn--outline" onClick={() => setShowExpenseForm(false)}>Cancel</button>
-              <button type="submit" className="dash-btn dash-btn--primary">Save expense</button>
+            <div className="dash-field">
+              <PrettySelect
+                label="Category"
+                icon="budget"
+                value={expForm.categoryId}
+                options={expenseCategoryOptions}
+                onChange={chooseExpenseCategory}
+              />
+            </div>
+            <label className="dash-field">
+              <span>Date</span>
+              <input type="date" value={expForm.date} onChange={(e) => setExpForm({ ...expForm, date: e.target.value })} />
+            </label>
+            <label className="dash-field">
+              <span>Notes</span>
+              <textarea rows={2} placeholder="Optional notes" value={expForm.notes} onChange={(e) => setExpForm({ ...expForm, notes: e.target.value })} />
+            </label>
+            {expenseError ? <p className="form__error">{expenseError}</p> : null}
+            <div className="dash-panel__actions">
+              <button type="button" className="dash-btn dash-btn--ghost" onClick={() => setShowExpense(false)}>Cancel</button>
+              <button type="submit" className="dash-btn dash-btn--primary">Save payment</button>
             </div>
           </form>
         </div>

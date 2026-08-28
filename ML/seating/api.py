@@ -14,9 +14,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from guest_features import (
     CAT_COLS,
     NUM_COLS,
-    RF_FEATURE_COLS,
     add_ml_columns,
-    add_rf_columns,
     pick_elbow,
     relationship_and_priority,
 )
@@ -37,11 +35,6 @@ try:
     bundle = joblib.load(FOLDER / "KMeans.pkl")
 except Exception:
     bundle = {"preprocessor": None, "kmeans": None, "k": 5}
-
-try:
-    rf_bundle = joblib.load(FOLDER / "wowwed_seating_random_forest.pkl")
-except Exception:
-    rf_bundle = None
 
 
 class GuestIn(BaseModel):
@@ -143,23 +136,6 @@ def add_clusters(df):
     return df, score
 
 
-def predict_table_types(df):
-    if df.empty:
-        df["table_type"] = []
-        return df
-    df = add_rf_columns(df)
-    if rf_bundle and rf_bundle.get("model") is not None:
-        cols = rf_bundle.get("feature_cols") or RF_FEATURE_COLS
-        preds = rf_bundle["model"].predict(df[cols])
-        df = df.copy()
-        df["table_type"] = preds
-        df["expected_table"] = df["table_type"]
-        return df
-    df = df.copy()
-    df["table_type"] = df.get("expected_table", "general")
-    return df
-
-
 def table_capacity(table):
     return max(1, min(20, int(getattr(table, "seats", None) or SEATS_PER_TABLE)))
 
@@ -172,17 +148,7 @@ def table_kind(table):
     return suite
 
 
-def preferred_kinds(group, rel, predicted=None):
-    predicted = (predicted or "").strip().lower()
-    by_model = {
-        "vip": ["vip"],
-        "bride-family": ["bride-family", "general"],
-        "groom-family": ["groom-family", "general"],
-        "friends": ["friends", "general"],
-        "general": ["general", "friends"],
-    }
-    if predicted in by_model:
-        return by_model[predicted]
+def preferred_kinds(group, rel):
     g = (group or "").strip().lower()
     if rel == "vip" or g == "vip":
         return ["vip"]
@@ -247,14 +213,10 @@ def assign_to_tables(df, tables):
     batches.sort(key=lambda item: (item[0], item[1]))
 
     for _, group_name, members, rel in batches:
+        kinds = preferred_kinds(group_name, rel)
         leftover = list(members)
         while leftover:
             guest = leftover.pop(0)
-            kinds = preferred_kinds(
-                group_name,
-                rel,
-                guest.get("table_type") or guest.get("expected_table"),
-            )
             open_slots = [s for s in slots if s["left"] > 0]
             if not open_slots:
                 break
@@ -285,12 +247,7 @@ def assign_to_tables(df, tables):
                 return False
 
             safe = [s for s in (same or preferred) if not has_conflict(s)]
-            pool = safe or same or preferred
-            same_pool = [s for s in pool if group_name in s["groups"]]
-            if same_pool:
-                pick = min(same_pool, key=lambda s: s["left"])
-            else:
-                pick = min(pool, key=lambda s: s["left"])
+            pick = max(safe or same or preferred, key=lambda s: s["left"])
             rows.append(assignment_row(
                 guest,
                 pick["table"].name or group_name,
@@ -318,7 +275,6 @@ def assignment_row(guest, table_name, seat, table_id):
         "age_group": guest.get("age_group", ""),
         "age": int(guest.get("age", 0) or 0),
         "expected_table": guest.get("expected_table", ""),
-        "table_type": guest.get("table_type") or guest.get("expected_table", ""),
         "cluster": int(guest.get("cluster", 0)),
         "avoid": guest.get("avoid", ""),
         "table": table_name,
@@ -453,11 +409,7 @@ def score_quality(df, assignments, tables, silhouette):
             kinds[table.id or ""] = table_kind(table)
     label_ok = 0
     for row in assignments:
-        want = preferred_kinds(
-            row.get("group"),
-            row.get("relationship_type"),
-            row.get("table_type") or row.get("expected_table"),
-        )
+        want = preferred_kinds(row.get("group"), row.get("relationship_type"))
         got = kinds.get(row.get("table_id") or "", "")
         if got and got in want:
             label_ok += 1
@@ -500,7 +452,6 @@ def result_payload(df, assignments, source, tables=None, silhouette=None):
         "group_score": quality["group_score"],
         "label_accuracy": quality["label_accuracy"],
         "seating_accuracy": quality["seating_accuracy"],
-        "model": "wowwed_seating_random_forest.pkl" if rf_bundle else "KMeans.pkl",
         "tables": len({row["table"] for row in assignments}) if assignments else 0,
         "flags": build_flags(assignments, tables, unseated),
         "assignments": assignments,
@@ -509,17 +460,13 @@ def result_payload(df, assignments, source, tables=None, silhouette=None):
 
 @app.get("/health")
 def health():
-    return {
-        "ok": True,
-        "model": "wowwed_seating_random_forest.pkl" if rf_bundle else "KMeans.pkl",
-    }
+    return {"ok": True, "model": "KMeans.pkl"}
 
 
 @app.get("/optimize")
 def optimize_from_csv():
     guests = pd.read_csv(FOLDER / "seating_dataset.csv")
     guests, score = add_clusters(guests)
-    guests = predict_table_types(guests)
     assignments, _ = assign_to_tables(guests, [])
     return result_payload(guests, assignments, "csv", silhouette=score)
 
@@ -528,6 +475,5 @@ def optimize_from_csv():
 def optimize_live(body: OptimizeIn):
     df = guests_to_frame(body.guests)
     df, score = add_clusters(df)
-    df = predict_table_types(df)
     assignments, _ = assign_to_tables(df, body.tables)
     return result_payload(df, assignments, "live", body.tables, score)
