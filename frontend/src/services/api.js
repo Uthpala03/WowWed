@@ -1,69 +1,73 @@
-import { API_BASE_URL } from '../config/urls';
+import { API_BASE_URL, COST_API_URL, SEATING_API_URL } from '../config/urls';
 
-function getToken() {
-  return localStorage.getItem('wowwed_token');
-}
+const TOKEN_KEY = 'wowwed_token';
 
-export function setToken(token) {
-  if (token) localStorage.setItem('wowwed_token', token);
-  else localStorage.removeItem('wowwed_token');
-}
+let token = typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
 
-export async function fetchApi(path, options = {}) {
-  const token = getToken();
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(options.headers || {}),
-  };
+async function request(path, options = {}) {
+  const headers = { ...(options.headers || {}) };
   if (token) headers.Authorization = `Bearer ${token}`;
-
-  let response;
-  try {
-    response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
-  } catch {
-    throw new Error('Cannot reach the WowWed server. Start the backend and try again.');
-  }
-  const body = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(body.error || `API error: ${response.status}`);
+  if (options.body && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
   }
 
-  return body;
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers,
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || data.message || `Request failed (${res.status})`);
+  }
+  return data;
+}
+
+async function postExternal(url, body) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || data.detail || `Request failed (${res.status})`);
+  }
+  return data;
+}
+
+export function setToken(next) {
+  token = next;
+  if (next) localStorage.setItem(TOKEN_KEY, next);
+  else localStorage.removeItem(TOKEN_KEY);
 }
 
 export const api = {
-  register: (payload) => fetchApi('/api/auth/register', { method: 'POST', body: JSON.stringify(payload) }),
-  login: (payload) => fetchApi('/api/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
-  me: () => fetchApi('/api/auth/me'),
-  resetPassword: (payload) => fetchApi('/api/auth/password', { method: 'PUT', body: JSON.stringify(payload) }),
+  register: (body) => request('/api/auth/register', { method: 'POST', body }),
+  login: (body) => request('/api/auth/login', { method: 'POST', body }),
+  me: () => request('/api/auth/me'),
+  resetPassword: (body) => request('/api/auth/reset-password', { method: 'POST', body }),
 
-  getAllData: () => fetchApi('/api/data'),
-  getData: (key) => fetchApi(`/api/data/${key}`),
-  saveData: (key, data) => fetchApi(`/api/data/${key}`, { method: 'PUT', body: JSON.stringify(data) }),
+  getAllData: () => request('/api/data'),
+  saveData: (key, data) => request(`/api/data/${key}`, { method: 'PUT', body: { data } }),
 
-  getWeddingProfile: () => fetchApi('/api/profiles/wedding'),
-  saveWeddingProfile: (profile) => fetchApi('/api/profiles/wedding', { method: 'PUT', body: JSON.stringify(profile) }),
-  ensureChecklist: () => fetchApi('/api/data'),
-  getOnboarding: () => fetchApi('/api/profiles/onboarding'),
-  saveOnboarding: (onboarding) => fetchApi('/api/profiles/onboarding', { method: 'PUT', body: JSON.stringify(onboarding) }),
-  getVendorProfile: () => fetchApi('/api/profiles/vendor'),
-  saveVendorProfile: (profile) => fetchApi('/api/profiles/vendor', { method: 'PUT', body: JSON.stringify(profile) }),
-  uploadVendorPdf: (payload) => fetchApi('/api/profiles/vendor/pdf', { method: 'POST', body: JSON.stringify(payload) }),
-  getVendorListings: () => fetchApi('/api/profiles/vendors'),
+  getWeddingProfile: () => request('/api/profiles/wedding'),
+  saveWeddingProfile: (profile) => request('/api/profiles/wedding', { method: 'PUT', body: profile }),
+  getVendorProfile: () => request('/api/profiles/vendor'),
+  saveVendorProfile: (profile) => request('/api/profiles/vendor', { method: 'PUT', body: profile }),
+  getOnboarding: () => request('/api/profiles/onboarding'),
+  saveOnboarding: (data) => request('/api/profiles/onboarding', { method: 'PUT', body: data }),
 
-  getBookings: () => fetchApi('/api/bookings'),
-  createBooking: (booking) => fetchApi('/api/bookings', { method: 'POST', body: JSON.stringify(booking) }),
-  updateBooking: (id, payload) => fetchApi(`/api/bookings/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  getAvailability: (listingId, date) => fetchApi(`/api/bookings/availability?listingId=${encodeURIComponent(listingId)}&date=${encodeURIComponent(date)}`),
+  getBookings: () => request('/api/bookings'),
+  createBooking: (booking) => request('/api/bookings', { method: 'POST', body: booking }),
+  updateBooking: (id, body) => request(`/api/bookings/${id}`, { method: 'PATCH', body }),
+  getVendorListings: () => request('/api/profiles/vendor/listings'),
 
-  getReviews: (listingId) => fetchApi(listingId ? `/api/reviews?listingId=${encodeURIComponent(listingId)}` : '/api/reviews'),
-  createReview: (payload) => fetchApi('/api/reviews', { method: 'POST', body: JSON.stringify(payload) }),
+  getAvailability: (listingId, date) => request(`/api/bookings/availability?listingId=${encodeURIComponent(listingId)}&date=${encodeURIComponent(date)}`),
+  getReviews: (listingId) => request(`/api/reviews/${listingId}`),
+  createReview: (payload) => request('/api/reviews', { method: 'POST', body: payload }),
 
-  getNotifications: () => fetchApi('/api/notifications'),
-  markNotificationRead: (id) => fetchApi(`/api/notifications/${id}/read`, { method: 'PUT' }),
-  markAllNotificationsRead: () => fetchApi('/api/notifications/read-all', { method: 'PUT' }),
-
-  predictCost: (payload) => fetchApi('/api/ml/cost', { method: 'POST', body: JSON.stringify(payload) }),
-  optimizeSeating: (payload) => fetchApi('/api/ml/seating', { method: 'POST', body: JSON.stringify(payload) }),
+  optimizeSeating: (body) => postExternal(SEATING_API_URL, body),
+  predictCost: (body) => postExternal(COST_API_URL, body),
 };

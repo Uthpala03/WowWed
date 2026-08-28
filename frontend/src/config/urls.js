@@ -7,3 +7,9 @@ export const SEATING_API_URL = (
   process.env.REACT_APP_SEATING_API_URL
   || `${API_BASE_URL}/api/ml/seating`
 ).replace(/\/$/, '');
+
+/** Cost tier ML via backend proxy. */
+export const COST_API_URL = (
+  process.env.REACT_APP_COST_API_URL
+  || `${API_BASE_URL}/api/ml/cost`
+).replace(/\/$/, '');
