@@ -9,8 +9,11 @@ function SmartHighlights() {
       <div className="container">
         <div className="section__header">
           <span className="section__eyebrow">Decision support</span>
-          <h2>ML where it is ML — rules where it is rules</h2>
-          <p>Cost prediction and seating use trained models. Vendor match and the assistant use rules and keywords, not ML.</p>
+          <h2>Smart tools for Sri Lankan wedding planning</h2>
+          <p>
+            Budget and seating use machine learning trained on local vendor data.
+            Vendor match and your readiness score use clear, transparent rules.
+          </p>
         </div>
         <div className="smart-highlights__grid">
           {items.map((mod) => {
