@@ -52,6 +52,56 @@ function guestMatchesGroup(guest, groupFilter) {
   return normalizeGuestGroup(guest?.group) === normalizeGuestGroup(groupFilter);
 }
 
+function suiteFromGuestGroup(group) {
+  const g = String(normalizeGuestGroup(group) || '').toLowerCase();
+  if (g === 'vip') return 'vip';
+  if (g.includes('bride') && g.includes('family')) return 'bride-family';
+  if (g.includes('groom') && g.includes('family')) return 'groom-family';
+  if (g.includes('friend')) return 'friends';
+  return 'general';
+}
+
+/** Update suite + preferred groups from who was actually seated (ML / auto-seat). */
+function syncTableOptimizationMeta(chart) {
+  chart.tables.forEach((table) => {
+    const seated = getTableGuests(chart, table.id).map((row) => row.guest);
+    if (!seated.length) return;
+
+    const counts = new Map();
+    seated.forEach((guest) => {
+      const group = normalizeGuestGroup(guest.group);
+      if (!group || group === 'No Group') return;
+      counts.set(group, (counts.get(group) || 0) + 1);
+    });
+    const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    if (!ranked.length) return;
+
+    const topGroups = ranked.slice(0, 2).map(([name]) => name);
+    table.guestGroups = topGroups;
+    table.suite = suiteFromGuestGroup(ranked[0][0]);
+  });
+}
+
+function tableOptimizationCaption(chart, table) {
+  const seated = getTableGuests(chart, table.id).map((row) => row.guest);
+  const counts = new Map();
+  seated.forEach((guest) => {
+    const group = normalizeGuestGroup(guest.group);
+    if (!group || group === 'No Group') return;
+    counts.set(group, (counts.get(group) || 0) + 1);
+  });
+  const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  if (ranked.length) {
+    const total = seated.length || 1;
+    const [top, second] = ranked;
+    if (!second || top[1] === total || top[1] / total >= 0.7) return top[0];
+    return `${top[0]} + ${second[0]}`;
+  }
+  if (table.guestGroups?.[0]) return normalizeGuestGroup(table.guestGroups[0]);
+  const suite = tableSuites.find((s) => s.id === table.suite);
+  return suite?.id === 'general' ? '' : (suite?.label || '');
+}
+
 function tableSortNumber(table) {
   const match = (table.name || String(table.id || '')).match(/(\d+)/);
   return match ? Number(match[1]) : 9999;
@@ -404,6 +454,7 @@ function SeatingChartPage() {
         seated += 1;
       });
 
+      syncTableOptimizationMeta(next);
       const removedEmpty = next.pruneEmptyTables();
       const quality = {
         silhouette: data.silhouette,
@@ -434,6 +485,7 @@ function SeatingChartPage() {
     } catch (err) {
       const next = new SeatingChart({ tables: workTables, assignments: {} }, guests);
       const { filled, conflicts } = next.autoSeatAll();
+      syncTableOptimizationMeta(next);
       const removedEmpty = next.pruneEmptyTables();
       persist(next);
       const pruneNote = removedEmpty > 0 ? ` Removed ${removedEmpty} unused empty table${removedEmpty === 1 ? '' : 's'}.` : '';
@@ -464,6 +516,7 @@ function SeatingChartPage() {
   const renderTableCard = (table) => {
     const fill = chart.getTableFill(table.id);
     const currentGroup = table.guestGroups?.[0] || '';
+    const optCaption = tableOptimizationCaption(chart, table);
     const selected = selectedTableId === table.id;
     const tableGuests = selected ? getTableGuests(chart, table.id) : [];
     const fillPct = fill.total ? Math.round((fill.filled / fill.total) * 100) : 0;
@@ -484,9 +537,11 @@ function SeatingChartPage() {
               </span>
             </div>
             <small className="seating-table-card__sub">
-              {selected
-                ? `${tableShapes.find((s) => s.id === table.shape)?.label || 'Round'} · ${table.seats} chairs`
-                : 'Tap to view guests'}
+              {optCaption
+                ? `${optCaption} · ${fill.filled}/${fill.total}`
+                : selected
+                  ? `${tableShapes.find((s) => s.id === table.shape)?.label || 'Round'} · ${table.seats} chairs`
+                  : 'Tap to view guests'}
             </small>
             {selected && (
               <div className="seating-table-card__fillbar" aria-hidden="true">
