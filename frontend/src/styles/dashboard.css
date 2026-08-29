@@ -13329,11 +13329,40 @@
   margin: 0 0 0.85rem;
   padding: 0;
   display: grid;
-  gap: 0.35rem;
+  gap: 0.4rem;
   font-size: 0.88rem;
 }
-.vendor-checks li { color: var(--color-text-muted); }
-.vendor-checks li.is-ok { color: #3d6b4a; font-weight: 600; }
+.vendor-checks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  color: var(--color-text-muted);
+}
+.vendor-checks li > span:first-child {
+  flex-shrink: 0;
+  width: 1rem;
+  text-align: center;
+}
+.vendor-checks li div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.vendor-checks li strong {
+  font-weight: 600;
+  color: inherit;
+}
+.vendor-checks li.is-ok { color: #3d6b4a; }
+.vendor-check-hint {
+  font-style: normal;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+.vendor-strength-meta {
+  margin-top: -0.35rem;
+}
 .vendor-shortcut {
   display: flex;
   align-items: center;

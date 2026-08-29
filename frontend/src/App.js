@@ -77,7 +77,7 @@ function AppShell() {
         </Routes>
       </main>
       {!isDashboard && !isOnboarding && <Footer />}
-      <ChatWidget />
+      {!location.pathname.startsWith('/vendor') && <ChatWidget />}
     </div>
   );
 }

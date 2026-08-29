@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getBookings, getVendorProfile, loadReviews, refreshBookings, updateBookingStatus } from '../../utils/storage';
+import { getBookings, getVendorProfile, hydrateUserData, loadReviews, refreshBookings, updateBookingStatus } from '../../utils/storage';
 import { formatVendorCategories, formatVendorDistricts } from '../../utils/vendorMeta';
+import { computeListingStrength } from '../../utils/vendorReports';
 import { resolveUploadUrl } from '../../utils/uploadUrl';
 import { awaitingCouple, displayStatus, isPaid, vendorNeedsDecision } from '../../utils/bookingStatus';
 import { useAuth } from '../../context/AuthContext';
@@ -9,7 +10,7 @@ import VendorRequestCard from '../../components/vendor/VendorRequestCard';
 
 function VendorDashboard() {
   const { user } = useAuth();
-  const profile = getVendorProfile();
+  const [profile, setProfile] = useState(() => getVendorProfile());
   const [bookings, setBookings] = useState(() => getBookings());
   const [reviews, setReviews] = useState([]);
   const [busyId, setBusyId] = useState('');
@@ -18,12 +19,22 @@ function VendorDashboard() {
   const reload = async () => {
     const next = await refreshBookings().catch(() => getBookings());
     setBookings(next || []);
+    setProfile(getVendorProfile());
   };
 
   useEffect(() => {
+    hydrateUserData()
+      .then(() => {
+        setProfile(getVendorProfile());
+        setBookings(getBookings() || []);
+      })
+      .catch(() => {});
     reload();
     loadReviews().then(setReviews).catch(() => setReviews([]));
-    const onDataChanged = () => setBookings(getBookings() || []);
+    const onDataChanged = () => {
+      setBookings(getBookings() || []);
+      setProfile(getVendorProfile());
+    };
     window.addEventListener('wowwed-data-changed', onDataChanged);
     const timer = setInterval(reload, 8000);
     return () => {
@@ -48,16 +59,10 @@ function VendorDashboard() {
     : profile?.rating;
   const actionList = pending.length ? pending : bookings.slice(0, 5);
 
-  const listingReady = useMemo(() => {
-    const checks = [
-      { ok: Boolean(businessName && businessName !== 'Your listing'), label: 'Business name' },
-      { ok: Boolean(profile?.description), label: 'Description' },
-      { ok: (profile?.portfolioImages || []).length > 0, label: 'Photos' },
-      { ok: (profile?.quotations || []).length > 0, label: 'Packages' },
-    ];
-    const done = checks.filter((item) => item.ok).length;
-    return { checks, done, pct: Math.round((done / checks.length) * 100) };
-  }, [profile, businessName]);
+  const listingReady = useMemo(() => computeListingStrength({
+    ...profile,
+    ownerEmail: profile?.ownerEmail || user?.email,
+  }), [profile, user?.email]);
 
   const respond = async (id, status, extra = {}) => {
     setError('');
@@ -212,18 +217,37 @@ function VendorDashboard() {
 
           <section className="dash-card">
             <h2>Listing strength</h2>
-            <p className="vendor-side__muted">{listingReady.pct}% complete</p>
-            <div className="budget-bar vendor-strength-bar"><div style={{ width: `${listingReady.pct}%` }} /></div>
+            <p className="vendor-side__muted">
+              {listingReady.pct}% complete · {listingReady.done}/{listingReady.total} from your listing
+            </p>
+            <div
+              className="budget-bar vendor-strength-bar"
+              style={{ '--spent': `${listingReady.pct}%` }}
+              role="progressbar"
+              aria-valuenow={listingReady.pct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="Listing strength"
+            />
             <ul className="vendor-checks">
               {listingReady.checks.map((item) => (
                 <li key={item.label} className={item.ok ? 'is-ok' : ''}>
-                  <span>{item.ok ? '✓' : '○'}</span> {item.label}
+                  <span>{item.ok ? '✓' : '○'}</span>
+                  <div>
+                    <strong>{item.label}</strong>
+                    {!item.ok && <em className="vendor-check-hint">{item.hint}</em>}
+                  </div>
                 </li>
               ))}
             </ul>
-            {listingReady.pct < 100 && (
-              <Link to="/vendor/profile" className="dash-btn dash-btn--white">Improve listing</Link>
-            )}
+            <p className="vendor-side__muted vendor-strength-meta">
+              {listingReady.summary.photoCount} photo{listingReady.summary.photoCount === 1 ? '' : 's'}
+              {' · '}
+              {listingReady.summary.packageCount} package{listingReady.summary.packageCount === 1 ? '' : 's'}
+            </p>
+            <Link to="/vendor/profile" className="dash-btn dash-btn--white">
+              {listingReady.pct < 100 ? 'Complete listing' : 'Edit listing'}
+            </Link>
           </section>
         </aside>
       </div>
