@@ -1,11 +1,12 @@
 const { query } = require('../config/db');
+const { templatesForCeremony } = require('../data/checklistTemplates');
 
 const PHASE_LABELS = {
-  from_start: 'From when you started',
-  six_months: '6 months before the wedding',
-  three_months: '3 months before the wedding',
-  one_month: '1 month before the wedding',
-  wedding_week: 'Wedding week',
+  from_start: 'Just started',
+  six_months: '6 months to go',
+  three_months: '3 months to go',
+  one_month: '1 month to go',
+  wedding_week: '1 week to go',
 };
 
 function formatDate(date) {
@@ -34,8 +35,7 @@ function dueForPhase(phase, weddingDate, startedAt) {
 
   let due;
   if (phase === 'from_start') {
-    due = new Date(start);
-    due.setDate(due.getDate() + 14);
+    due = addMonths(wedding, -8);
   } else if (phase === 'six_months') {
     due = addMonths(wedding, -6);
   } else if (phase === 'three_months') {
@@ -44,7 +44,7 @@ function dueForPhase(phase, weddingDate, startedAt) {
     due = addMonths(wedding, -1);
   } else {
     due = new Date(wedding);
-    due.setDate(due.getDate() - 7);
+    due.setDate(due.getDate() - 4);
   }
 
   if (due < start) {
@@ -90,24 +90,15 @@ function ceremonyKeyFromValue(value) {
 }
 
 async function loadChecklistTemplates(ceremonyKey) {
-  try {
-    return await query(
-      `SELECT id, title, category, phase, ceremony, sort_order
-       FROM checklist_templates
-       WHERE ceremony = 'all' OR ceremony = :ceremonyKey
-       ORDER BY sort_order ASC, id ASC`,
-      { ceremonyKey },
-    );
-  } catch (err) {
-    return query(
-      `SELECT id, title, category, phase, sort_order
-       FROM checklist_templates
-       ORDER BY sort_order ASC, id ASC`,
-    );
-  }
+  return templatesForCeremony(ceremonyKey);
 }
 
-function tasksFromTemplates(templates, weddingDate, startedAt, ceremonyKey) {
+function tasksFromTemplates(templates, weddingDate, startedAt, ceremonyKey, existing = []) {
+  const doneByTitle = new Map();
+  existing.forEach((task) => {
+    if (task.done) doneByTitle.set(normalizeTitle(task.title), true);
+  });
+
   return templates.map((row) => ({
     id: `seed-${row.id}`,
     title: row.title,
@@ -115,9 +106,8 @@ function tasksFromTemplates(templates, weddingDate, startedAt, ceremonyKey) {
     phase: row.phase,
     phaseLabel: PHASE_LABELS[row.phase] || row.phase,
     ceremonyKey,
-    monthsBefore: row.phase === 'six_months' ? 6 : row.phase === 'three_months' ? 3 : row.phase === 'one_month' ? 1 : row.phase === 'wedding_week' ? 0 : null,
     dueDate: dueForPhase(row.phase, weddingDate, startedAt),
-    done: false,
+    done: doneByTitle.get(normalizeTitle(row.title)) || false,
     assigned: 'Unassigned',
     notes: '',
     suggested: true,
@@ -169,6 +159,26 @@ function isStarterTask(task) {
     && !String(task.notes || '').trim();
 }
 
+function isPristineGeneratedTask(task) {
+  return isGeneratedTask(task)
+    && (!task.assigned || task.assigned === 'Unassigned')
+    && !String(task.notes || '').trim();
+}
+
+function shouldRebuildChecklist(current, templates) {
+  if (current.length === 0) return true;
+  if (current.every(isStarterTask)) return true;
+
+  const seedTasks = current.filter((task) => String(task.id || '').startsWith('seed-'));
+  if (seedTasks.length === 0) return false;
+  if (seedTasks.length !== templates.length && current.every(isPristineGeneratedTask)) return true;
+
+  const phases = new Set(seedTasks.map((task) => task.phase).filter(Boolean));
+  return seedTasks.length !== templates.length
+    && phases.size < 5
+    && current.every(isPristineGeneratedTask);
+}
+
 async function applyChecklistForCouple(userId, existingTasks = []) {
   const current = Array.isArray(existingTasks) ? existingTasks : [];
   const { startedAt, weddingDate, ceremonyKey } = await loadCoupleTiming(userId);
@@ -177,8 +187,11 @@ async function applyChecklistForCouple(userId, existingTasks = []) {
   const templates = await loadChecklistTemplates(ceremonyKey);
   if (!templates.length) return current;
 
-  if (current.length === 0 || current.every(isStarterTask)) {
-    return saveCoupleTasks(userId, tasksFromTemplates(templates, weddingDate, startedAt, ceremonyKey));
+  if (shouldRebuildChecklist(current, templates)) {
+    return saveCoupleTasks(
+      userId,
+      tasksFromTemplates(templates, weddingDate, startedAt, ceremonyKey, current),
+    );
   }
 
   const wantedIds = new Set(templates.map((row) => `seed-${row.id}`));
@@ -206,7 +219,7 @@ async function applyChecklistForCouple(userId, existingTasks = []) {
       const dueDate = dueForPhase(task.phase, weddingDate, startedAt);
       if (dueDate && dueDate !== task.dueDate) {
         changed = true;
-        updated = { ...updated, dueDate };
+        updated = { ...updated, dueDate, phaseLabel: PHASE_LABELS[task.phase] || task.phase };
       }
     }
     keptTitles.add(normalizeTitle(updated.title));

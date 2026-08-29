@@ -260,6 +260,13 @@ export class SeatingChart {
     });
   }
 
+  /** Drop tables with no seated guests (e.g. after auto-seat). Returns how many were removed. */
+  pruneEmptyTables() {
+    const empty = this.tables.filter((t) => this.getTableFill(t.id).filled === 0);
+    empty.forEach((t) => this.removeTable(t.id));
+    return empty.length;
+  }
+
   get assignedGuestIds() {
     return Object.values(this.assignments);
   }
@@ -296,12 +303,13 @@ export class SeatingChart {
   #candidatesForTable(table, pool, guestGroup) {
     let list = [...pool];
     if (guestGroup && guestGroup !== 'Any') {
-      const matched = list.filter((g) => g.group === guestGroup);
-      const rest = list.filter((g) => g.group !== guestGroup);
+      const matched = list.filter((g) => normalizeGuestGroup(g.group) === normalizeGuestGroup(guestGroup));
+      const rest = list.filter((g) => normalizeGuestGroup(g.group) !== normalizeGuestGroup(guestGroup));
       list = [...matched, ...rest];
     } else if (table.guestGroups?.length) {
-      const matched = list.filter((g) => table.guestGroups.includes(g.group));
-      const rest = list.filter((g) => !table.guestGroups.includes(g.group));
+      const tags = new Set(table.guestGroups.map(normalizeGuestGroup));
+      const matched = list.filter((g) => tags.has(normalizeGuestGroup(g.group)));
+      const rest = list.filter((g) => !tags.has(normalizeGuestGroup(g.group)));
       list = [...matched, ...rest];
     }
     return list;
@@ -314,10 +322,25 @@ export class SeatingChart {
     );
     const counts = { Any: pool.length };
     pool.forEach((g) => {
-      const grp = g.group || 'No Group';
+      const grp = normalizeGuestGroup(g.group);
       counts[grp] = (counts[grp] || 0) + 1;
     });
     return counts;
+  }
+
+  /** Seated / waiting / total counts per group (Coming guests only) */
+  getGroupStats() {
+    const stats = {};
+    const assigned = new Set(this.assignedGuestIds);
+    this.guests.forEach((g) => {
+      if (!isComingRsvp(g.rsvp)) return;
+      const grp = normalizeGuestGroup(g.group);
+      if (!stats[grp]) stats[grp] = { total: 0, seated: 0, waiting: 0 };
+      stats[grp].total += 1;
+      if (assigned.has(g.id)) stats[grp].seated += 1;
+      else stats[grp].waiting += 1;
+    });
+    return stats;
   }
 
   /** Bulk-fill empty seats — strict group when specified */
@@ -341,7 +364,8 @@ export class SeatingChart {
     );
 
     if (guestGroup && guestGroup !== 'Any') {
-      pool = pool.filter((g) => g.group === guestGroup);
+      const want = normalizeGuestGroup(guestGroup);
+      pool = pool.filter((g) => normalizeGuestGroup(g.group) === want);
     } else {
       pool = this.#candidatesForTable(table, pool, null);
     }
@@ -396,7 +420,8 @@ export class SeatingChart {
     );
 
     if (guestGroup && guestGroup !== 'Any') {
-      pool = pool.filter((g) => g.group === guestGroup);
+      const want = normalizeGuestGroup(guestGroup);
+      pool = pool.filter((g) => normalizeGuestGroup(g.group) === want);
     }
 
     if (!pool.length) {

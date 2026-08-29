@@ -233,39 +233,170 @@ export function groupTasksByMonth(tasks) {
   return groups;
 }
 
-const PHASE_ORDER = ['from_start', 'six_months', 'three_months', 'one_month', 'wedding_week'];
-const PHASE_LABELS = {
-  from_start: 'From when you started',
-  six_months: '6 months before the wedding',
-  three_months: '3 months before the wedding',
-  one_month: '1 month before the wedding',
-  wedding_week: 'Wedding week',
-};
+const PHASE_ORDER = ['from_start', 'six_months', 'three_months', 'one_month', 'one_week', 'wedding_day'];
+const TIMELINE_PHASES = ['from_start', 'six_months', 'three_months', 'one_month', 'one_week'];
+const PHASE_ALIASES = { wedding_week: 'one_week' };
 
-export function groupTasksByPhase(tasks) {
+export const WEDDING_PHASES = [
+  { id: 'from_start', label: 'Just started', shortLabel: 'Start' },
+  { id: 'six_months', label: '6 months to go', shortLabel: '6 mo' },
+  { id: 'three_months', label: '3 months to go', shortLabel: '3 mo' },
+  { id: 'one_month', label: '1 month to go', shortLabel: '1 mo' },
+  { id: 'one_week', label: '1 week to go', shortLabel: '1 wk' },
+  { id: 'wedding_day', label: 'Wedding day', shortLabel: 'Day' },
+];
+
+const PHASE_LABELS = Object.fromEntries(WEDDING_PHASES.map((p) => [p.id, p.label]));
+
+function startOfDay(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function daysBeforeWedding(dueDate, weddingDate) {
+  const wedding = startOfDay(weddingDate);
+  const due = startOfDay(dueDate);
+  if (!wedding || !due) return null;
+  return Math.round((wedding - due) / 86400000);
+}
+
+export function resolveTaskPhase(dueDate, weddingDate, taskPhase) {
+  if (taskPhase) {
+    const normalized = PHASE_ALIASES[taskPhase] || taskPhase;
+    if (PHASE_ORDER.includes(normalized)) return normalized;
+  }
+  if (!dueDate) return 'from_start';
+  if (!weddingDate) return 'from_start';
+  const days = daysBeforeWedding(dueDate, weddingDate);
+  if (days == null) return 'from_start';
+  if (days <= 0) return 'wedding_day';
+  if (days <= 7) return 'one_week';
+  if (days <= 31) return 'one_month';
+  if (days <= 92) return 'three_months';
+  if (days <= 186) return 'six_months';
+  return 'from_start';
+}
+
+export function getPhaseLabel(phaseId) {
+  return PHASE_LABELS[phaseId] || 'Your tasks';
+}
+
+export function getPhaseDateHint(phaseId, weddingDate) {
+  if (!weddingDate) return '';
+  const wedding = startOfDay(weddingDate);
+  if (!wedding) return '';
+
+  const fmtMonth = (d) => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  const fmtDay = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  if (phaseId === 'from_start') {
+    const sixBefore = new Date(wedding);
+    sixBefore.setMonth(sixBefore.getMonth() - 6);
+    return `Before ${fmtMonth(sixBefore)}`;
+  }
+  if (phaseId === 'six_months') {
+    const d = new Date(wedding);
+    d.setMonth(d.getMonth() - 6);
+    return `Around ${fmtMonth(d)}`;
+  }
+  if (phaseId === 'three_months') {
+    const d = new Date(wedding);
+    d.setMonth(d.getMonth() - 3);
+    return `Around ${fmtMonth(d)}`;
+  }
+  if (phaseId === 'one_month') {
+    const d = new Date(wedding);
+    d.setMonth(d.getMonth() - 1);
+    return `Around ${fmtMonth(d)}`;
+  }
+  if (phaseId === 'one_week') {
+    const end = new Date(wedding);
+    end.setDate(end.getDate() - 1);
+    const start = new Date(wedding);
+    start.setDate(start.getDate() - 7);
+    return `${fmtDay(start)} – ${fmtDay(end)}`;
+  }
+  if (phaseId === 'wedding_day') {
+    return fmtDay(wedding);
+  }
+  return '';
+}
+
+export function getTaskPhaseGroups(tasks, weddingDate) {
+  const counts = {};
+  tasks.forEach((task) => {
+    const phase = resolveTaskPhase(task.dueDate, weddingDate, task.phase);
+    counts[phase] = (counts[phase] || 0) + 1;
+  });
+  return TIMELINE_PHASES.map((id) => {
+    const phase = WEDDING_PHASES.find((row) => row.id === id);
+    return {
+      id,
+      label: phase?.label || id,
+      hint: getPhaseDateHint(id, weddingDate),
+      count: counts[id] || 0,
+    };
+  });
+}
+
+export function groupTasksByWeddingPhase(tasks, weddingDate) {
+  const buckets = Object.fromEntries(PHASE_ORDER.map((id) => [id, []]));
+
+  [...tasks]
+    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+    .forEach((task) => {
+      const phase = resolveTaskPhase(task.dueDate, weddingDate, task.phase);
+      buckets[phase].push(task);
+    });
+
   const groups = {};
-  const sorted = [...tasks].sort((a, b) => {
-    const aPhase = PHASE_ORDER.indexOf(a.phase);
-    const bPhase = PHASE_ORDER.indexOf(b.phase);
-    if (aPhase !== bPhase) return (aPhase === -1 ? 99 : aPhase) - (bPhase === -1 ? 99 : bPhase);
-    return new Date(a.dueDate) - new Date(b.dueDate);
+  TIMELINE_PHASES.forEach((phaseId) => {
+    const phase = WEDDING_PHASES.find((row) => row.id === phaseId);
+    if (buckets[phaseId]?.length) {
+      groups[phase.label] = {
+        tasks: buckets[phaseId],
+        phaseId: phase.id,
+        hint: getPhaseDateHint(phase.id, weddingDate),
+      };
+    }
   });
-  sorted.forEach((task) => {
-    const key = task.phaseLabel || PHASE_LABELS[task.phase] || 'Your tasks';
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(task);
-  });
+  if (buckets.wedding_day?.length) {
+    const phase = WEDDING_PHASES.find((row) => row.id === 'wedding_day');
+    groups[phase.label] = {
+      tasks: buckets.wedding_day,
+      phaseId: 'wedding_day',
+      hint: getPhaseDateHint('wedding_day', weddingDate),
+    };
+  }
   return groups;
+}
+
+export function groupTasksByPhase(tasks, weddingDate) {
+  const groups = groupTasksByWeddingPhase(tasks, weddingDate);
+  return Object.fromEntries(
+    Object.entries(groups).map(([label, value]) => [label, value.tasks || value]),
+  );
 }
 
 export function getTaskDateGroups(tasks) {
   const counts = {};
   tasks.forEach((task) => {
+    if (!task?.dueDate) return;
     const date = new Date(task.dueDate);
+    if (Number.isNaN(date.getTime())) return;
     const key = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     counts[key] = (counts[key] || 0) + 1;
   });
   return Object.entries(counts)
-    .sort(([a], [b]) => new Date(a) - new Date(b))
+    .sort(([a], [b]) => new Date(`${a} 1`) - new Date(`${b} 1`))
     .map(([label, count]) => ({ label, count }));
+}
+
+export function taskMonthLabel(task) {
+  if (!task?.dueDate) return 'No date';
+  const date = new Date(task.dueDate);
+  if (Number.isNaN(date.getTime())) return 'No date';
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }

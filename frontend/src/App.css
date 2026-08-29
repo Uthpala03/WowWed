@@ -4,6 +4,12 @@ html {
   overflow-y: auto;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 body,
 #root {
   min-height: 100%;
@@ -1722,6 +1728,7 @@ body,
 .site-footer__bar {
   border-top: 1px solid #edd9cc;
   padding: 0.85rem 0;
+  padding-right: max(1rem, var(--chat-launcher-clearance-x, 13rem));
   font-size: 0.8rem;
 }
 

@@ -4,9 +4,10 @@ import { guestGroups, normalizeGuestGroup, rsvpStatuses } from '../../data/dashb
 import { getGuests, getSeating, saveGuests, saveSeating } from '../../utils/storage';
 import PageHeader from '../../components/ui/PageHeader';
 import PrettySelect from '../../components/ui/PrettySelect';
+import ListPagination from '../../components/ui/ListPagination';
+import { COMPACT_PAGE_SIZES, usePagination } from '../../hooks/usePagination';
 
 const emptyGuest = { name: '', email: '', phone: '', group: 'No Group', rsvp: 'Pending', age: '', notes: '', avoid: '' };
-const PAGE_SIZES = [25, 50, 100, 250];
 const CSV_HEADER = 'name,email,phone,group,rsvp,age,notes,avoid';
 
 const RSVP_LABELS = {
@@ -132,8 +133,6 @@ function GuestListPage() {
   const [search, setSearch] = useState('');
   const [groupFilter, setGroupFilter] = useState('All Groups');
   const [rsvpFilter, setRsvpFilter] = useState('All Statuses');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [panelOpen, setPanelOpen] = useState(false);
   const [bulkAddOpen, setBulkAddOpen] = useState(false);
@@ -176,11 +175,17 @@ function GuestListPage() {
     return matchSearch && matchGroup && matchRsvp;
   }), [guests, search, groupFilter, rsvpFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const safePage = Math.min(page, totalPages);
-  const paginated = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
-  const pageStart = filtered.length ? (safePage - 1) * pageSize + 1 : 0;
-  const pageEnd = Math.min(safePage * pageSize, filtered.length);
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    pageItems: paginated,
+    pageStart,
+    pageEnd,
+    resetPage,
+  } = usePagination(filtered, { initialPageSize: 20, pageSizes: [15, ...COMPACT_PAGE_SIZES] });
 
   const selectedCount = selectedIds.size;
   const allPageSelected = paginated.length > 0 && paginated.every((g) => selectedIds.has(g.id));
@@ -401,7 +406,7 @@ function GuestListPage() {
 
   const filterByRsvp = (status) => {
     setRsvpFilter(rsvpFilter === status ? 'All Statuses' : status);
-    setPage(1);
+    resetPage();
   };
 
   const hasActiveFilters = search.trim() || groupFilter !== 'All Groups' || rsvpFilter !== 'All Statuses';
@@ -410,22 +415,22 @@ function GuestListPage() {
     setSearch('');
     setGroupFilter('All Groups');
     setRsvpFilter('All Statuses');
-    setPage(1);
+    resetPage();
   };
 
   const handleSearchChange = (value) => {
     setSearch(value);
-    setPage(1);
+    resetPage();
   };
 
   const handleGroupFilterChange = (value) => {
     setGroupFilter(value);
-    setPage(1);
+    resetPage();
   };
 
   const handleRsvpFilterChange = (value) => {
     setRsvpFilter(value);
-    setPage(1);
+    resetPage();
   };
 
   const selectedIdList = [...selectedIds];
@@ -433,19 +438,24 @@ function GuestListPage() {
   return (
     <div className="dash-page dash-page--guests">
       <PageHeader moduleId="guests">
-        <div className="dash-page__actions">
-          <button type="button" className="dash-btn dash-btn--outline" onClick={exportCsv}>Export CSV</button>
-          <label className="dash-btn dash-btn--outline csv-upload">
-            Import / Update CSV
-            <input type="file" accept=".csv" hidden onChange={importCsv} />
-          </label>
-          {guests.length > 0 && (
-            <button type="button" className="dash-btn dash-btn--outline guest-delete-btn" onClick={() => setCsvDeleteConfirm(true)}>
-              Delete imported CSV
-            </button>
-          )}
-          <button type="button" className="dash-btn dash-btn--outline" onClick={() => setBulkAddOpen(true)}>Add many</button>
+        <div className="dash-page__actions dash-page__actions--compact">
           <button type="button" className="dash-btn dash-btn--primary" onClick={openAdd}>+ Add guest</button>
+          <details className="dash-collapsible dash-collapsible--inline dash-collapsible--menu">
+            <summary>More</summary>
+            <div className="dash-collapsible__body">
+              <button type="button" className="dash-menu-btn" onClick={exportCsv}>Export CSV</button>
+              <label className="dash-menu-btn csv-upload">
+                Import / update CSV
+                <input type="file" accept=".csv" hidden onChange={importCsv} />
+              </label>
+              <button type="button" className="dash-menu-btn" onClick={() => setBulkAddOpen(true)}>Add many guests</button>
+              {guests.length > 0 && (
+                <button type="button" className="dash-menu-btn dash-menu-btn--danger" onClick={() => setCsvDeleteConfirm(true)}>
+                  Delete imported CSV
+                </button>
+              )}
+            </div>
+          </details>
         </div>
       </PageHeader>
 
@@ -455,42 +465,57 @@ function GuestListPage() {
         </div>
       )}
 
-      <section className="guest-help-banner" aria-label="How RSVPs work">
-        <span className="guest-help-banner__icon">💡</span>
-        <div>
-          <strong>Best for large weddings (100+ guests)</strong>
+      <details className="dash-collapsible">
+        <summary>How to manage RSVPs for large guest lists</summary>
+        <div className="dash-collapsible__body">
           <p>
-            <strong>1.</strong> Export CSV → update RSVPs in Excel/Google Sheets (Accepted / Rejected / Pending) → re-import to update all at once.
-            <strong> 2.</strong> Select multiple guests and bulk-mark Coming or Not coming.
-            <strong> 3.</strong> Choose a group above, then mark Coming, Waiting, or Not coming. Or use the RSVP buttons on each guest.
+            Export CSV → update RSVPs in Excel or Google Sheets → re-import to update everyone at once.
+            Or select multiple guests and bulk-mark Coming / Not coming / Waiting.
           </p>
         </div>
-      </section>
+      </details>
 
-      <div className="guest-stats">
-        <button type="button" className={`guest-stat guest-stat--clickable${rsvpFilter === 'All Statuses' && !hasActiveFilters ? ' is-on' : ''}`} onClick={clearFilters}>
-          <strong>{stats.total}</strong><span>Total guests</span>
-        </button>
-        <button type="button" className={`guest-stat guest-stat--gold guest-stat--clickable${rsvpFilter === 'Pending' ? ' is-on' : ''}`} onClick={() => filterByRsvp('Pending')}>
-          <strong>{stats.pending}</strong><span>Waiting for reply</span>
-        </button>
-        <button type="button" className={`guest-stat guest-stat--green guest-stat--clickable${rsvpFilter === 'Accepted' ? ' is-on' : ''}`} onClick={() => filterByRsvp('Accepted')}>
-          <strong>{stats.accepted}</strong><span>Coming</span>
-        </button>
-        <button type="button" className={`guest-stat guest-stat--red guest-stat--clickable${rsvpFilter === 'Rejected' ? ' is-on' : ''}`} onClick={() => filterByRsvp('Rejected')}>
-          <strong>{stats.declined}</strong><span>Not coming</span>
-        </button>
-      </div>
-
-      {stats.total > 0 && (
-        <div className="guest-rsvp-progress">
-          <div className="guest-rsvp-progress__bar">
-            <div className="guest-rsvp-progress__fill guest-rsvp-progress__fill--accepted" style={{ width: `${(stats.accepted / stats.total) * 100}%` }} />
-            <div className="guest-rsvp-progress__fill guest-rsvp-progress__fill--declined" style={{ width: `${(stats.declined / stats.total) * 100}%` }} />
-          </div>
-          <span>{responsePct}% have replied · {stats.pending} still waiting</span>
+      <section className="dash-summary-bar" aria-label="Guest summary">
+        <div className="dash-summary-bar__chips">
+          <button
+            type="button"
+            className={`dash-summary-chip${rsvpFilter === 'All Statuses' && !hasActiveFilters ? ' is-on' : ''}`}
+            onClick={clearFilters}
+          >
+            All <strong>{stats.total}</strong>
+          </button>
+          <button
+            type="button"
+            className={`dash-summary-chip${rsvpFilter === 'Pending' ? ' is-on' : ''}`}
+            onClick={() => filterByRsvp('Pending')}
+          >
+            Waiting <strong>{stats.pending}</strong>
+          </button>
+          <button
+            type="button"
+            className={`dash-summary-chip${rsvpFilter === 'Accepted' ? ' is-on' : ''}`}
+            onClick={() => filterByRsvp('Accepted')}
+          >
+            Coming <strong>{stats.accepted}</strong>
+          </button>
+          <button
+            type="button"
+            className={`dash-summary-chip${rsvpFilter === 'Rejected' ? ' is-on' : ''}`}
+            onClick={() => filterByRsvp('Rejected')}
+          >
+            Not coming <strong>{stats.declined}</strong>
+          </button>
         </div>
-      )}
+        {stats.total > 0 && (
+          <>
+            <div className="dash-summary-bar__progress" aria-label={`${responsePct}% replied`}>
+              <span className="dash-summary-bar__progress-fill--accepted" style={{ width: `${(stats.accepted / stats.total) * 100}%`, background: '#6b9e78' }} />
+              <span className="dash-summary-bar__progress-fill--declined" style={{ width: `${(stats.declined / stats.total) * 100}%`, background: '#c96a5a' }} />
+            </div>
+            <span className="dash-summary-bar__progress-note">{responsePct}% replied · {stats.pending} still waiting</span>
+          </>
+        )}
+      </section>
 
       <div className="guest-toolbar">
         <div className="guest-search">
@@ -521,22 +546,24 @@ function GuestListPage() {
         {hasActiveFilters && <button type="button" className="guest-clear-filters" onClick={clearFilters}>Clear</button>}
       </div>
 
-      <div className={`guest-selected-group${activeGroupMembers.length === 0 ? ' is-empty' : ''}`}>
-        <div className="guest-selected-group__meta">
-          <strong>{groupFilter}</strong>
-          <span>
-            {activeGroupMembers.length
-              ? `${activeGroupMembers.length} ${activeGroupMembers.length === 1 ? 'guest' : 'guests'} — mark this group`
-              : 'No guests yet'}
-          </span>
+      {groupFilter !== 'All Groups' && (
+        <div className={`guest-selected-group${activeGroupMembers.length === 0 ? ' is-empty' : ''}`}>
+          <div className="guest-selected-group__meta">
+            <strong>{groupFilter}</strong>
+            <span>
+              {activeGroupMembers.length
+                ? `${activeGroupMembers.length} guest${activeGroupMembers.length === 1 ? '' : 's'} — mark whole group`
+                : 'No guests in this group'}
+            </span>
+          </div>
+          <RsvpToggle
+            value={activeGroupStatus}
+            disabled={!activeGroupMembers.length}
+            onChange={(rsvp) => applyGroupRsvp(groupFilter, rsvp)}
+          />
+          {groupRsvpNote && <p className="guest-selected-group__note" role="status">{groupRsvpNote}</p>}
         </div>
-        <RsvpToggle
-          value={activeGroupStatus}
-          disabled={!activeGroupMembers.length}
-          onChange={(rsvp) => applyGroupRsvp(groupFilter, rsvp)}
-        />
-        {groupRsvpNote && <p className="guest-selected-group__note" role="status">{groupRsvpNote}</p>}
-      </div>
+      )}
 
       {selectedCount > 0 && (
         <div className="guest-bulk-bar">
@@ -613,20 +640,17 @@ function GuestListPage() {
                 />
               ))}
             </ul>
-            <div className="guest-pagination">
-              <PrettySelect
-                label="Rows"
-                icon="guests"
-                value={pageSize}
-                options={PAGE_SIZES.map((size) => ({ value: size, label: `${size} per page`, icon: 'guests' }))}
-                onChange={(value) => { setPageSize(Number(value)); setPage(1); }}
-              />
-              <div className="guest-pagination__nav">
-                <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>← Prev</button>
-                <span>Page {safePage} of {totalPages}</span>
-                <button type="button" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Next →</button>
-              </div>
-            </div>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              pageStart={pageStart}
+              pageEnd={pageEnd}
+              totalItems={filtered.length}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              icon="guests"
+            />
           </>
         )}
       </div>

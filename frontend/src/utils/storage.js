@@ -271,6 +271,19 @@ export async function saveWeddingProfile(profile) {
     const { profile: saved } = await api.saveWeddingProfile(payload);
     if (saved) cache.weddingProfile = saved;
   }
+  const profileBudget = Number(cache.weddingProfile?.budget) || 0;
+  if (profileBudget) {
+    const current = cache.budget && typeof cache.budget === 'object'
+      ? cache.budget
+      : { categories: [], expenses: [] };
+    cache.budget = {
+      ...current,
+      total: profileBudget,
+      categories: current.categories || [],
+      expenses: current.expenses || [],
+    };
+  }
+  notifyDataChanged();
   return cache.weddingProfile;
 }
 
@@ -314,6 +327,10 @@ export async function ensureCoupleChecklist() {
   cache.tasks = data.tasks || [];
   cache.guests = data.guests || cache.guests || [];
   cache.budget = data.budget || cache.budget;
+  const profileBudget = getProfileBudget();
+  if (profileBudget && cache.budget) {
+    cache.budget = { ...cache.budget, total: profileBudget };
+  }
   return cache.tasks;
 }
 
@@ -339,13 +356,20 @@ export function getBudget() {
   return cache.budget;
 }
 
+export function getProfileBudget() {
+  if (ownedByOtherUser()) return 0;
+  return Number(cache.weddingProfile?.budget) || 0;
+}
+
 export async function saveBudget(budget) {
-  cache.budget = budget;
-  if (cache.weddingProfile && budget?.total != null) {
-    cache.weddingProfile = { ...cache.weddingProfile, budget: Number(budget.total) };
-  }
+  const profileBudget = getProfileBudget();
+  const next = {
+    ...budget,
+    total: profileBudget || Number(budget?.total) || 0,
+  };
+  cache.budget = next;
   notifyDataChanged();
-  if (cache.user) await api.saveData('budget', budget);
+  if (cache.user) await api.saveData('budget', next);
 }
 
 export function getSeating() {
@@ -364,6 +388,7 @@ export function getCrew() {
 
 export async function saveCrew(crew) {
   cache.crew = crew;
+  notifyDataChanged();
   if (cache.user) await api.saveData('crew', crew);
 }
 
@@ -406,6 +431,10 @@ export async function updateBookingStatus(id, status, extra = {}) {
       try {
         const data = await api.getAllData();
         cache.budget = data.budget || cache.budget;
+        const profileBudget = getProfileBudget();
+        if (profileBudget && cache.budget) {
+          cache.budget = { ...cache.budget, total: profileBudget };
+        }
       } catch {
         /* keep local budget if refresh fails */
       }

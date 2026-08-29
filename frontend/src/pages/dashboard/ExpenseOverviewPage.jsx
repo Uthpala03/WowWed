@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getBudget } from '../../utils/storage';
+import ListPagination from '../../components/ui/ListPagination';
+import { usePagination } from '../../hooks/usePagination';
 
 const chipColors = ['#e8a88c', '#6b9e78', '#7a9eb8', '#c96a5a', '#d4b85c', '#5c6d8a', '#b8a0c8', '#8a7268'];
 
@@ -31,6 +33,18 @@ function ExpenseOverviewPage() {
     return budget.expenses.filter((e) => e.categoryId === catFilter);
   }, [budget.expenses, catFilter]);
 
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    pageItems: paginatedExpenses,
+    pageStart,
+    pageEnd,
+    resetPage,
+  } = usePagination(filtered, { initialPageSize: 25 });
+
   return (
     <div className="dash-page">
       <header className="dash-page__header dash-page__header--split">
@@ -44,14 +58,14 @@ function ExpenseOverviewPage() {
       </div>
 
       <div className="expense-filters">
-        <button type="button" className={`expense-filter-btn${catFilter === 'all' ? ' is-on' : ''}`} onClick={() => setCatFilter('all')}>All</button>
-        <button type="button" className={`expense-filter-btn${catFilter === 'uncategorized' ? ' is-on' : ''}`} onClick={() => setCatFilter('uncategorized')}>Uncategorized</button>
+        <button type="button" className={`expense-filter-btn${catFilter === 'all' ? ' is-on' : ''}`} onClick={() => { setCatFilter('all'); resetPage(); }}>All</button>
+        <button type="button" className={`expense-filter-btn${catFilter === 'uncategorized' ? ' is-on' : ''}`} onClick={() => { setCatFilter('uncategorized'); resetPage(); }}>Uncategorized</button>
         {budget.categories.map((c) => (
           <button
             key={c.id}
             type="button"
             className={`expense-filter-btn${catFilter === c.id ? ' is-on' : ''}`}
-            onClick={() => setCatFilter(c.id)}
+            onClick={() => { setCatFilter(c.id); resetPage(); }}
           >
             <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: c.color, marginRight: 4 }} />
             {c.name}
@@ -64,24 +78,41 @@ function ExpenseOverviewPage() {
         {filtered.length === 0 ? (
           <div className="dash-empty"><p>No expenses found</p></div>
         ) : (
-          <table className="guest-table">
-            <thead><tr><th>Name</th><th>Category</th><th>Date</th><th>Amount</th></tr></thead>
-            <tbody>
-              {filtered.map((e) => (
-                <tr key={e.id}>
-                  <td>
-                    <div className="guest-name-cell">
-                      <span className="dash-list-avatar">{String(e.name || 'E').charAt(0).toUpperCase()}</span>
-                      <strong>{e.name}</strong>
-                    </div>
-                  </td>
-                  <td><span className="guest-group-badge">{getCatName(e.categoryId)}</span></td>
-                  <td>{e.date}</td>
-                  <td><strong>Rs. {Number(e.amount).toLocaleString()}</strong></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <>
+            <div className="guest-table-toolbar">
+              <span className="guest-page-info">Showing {pageStart}–{pageEnd} of {filtered.length}</span>
+            </div>
+            <table className="guest-table">
+              <thead><tr><th>Name</th><th>Category</th><th>Date</th><th>Amount</th></tr></thead>
+              <tbody>
+                {paginatedExpenses.map((e) => (
+                  <tr key={e.id}>
+                    <td>
+                      <div className="guest-name-cell">
+                        <span className="dash-list-avatar">{String(e.name || 'E').charAt(0).toUpperCase()}</span>
+                        <strong>{e.name}</strong>
+                      </div>
+                    </td>
+                    <td><span className="guest-group-badge">{getCatName(e.categoryId)}</span></td>
+                    <td>{e.date}</td>
+                    <td><strong>Rs. {Number(e.amount).toLocaleString()}</strong></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              pageStart={pageStart}
+              pageEnd={pageEnd}
+              totalItems={filtered.length}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              icon="budget"
+              showSummary={false}
+            />
+          </>
         )}
       </div>
       <footer className="expense-footer">

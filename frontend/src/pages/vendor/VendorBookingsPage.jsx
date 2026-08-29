@@ -9,6 +9,8 @@ import {
 import PageHeader from '../../components/ui/PageHeader';
 import BookingCalendar from '../../components/vendor/BookingCalendar';
 import VendorRequestCard from '../../components/vendor/VendorRequestCard';
+import ListPagination from '../../components/ui/ListPagination';
+import { usePagination } from '../../hooks/usePagination';
 
 const TABS = [
   { id: 'needs', label: 'Needs reply' },
@@ -59,6 +61,22 @@ function VendorBookingsPage() {
     if (selectedDate && bookingDateKey(b) !== selectedDate) return false;
     return true;
   });
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    pageItems: pagedBookings,
+    pageStart,
+    pageEnd,
+    resetPage,
+  } = usePagination(visible, { initialPageSize: 10, pageSizes: [10, 20, 50] });
+
+  useEffect(() => {
+    resetPage();
+  }, [tab, selectedDate, resetPage]);
 
   const respond = async (id, status, extra = {}) => {
     setError('');
@@ -116,16 +134,34 @@ function VendorBookingsPage() {
           </p>
         </div>
       ) : (
-        <div className="vendor-request-grid">
-          {visible.map((booking) => (
-            <VendorRequestCard
-              key={booking.id}
-              booking={booking}
-              busyId={busyId}
-              onRespond={respond}
-            />
-          ))}
-        </div>
+        <>
+          <div className="guest-table-toolbar">
+            <span className="guest-page-info">Showing {pageStart}–{pageEnd} of {visible.length}</span>
+          </div>
+          <div className="vendor-request-grid">
+            {pagedBookings.map((booking) => (
+              <VendorRequestCard
+                key={booking.id}
+                booking={booking}
+                busyId={busyId}
+                onRespond={respond}
+              />
+            ))}
+          </div>
+          <ListPagination
+            page={page}
+            totalPages={totalPages}
+            pageStart={pageStart}
+            pageEnd={pageEnd}
+            totalItems={visible.length}
+            pageSize={pageSize}
+            pageSizes={[10, 20, 50]}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            icon="vendors"
+            showSummary={false}
+          />
+        </>
       )}
 
       <BookingCalendar

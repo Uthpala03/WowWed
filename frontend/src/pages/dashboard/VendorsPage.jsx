@@ -25,6 +25,8 @@ import PageHeader from '../../components/ui/PageHeader';
 import VendorCard from '../../components/vendor/VendorCard';
 import VendorDetailModal, { VendorPackageList } from '../../components/vendor/VendorDetailModal';
 import VendorFilterSelect from '../../components/vendor/VendorFilterSelect';
+import ListPagination from '../../components/ui/ListPagination';
+import { usePagination } from '../../hooks/usePagination';
 
 const PRICE_BANDS = [
   { id: 'any', label: 'Any price' },
@@ -159,6 +161,22 @@ function VendorsPage() {
     return allVendors.filter(matchesVendorFilters);
   }, [allVendors, category, city, search, priceBand, minRating, recommendOn, smart.matches]);
 
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    pageItems: paginatedVendors,
+    pageStart,
+    pageEnd,
+    resetPage,
+  } = usePagination(filtered, { initialPageSize: 12, pageSizes: [12, 24, 48, 96] });
+
+  useEffect(() => {
+    resetPage();
+  }, [category, city, search, priceBandId, minRating, recommendOn, resetPage]);
+
   const compareVendors = useMemo(
     () => compareIds.map((id) => allVendors.find((vendor) => vendor.id === id)).filter(Boolean),
     [compareIds, allVendors],
@@ -289,7 +307,7 @@ function VendorsPage() {
 
   return (
     <div className="dash-page vendors-page">
-      <PageHeader moduleId="vendors" title="Find Your Perfect Wedding Vendors" className="vendors-hero" />
+      <PageHeader moduleId="vendors" />
       <div className="vendor-search-bar vendor-search-bar--standalone">
         <VendorFilterSelect
           label="Category"
@@ -314,26 +332,31 @@ function VendorsPage() {
         </button>
       </div>
       <div className="vendor-filter-row">
-        <VendorFilterSelect
-          label="Price"
-          icon="budget"
-          value={priceBandId}
-          options={PRICE_BANDS.map((band) => ({ value: band.id, label: band.label, icon: 'budget' }))}
-          onChange={setPriceBandId}
-        />
-        <VendorFilterSelect
-          label="Rating"
-          icon="sparkle"
-          value={minRating}
-          options={[
-            { value: 0, label: 'Any rating', icon: 'sparkle' },
-            { value: 4, label: '4.0 and up', icon: 'sparkle' },
-            { value: 4.5, label: '4.5 and up', icon: 'sparkle' },
-            { value: 4.8, label: '4.8 and up', icon: 'sparkle' },
-          ]}
-          onChange={(value) => setMinRating(Number(value))}
-        />
-        <p>{filtered.length} matching listing{filtered.length === 1 ? '' : 's'} · Add 2–3 to compare side by side</p>
+        <details className="dash-collapsible vendor-more-filters">
+          <summary>Price & rating filters</summary>
+          <div className="dash-collapsible__body vendor-more-filters__body">
+            <VendorFilterSelect
+              label="Price"
+              icon="budget"
+              value={priceBandId}
+              options={PRICE_BANDS.map((band) => ({ value: band.id, label: band.label, icon: 'budget' }))}
+              onChange={setPriceBandId}
+            />
+            <VendorFilterSelect
+              label="Rating"
+              icon="sparkle"
+              value={minRating}
+              options={[
+                { value: 0, label: 'Any rating', icon: 'sparkle' },
+                { value: 4, label: '4.0 and up', icon: 'sparkle' },
+                { value: 4.5, label: '4.5 and up', icon: 'sparkle' },
+                { value: 4.8, label: '4.8 and up', icon: 'sparkle' },
+              ]}
+              onChange={(value) => setMinRating(Number(value))}
+            />
+          </div>
+        </details>
+        <p>{filtered.length} match{filtered.length === 1 ? '' : 'es'} · pick 2–3 to compare</p>
       </div>
       {recommendError && (
         <p className="vendor-recommend-note vendor-recommend-note--error">
@@ -350,38 +373,50 @@ function VendorsPage() {
       )}
 
       {requested.length > 0 && (
-        <section className="vendor-board vendor-board--requested">
-          <div className="vendor-board__head">
-            <div>
-              <p className="vendor-board__kicker">Your vendors</p>
-              <h2>Your chosen vendors</h2>
-              <p>These stay here while you pick more vendors. Open Requests to hire or track replies.</p>
+        <details className="dash-collapsible vendor-board vendor-board--requested vendor-board--compact" open={requested.length <= 3}>
+          <summary>
+            Your chosen vendors ({requested.length}) — open Requests to track replies
+          </summary>
+          <div className="dash-collapsible__body">
+            <div className="vendor-chosen-strip">
+              {requested.map(({ vendor, booking }) => (
+                <button
+                  key={`req-${vendor.id}`}
+                  type="button"
+                  className="vendor-chosen-chip"
+                  onClick={() => setSelectedVendor(vendor)}
+                >
+                  {vendor.name}
+                  <span>{displayStatus(booking.status)}</span>
+                </button>
+              ))}
             </div>
-            <Link to="/dashboard/bookings" className="dash-btn dash-btn--white">Manage requests</Link>
+            <div className="vendor-chosen-actions">
+              <Link to="/dashboard/bookings" className="dash-btn dash-btn--white">Manage requests</Link>
+              {requested.length <= 6 && (
+                <div className="vendor-grid vendor-chosen-grid">
+                  {requested.map(({ vendor, booking }) => (
+                    <VendorCard
+                      key={`req-card-${vendor.id}`}
+                      vendor={vendor}
+                      booking={booking}
+                      ctaLabel="View request"
+                      onOpen={setSelectedVendor}
+                      comparing={compareIds.includes(vendor.id)}
+                      compareDisabled={compareIds.length >= 3}
+                      onToggleCompare={toggleCompare}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-          <div className="vendor-grid">
-            {requested.map(({ vendor, booking }) => (
-              <VendorCard
-                key={`req-${vendor.id}`}
-                vendor={vendor}
-                booking={booking}
-                ctaLabel="View request"
-                onOpen={setSelectedVendor}
-                comparing={compareIds.includes(vendor.id)}
-                compareDisabled={compareIds.length >= 3}
-                onToggleCompare={toggleCompare}
-              />
-            ))}
-          </div>
-        </section>
+        </details>
       )}
 
       <section className="vendors-section">
         <div className="vendor-board__head vendor-board__head--plain vendor-results-head">
           <div>
-            {category !== 'All Categories' && !recommendOn && (
-              <p className="vendor-results-kicker">Category</p>
-            )}
             <h2>{listTitle}</h2>
             <p>{listSubtitle}</p>
           </div>
@@ -393,20 +428,38 @@ function VendorsPage() {
               : 'No listings match these filters.'}
           </p>
         ) : (
-          <div className="vendor-grid">
-            {filtered.map((vendor) => (
-              <VendorCard
-                key={vendor.id}
-                vendor={vendor}
-                booking={bookingForVendor(bookings, vendor)}
-                ctaLabel={bookingForVendor(bookings, vendor) ? 'View request' : 'View details'}
-                onOpen={setSelectedVendor}
-                comparing={compareIds.includes(vendor.id)}
-                compareDisabled={compareIds.length >= 3}
-                onToggleCompare={toggleCompare}
-              />
-            ))}
-          </div>
+          <>
+            <div className="guest-table-toolbar">
+              <span className="guest-page-info">Showing {pageStart}–{pageEnd} of {filtered.length}</span>
+            </div>
+            <div className="vendor-grid">
+              {paginatedVendors.map((vendor) => (
+                <VendorCard
+                  key={vendor.id}
+                  vendor={vendor}
+                  booking={bookingForVendor(bookings, vendor)}
+                  ctaLabel={bookingForVendor(bookings, vendor) ? 'View request' : 'View details'}
+                  onOpen={setSelectedVendor}
+                  comparing={compareIds.includes(vendor.id)}
+                  compareDisabled={compareIds.length >= 3}
+                  onToggleCompare={toggleCompare}
+                />
+              ))}
+            </div>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              pageStart={pageStart}
+              pageEnd={pageEnd}
+              totalItems={filtered.length}
+              pageSize={pageSize}
+              pageSizes={[12, 24, 48, 96]}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              icon="vendors"
+              showSummary={false}
+            />
+          </>
         )}
       </section>
 

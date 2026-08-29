@@ -1,120 +1,28 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useOutletContext } from 'react-router-dom';
-import {
-  chatbotStarters,
-  chatbotTopics,
-  emptyChatSession,
-  getArticleReply,
-  getChatbotReply,
-  getTopicQuestions,
-  getWelcomeMessage,
-  readLoggedInCouple,
-} from '../../data/chatbotKnowledge';
+import { useOutletContext } from 'react-router-dom';
+import useChatbot from '../../hooks/useChatbot';
+import BotMessage from '../../components/chat/BotMessage';
 import PageHeader from '../../components/ui/PageHeader';
 import AppIcon from '../../components/ui/AppIcon';
 
-function BotMessage({ message }) {
-  return (
-    <div className="chatbot__bubble chatbot__bubble--bot">
-      <p>{message.text}</p>
-      {message.points?.length > 0 && (
-        <ul className="chatbot__points">
-          {message.points.map((point) => (
-            <li key={point}>{point}</li>
-          ))}
-        </ul>
-      )}
-      {message.route && (
-        <Link className="chatbot__page-link" to={message.route}>
-          {message.routeLabel || 'Open this page'}
-        </Link>
-      )}
-    </div>
-  );
-}
-
 function ChatbotPage() {
   const coupleData = useOutletContext();
-  const couple = useMemo(() => readLoggedInCouple(coupleData), [coupleData]);
-  const welcomeText = getWelcomeMessage(couple);
-  const [session, setSession] = useState(() => emptyChatSession());
-  const [messages, setMessages] = useState(() => [
-    { from: 'bot', id: 'welcome', text: welcomeText, points: [], related: [] },
-  ]);
-  const [input, setInput] = useState('');
-  const [topicId, setTopicId] = useState(null);
-  const bottomRef = useRef(null);
-  const isFresh = messages.length === 1;
 
-  useEffect(() => {
-    setSession(emptyChatSession());
-    setMessages([{ from: 'bot', id: 'welcome', text: getWelcomeMessage(couple), points: [], related: [] }]);
-    setInput('');
-    setTopicId(null);
-  }, [couple.userId]);
-
-  const topicQuestions = useMemo(
-    () => (topicId ? getTopicQuestions(topicId).slice(0, 6) : []),
-    [topicId],
-  );
-
-  const lastBot = [...messages].reverse().find((msg) => msg.from === 'bot');
-  const followUps = (lastBot?.related || []).slice(0, 4);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages, topicId]);
-
-  const pushReply = (userText, reply) => {
-    if (reply?.session) setSession(reply.session);
-    setMessages((current) => [
-      ...current,
-      { from: 'user', text: userText },
-      { from: 'bot', ...reply },
-    ]);
-    setTopicId(null);
-  };
-
-  const ask = (text) => {
-    const query = String(text || '').trim();
-    if (!query) return;
-    const liveCouple = readLoggedInCouple(coupleData);
-    pushReply(query, getChatbotReply(query, session, liveCouple));
-    setInput('');
-  };
-
-  const askArticle = (item) => {
-    if (!item?.id || String(item.id).startsWith('starter-') || String(item.id).startsWith('say-')) {
-      ask(item.label);
-      return;
-    }
-    const reply = getArticleReply(item.id, session, readLoggedInCouple(coupleData));
-    if (reply.id === 'fallback') {
-      ask(item.label);
-      return;
-    }
-    pushReply(item.label, reply);
-  };
-
-  const send = (e) => {
-    e.preventDefault();
-    ask(input);
-  };
-
-  const resetChat = () => {
-    setSession(emptyChatSession());
-    setMessages([{ from: 'bot', id: 'welcome', text: getWelcomeMessage(couple), points: [], related: [] }]);
-    setInput('');
-    setTopicId(null);
-  };
-
-  const suggestions = isFresh
-    ? (topicQuestions.length
-      ? topicQuestions
-      : chatbotStarters.map((label, index) => ({ id: `starter-${index}`, label })))
-    : followUps;
-
-  const selectedTopic = chatbotTopics.find((topic) => topic.id === topicId);
+  const {
+    messages,
+    input,
+    setInput,
+    topicId,
+    setTopicId,
+    isFresh,
+    suggestions,
+    selectedTopic,
+    chatbotTopics,
+    topicQuestions,
+    bottomRef,
+    askArticle,
+    send,
+    resetChat,
+  } = useChatbot(coupleData);
 
   return (
     <div className="dash-page">

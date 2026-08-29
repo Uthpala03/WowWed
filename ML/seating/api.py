@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import List, Optional
+import re
 
 import joblib
 import pandas as pd
@@ -14,12 +15,16 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from guest_features import (
     CAT_COLS,
     NUM_COLS,
+    RF_FEATURE_COLS,
     add_ml_columns,
+    add_rf_columns,
+    expected_table,
     pick_elbow,
     relationship_and_priority,
 )
 
 FOLDER = Path(__file__).resolve().parent
+RF_MODEL_FILE = FOLDER / "wowwed_seating_random_forest.pkl"
 SEATS_PER_TABLE = 10
 COMING = {"accepted", "coming", "yes", "y"}
 
@@ -35,6 +40,11 @@ try:
     bundle = joblib.load(FOLDER / "KMeans.pkl")
 except Exception:
     bundle = {"preprocessor": None, "kmeans": None, "k": 5}
+
+try:
+    rf_bundle = joblib.load(RF_MODEL_FILE)
+except Exception:
+    rf_bundle = None
 
 
 class GuestIn(BaseModel):
@@ -124,6 +134,30 @@ def train_on_guests(df):
     return df, score
 
 
+def predict_table_types(df):
+    if df.empty:
+        df["table_type"] = []
+        return df
+
+    df = add_rf_columns(df)
+    if rf_bundle and rf_bundle.get("model") is not None:
+        cols = rf_bundle.get("feature_cols") or RF_FEATURE_COLS
+        preds = rf_bundle["model"].predict(df[cols])
+        df = df.copy()
+        df["table_type"] = preds
+        df["expected_table"] = preds
+        return df
+
+    types = []
+    for _, row in df.iterrows():
+        rel = row.get("relationship_type") or relationship_and_priority(row.get("group"))[0]
+        types.append(expected_table(row.get("group"), rel))
+    df = df.copy()
+    df["table_type"] = types
+    df["expected_table"] = types
+    return df
+
+
 def add_clusters(df):
     if df.empty:
         df["cluster"] = []
@@ -137,7 +171,50 @@ def add_clusters(df):
 
 
 def table_capacity(table):
-    return max(1, min(20, int(getattr(table, "seats", None) or SEATS_PER_TABLE)))
+    try:
+        seats = int(getattr(table, "seats", None) or SEATS_PER_TABLE)
+    except (TypeError, ValueError):
+        seats = SEATS_PER_TABLE
+    return max(1, min(30, seats))
+
+
+def _table_priority(table):
+    try:
+        return int(getattr(table, "priority", 5) or 5)
+    except (TypeError, ValueError):
+        return 5
+
+
+def _table_number(table):
+    name = getattr(table, "name", "") or ""
+    match = re.search(r"(\d+)", name)
+    if match:
+        return int(match.group(1))
+    table_id = getattr(table, "id", "") or ""
+    match = re.search(r"(\d+)", str(table_id))
+    return int(match.group(1)) if match else 9999
+
+
+def _sort_slots(slots):
+    kind_order = {"vip": 0, "bride-family": 1, "groom-family": 2, "friends": 3, "general": 4}
+    slots.sort(
+        key=lambda s: (
+            kind_order.get(s["kind"], 5),
+            _table_priority(s["table"]),
+            _table_number(s["table"]),
+        ),
+    )
+
+
+def _slot_pick_key(slot, group_name, group_remaining):
+    # Fill lower-numbered tables first (1, 2, 3…) before opening new ones.
+    return (
+        0 if group_name in slot["groups"] else 1,
+        _table_number(slot["table"]),
+        0 if slot["left"] >= group_remaining else 1,
+        slot["left"],
+        _table_priority(slot["table"]),
+    )
 
 
 def table_kind(table):
@@ -148,7 +225,12 @@ def table_kind(table):
     return suite
 
 
-def preferred_kinds(group, rel):
+def preferred_kinds(group, rel, predicted=None):
+    if predicted:
+        kinds = [predicted]
+        if predicted != "general":
+            kinds.append("general")
+        return kinds
     g = (group or "").strip().lower()
     if rel == "vip" or g == "vip":
         return ["vip"]
@@ -176,6 +258,174 @@ def group_rank(group, rel):
     return 10
 
 
+def _guest_uid(guest):
+    uid = str(guest.get("id") or "").strip()
+    if uid:
+        return f"id:{uid}"
+    email = (guest.get("email") or "").strip().lower()
+    if email:
+        return f"email:{email}"
+    phone = "".join(ch for ch in str(guest.get("phone") or "") if ch.isdigit())
+    if phone:
+        return f"phone:{phone}"
+    return f"name:{(guest.get('name') or '').strip().lower()}"
+
+
+def _has_conflict(guest, slot):
+    mine = (guest.get("name") or "").strip().lower()
+    avoided = {
+        p.strip().lower()
+        for p in (guest.get("avoid") or "").replace(";", ",").split(",")
+        if p.strip()
+    }
+    if slot["names"] & avoided:
+        return True
+    for other in slot["people"]:
+        other_avoid = {
+            p.strip().lower()
+            for p in (other.get("avoid") or "").replace(";", ",").split(",")
+            if p.strip()
+        }
+        if mine in other_avoid:
+            return True
+    return False
+
+
+def _next_seat(slot):
+    cap = table_capacity(slot["table"])
+    used = slot["used_seats"]
+    for seat_no in range(1, cap + 1):
+        if seat_no not in used:
+            used.add(seat_no)
+            slot["left"] = max(0, cap - len(used))
+            return seat_no
+    return None
+
+
+def _place_guest_in_slot(guest, slot, group_name):
+    seat_no = _next_seat(slot)
+    if seat_no is None:
+        return None
+    slot.setdefault("guest_seats", {})[_guest_uid(guest)] = seat_no
+    slot["groups"].add(group_name or "Other")
+    slot["names"].add((guest.get("name") or "").strip().lower())
+    slot["people"].append(guest)
+    return seat_no
+
+
+def _remove_guest_from_slot(slot, guest):
+    uid = _guest_uid(guest)
+    guest_seats = slot.get("guest_seats", {})
+    seat_no = guest_seats.pop(uid, None)
+    if seat_no is not None:
+        slot["used_seats"].discard(seat_no)
+        cap = table_capacity(slot["table"])
+        slot["left"] = max(0, cap - len(slot["used_seats"]))
+    if guest in slot["people"]:
+        slot["people"].remove(guest)
+    name = (guest.get("name") or "").strip().lower()
+    slot["names"].discard(name)
+    group_name = guest.get("group") or "Other"
+    if not any((p.get("group") or "Other") == group_name for p in slot["people"]):
+        slot["groups"].discard(group_name)
+
+
+def _rows_from_slots(slots):
+    rows = []
+    for slot in slots:
+        for guest in slot["people"]:
+            uid = _guest_uid(guest)
+            seat_no = slot.get("guest_seats", {}).get(uid)
+            if seat_no is None:
+                continue
+            rows.append(assignment_row(
+                guest,
+                slot["table"].name or "",
+                seat_no,
+                slot["table"].id or "",
+            ))
+    return rows
+
+
+def _consolidate_slots(slots):
+    """Pack guests into the lowest-numbered tables with free seats."""
+    changed = True
+    while changed:
+        changed = False
+        sources = sorted(
+            [s for s in slots if s["people"]],
+            key=lambda s: _table_number(s["table"]),
+            reverse=True,
+        )
+        if not sources:
+            break
+        source = sources[0]
+        targets = sorted(
+            [
+                s for s in slots
+                if s["left"] > 0 and _table_number(s["table"]) < _table_number(source["table"])
+            ],
+            key=lambda s: _table_number(s["table"]),
+        )
+        if not targets:
+            break
+        moved_any = False
+        for guest in list(source["people"]):
+            pick = next((t for t in targets if t["left"] > 0 and not _has_conflict(guest, t)), None)
+            if not pick:
+                continue
+            group_name = guest.get("group") or "Other"
+            _remove_guest_from_slot(source, guest)
+            _place_guest_in_slot(guest, pick, group_name)
+            moved_any = True
+            changed = True
+        if not moved_any:
+            break
+
+
+def _place_guest(guest, slot, group_name, rows):
+    seat_no = _place_guest_in_slot(guest, slot, group_name)
+    if seat_no is None:
+        return False
+    rows.append(assignment_row(
+        guest,
+        slot["table"].name or group_name,
+        seat_no,
+        slot["table"].id or "",
+    ))
+    return True
+
+
+def _pick_slot(guest, group_name, rel, open_slots, prefer_same=True, avoid_conflicts=True, group_remaining=1):
+    if not open_slots:
+        return None
+    kinds = preferred_kinds(group_name, rel, guest.get("table_type"))
+    kind_matched = [s for s in open_slots if s["kind"] in kinds]
+    if kind_matched:
+        lowest_kind = min(_table_number(s["table"]) for s in kind_matched)
+        empty_lower = [
+            s for s in open_slots
+            if s["left"] == table_capacity(s["table"])
+            and _table_number(s["table"]) < lowest_kind
+        ]
+        preferred = empty_lower + kind_matched
+    else:
+        preferred = open_slots
+    same = [s for s in preferred if group_name in s["groups"]] if prefer_same else []
+    pool = same or preferred
+
+    if avoid_conflicts:
+        safe = [s for s in pool if not _has_conflict(guest, s)]
+        if safe:
+            pool = safe
+        elif same:
+            pool = same
+        else:
+            pool = preferred
+
+    return min(pool, key=lambda s: _slot_pick_key(s, group_name, group_remaining))
+
+
 def assign_to_tables(df, tables):
     rows = []
     if df.empty:
@@ -194,16 +444,20 @@ def assign_to_tables(df, tables):
 
     slots = []
     for table in tables:
+        cap = table_capacity(table)
         slots.append({
             "table": table,
             "kind": table_kind(table),
-            "left": table_capacity(table),
-            "seat": 1,
+            "left": cap,
+            "used_seats": set(),
             "groups": set(),
             "names": set(),
             "people": [],
         })
+    _sort_slots(slots)
 
+    all_guests = df.to_dict("records")
+    total_capacity = sum(table_capacity(t) for t in tables)
     batches = []
     for group_name, part in df.groupby("group", dropna=False):
         members = part.to_dict("records")
@@ -212,55 +466,63 @@ def assign_to_tables(df, tables):
         batches.append((group_rank(group_name, rel), group_name or "Other", members, rel))
     batches.sort(key=lambda item: (item[0], item[1]))
 
+    unplaced = []
+    placed = set()
     for _, group_name, members, rel in batches:
-        kinds = preferred_kinds(group_name, rel)
-        leftover = list(members)
-        while leftover:
-            guest = leftover.pop(0)
+        for idx, guest in enumerate(members):
             open_slots = [s for s in slots if s["left"] > 0]
             if not open_slots:
-                break
-            preferred = [s for s in open_slots if s["kind"] in kinds]
-            if not preferred and "vip" in kinds:
-                preferred = open_slots
-            elif not preferred:
-                preferred = open_slots
-            same = [s for s in preferred if group_name in s["groups"]]
-
-            def has_conflict(slot):
-                mine = (guest.get("name") or "").strip().lower()
-                avoided = {
-                    p.strip().lower()
-                    for p in (guest.get("avoid") or "").replace(";", ",").split(",")
-                    if p.strip()
-                }
-                if slot["names"] & avoided:
-                    return True
-                for other in slot["people"]:
-                    other_avoid = {
-                        p.strip().lower()
-                        for p in (other.get("avoid") or "").replace(";", ",").split(",")
-                        if p.strip()
-                    }
-                    if mine in other_avoid:
-                        return True
-                return False
-
-            safe = [s for s in (same or preferred) if not has_conflict(s)]
-            pick = max(safe or same or preferred, key=lambda s: s["left"])
-            rows.append(assignment_row(
+                unplaced.append(guest)
+                continue
+            remaining = len(members) - idx
+            pick = _pick_slot(
                 guest,
-                pick["table"].name or group_name,
-                pick["seat"],
-                pick["table"].id or "",
-            ))
-            pick["seat"] += 1
-            pick["left"] -= 1
-            pick["groups"].add(group_name)
-            pick["names"].add((guest.get("name") or "").strip().lower())
-            pick["people"].append(guest)
+                group_name,
+                rel,
+                open_slots,
+                group_remaining=remaining,
+            )
+            if not pick or not _place_guest(guest, pick, group_name, rows):
+                unplaced.append(guest)
+            else:
+                placed.add(_guest_uid(guest))
 
-    return rows, 0
+    # Fallback: seat anyone still unplaced while empty chairs remain.
+    still_unplaced = [g for g in all_guests if _guest_uid(g) not in placed]
+    still_unplaced.sort(key=lambda g: -int(g.get("priority") or 1))
+
+    for guest in still_unplaced:
+        open_slots = [s for s in slots if s["left"] > 0]
+        if not open_slots:
+            break
+        rel = guest.get("relationship_type") or relationship_and_priority(guest.get("group"))[0]
+        group_name = guest.get("group") or "Other"
+        pick = _pick_slot(guest, group_name, rel, open_slots, prefer_same=True, avoid_conflicts=True)
+        if not pick:
+            pick = min(open_slots, key=lambda s: _slot_pick_key(s, group_name, 1))
+        if _place_guest(guest, pick, group_name, rows):
+            placed.add(_guest_uid(guest))
+
+    # Last resort: fill any remaining seat (conflicts allowed) so capacity is never wasted.
+    still_unplaced = [g for g in all_guests if _guest_uid(g) not in placed]
+    for guest in still_unplaced:
+        open_slots = [s for s in slots if s["left"] > 0]
+        if not open_slots:
+            break
+        group_name = guest.get("group") or "Other"
+        pick = min(open_slots, key=lambda s: _slot_pick_key(s, group_name, 1))
+        if _place_guest(guest, pick, group_name, rows):
+            placed.add(_guest_uid(guest))
+
+    _consolidate_slots(slots)
+    rows = _rows_from_slots(slots)
+
+    assigned_uids = {_guest_uid(r) for r in rows}
+    unseated = sum(1 for g in all_guests if _guest_uid(g) not in assigned_uids)
+    if unseated and total_capacity >= len(all_guests):
+        # Should not happen — log via empty assignments for debug; callers see unseated flag.
+        pass
+    return rows, unseated
 
 
 def assignment_row(guest, table_name, seat, table_id):
@@ -275,6 +537,7 @@ def assignment_row(guest, table_name, seat, table_id):
         "age_group": guest.get("age_group", ""),
         "age": int(guest.get("age", 0) or 0),
         "expected_table": guest.get("expected_table", ""),
+        "table_type": guest.get("table_type", ""),
         "cluster": int(guest.get("cluster", 0)),
         "avoid": guest.get("avoid", ""),
         "table": table_name,
@@ -409,7 +672,11 @@ def score_quality(df, assignments, tables, silhouette):
             kinds[table.id or ""] = table_kind(table)
     label_ok = 0
     for row in assignments:
-        want = preferred_kinds(row.get("group"), row.get("relationship_type"))
+        want = preferred_kinds(
+            row.get("group"),
+            row.get("relationship_type"),
+            row.get("table_type"),
+        )
         got = kinds.get(row.get("table_id") or "", "")
         if got and got in want:
             label_ok += 1
@@ -429,10 +696,11 @@ def score_quality(df, assignments, tables, silhouette):
     }
 
 
-def result_payload(df, assignments, source, tables=None, silhouette=None):
+def result_payload(df, assignments, source, tables=None, silhouette=None, unseated=None):
     coming = int(len(df))
     assigned = len(assignments)
-    unseated = max(0, coming - assigned)
+    if unseated is None:
+        unseated = max(0, coming - assigned)
     capacity = 0
     if tables:
         capacity = sum(table_capacity(t) for t in tables)
@@ -460,20 +728,28 @@ def result_payload(df, assignments, source, tables=None, silhouette=None):
 
 @app.get("/health")
 def health():
-    return {"ok": True, "model": "KMeans.pkl"}
+    model = "wowwed_seating_random_forest.pkl" if rf_bundle else "KMeans.pkl"
+    return {
+        "ok": True,
+        "model": model,
+        "rf_loaded": rf_bundle is not None,
+        "rf_accuracy": (rf_bundle or {}).get("accuracy"),
+    }
 
 
 @app.get("/optimize")
 def optimize_from_csv():
     guests = pd.read_csv(FOLDER / "seating_dataset.csv")
     guests, score = add_clusters(guests)
-    assignments, _ = assign_to_tables(guests, [])
-    return result_payload(guests, assignments, "csv", silhouette=score)
+    guests = predict_table_types(guests)
+    assignments, unseated = assign_to_tables(guests, [])
+    return result_payload(guests, assignments, "csv", silhouette=score, unseated=unseated)
 
 
 @app.post("/optimize")
 def optimize_live(body: OptimizeIn):
     df = guests_to_frame(body.guests)
     df, score = add_clusters(df)
-    assignments, _ = assign_to_tables(df, body.tables)
-    return result_payload(df, assignments, "live", body.tables, score)
+    df = predict_table_types(df)
+    assignments, unseated = assign_to_tables(df, body.tables)
+    return result_payload(df, assignments, "live", body.tables, score, unseated=unseated)

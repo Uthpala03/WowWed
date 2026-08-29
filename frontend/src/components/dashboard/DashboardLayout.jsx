@@ -1,24 +1,22 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { dashboardNav } from '../../data/dashboardData';
-import { buildNotifications } from '../../utils/notifications';
+import { getUserHomePath } from '../../utils/userHome';
 import { ensureCoupleChecklist, hydrateUserData, readCoupleSnapshot, refreshBookings } from '../../utils/storage';
 import { useAuth } from '../../context/AuthContext';
 import { coupleOnboarding } from '../../models/OnboardingPath';
-import { useInboxNotifications } from '../../hooks/useInboxNotifications';
 import AppIcon from '../ui/AppIcon';
-import NotificationsPanel from './NotificationsPanel';
+import DashNotificationButton from './DashNotificationButton';
 import Footer from '../layout/Footer';
+import DashScrollToTop from './DashScrollToTop';
 import '../../styles/dashboard.css';
 
 function DashboardLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading, logout } = useAuth();
   const [coupleData, setCoupleData] = useState(null);
   const [dataReady, setDataReady] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
-  const inbox = useInboxNotifications(8000);
-  const notifCount = inbox.unread + buildNotifications().length;
 
   useEffect(() => {
     if (!loading && user?.role === 'vendor') navigate('/vendor', { replace: true });
@@ -87,6 +85,13 @@ function DashboardLayout() {
     );
   }
 
+  const scrollNavTop = (path, end) => {
+    const active = end
+      ? location.pathname === path
+      : location.pathname === path || location.pathname.startsWith(`${path}/`);
+    if (active) window.scrollTo({ top: 0, behavior: 'auto' });
+  };
+
   if (user.role === 'vendor') return null;
 
   const profile = coupleData?.profile;
@@ -96,20 +101,10 @@ function DashboardLayout() {
     <div className="dash">
       <aside className="dash-sidebar">
         <div className="dash-sidebar__brand">
-          <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="WowWed" />
-          <button type="button" className="dash-notif-btn" onClick={() => setNotifOpen(!notifOpen)} aria-label="Notifications">
-            🔔{notifCount > 0 && <span>{notifCount}</span>}
-          </button>
+          <Link to={getUserHomePath(user)} className="dash-sidebar__logo-link" aria-label="Go to your home">
+            <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="WowWed" />
+          </Link>
         </div>
-        <NotificationsPanel
-          open={notifOpen}
-          onClose={() => setNotifOpen(false)}
-          inbox={inbox.items}
-          unread={inbox.unread}
-          includeLocal
-          onMarkRead={inbox.markRead}
-          onMarkAllRead={inbox.markAllRead}
-        />
 
         <Link to="/wedding-profile" className="dash-sidebar__couple" title="Edit wedding profile">
           <span className="dash-sidebar__avatar">{initials}</span>
@@ -125,7 +120,14 @@ function DashboardLayout() {
 
         <nav className="dash-sidebar__nav">
           {dashboardNav.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => `dash-sidebar__link${isActive ? ' is-active' : ''}`} style={{ '--nav-accent': item.ring }}>
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) => `dash-sidebar__link${isActive ? ' is-active' : ''}`}
+              style={{ '--nav-accent': item.ring }}
+              onClick={() => scrollNavTop(item.to, item.end)}
+            >
               <span className="dash-sidebar__icon" style={{ background: item.accent, color: item.ring }}>
                 <AppIcon name={item.icon} size={18} />
               </span>
@@ -140,6 +142,10 @@ function DashboardLayout() {
         </div>
       </aside>
       <div className="dash-main">
+        <header className="dash-topbar">
+          <DashNotificationButton className="dash-notif-wrap--topbar" />
+        </header>
+        <DashScrollToTop />
         <Outlet key={user.id} context={coupleData} />
         <Footer compact />
       </div>

@@ -26,6 +26,7 @@ import InvitationsPage from './pages/dashboard/InvitationsPage';
 import AnalyticsPage from './pages/dashboard/AnalyticsPage';
 import ReportsPage from './pages/dashboard/ReportsPage';
 import ChatbotPage from './pages/dashboard/ChatbotPage';
+import ChatWidget from './components/chat/ChatWidget';
 import VendorDashboard from './pages/vendor/VendorDashboard';
 import VendorBookingsPage from './pages/vendor/VendorBookingsPage';
 import VendorSetupPage from './pages/vendor/VendorSetupPage';
@@ -76,6 +77,7 @@ function AppShell() {
         </Routes>
       </main>
       {!isDashboard && !isOnboarding && <Footer />}
+      <ChatWidget />
     </div>
   );
 }

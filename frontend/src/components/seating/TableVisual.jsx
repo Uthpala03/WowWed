@@ -1,10 +1,15 @@
+import { normalizeGuestGroup } from '../../data/dashboardData';
+
 function TableVisual({
   table,
   assignments = {},
   getGuestName = () => '',
+  getGuestGroup = () => '',
   selectedGuest = null,
   onSeatClick,
   compact = false,
+  expanded = false,
+  highlightGroup = null,
 }) {
   const layout = table.getLayout();
   const seatSize = 24;
@@ -42,18 +47,24 @@ function TableVisual({
         const guestId = assignments[`${table.id}-${i}`];
         const isTarget = selectedGuest && !guestId;
         const name = guestId ? getGuestName(guestId) : '';
+        const group = guestId ? getGuestGroup(guestId) : '';
+        const highlight = highlightGroup ? normalizeGuestGroup(highlightGroup) : null;
+        const inHighlight = !highlight || !guestId || normalizeGuestGroup(group) === highlight;
+        const seatLabel = guestId
+          ? (expanded ? name.split(' ')[0] : name.charAt(0).toUpperCase())
+          : i + 1;
 
         return (
           <button
             key={`${table.id}-seat-${i}`}
             type="button"
-            className={`table-visual__seat${guestId ? ' is-filled' : ''}${isTarget ? ' is-target' : ''}`}
+            className={`table-visual__seat${guestId ? ' is-filled' : ''}${isTarget ? ' is-target' : ''}${expanded && guestId ? ' is-expanded' : ''}${guestId && !inHighlight ? ' is-dimmed' : ''}${guestId && inHighlight && highlight ? ' is-highlighted' : ''}`}
             style={{ left: pos.left, top: pos.top, width: seatSize, height: seatSize }}
             onClick={() => handleSeatClick(i, guestId)}
-            title={guestId ? name : `Seat ${i + 1} — click to assign`}
-            aria-label={guestId ? `${name}, seat ${i + 1}` : `Empty seat ${i + 1}`}
+            title={guestId ? `${name}${group ? ` · ${group}` : ''} — seat ${i + 1}` : `Seat ${i + 1} — click to assign`}
+            aria-label={guestId ? `${name}, ${group || 'No Group'}, seat ${i + 1}` : `Empty seat ${i + 1}`}
           >
-            {guestId ? name.charAt(0).toUpperCase() : i + 1}
+            {seatLabel}
           </button>
         );
       })}

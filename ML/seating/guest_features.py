@@ -135,3 +135,40 @@ def pick_elbow(ks, inertias):
 
 CAT_COLS = ["age_group", "relationship_type", "side"]
 NUM_COLS = ["priority", "age", "plus_one", "wheelchair", "allergy"]
+
+RF_FEATURE_COLS = [
+    "age",
+    "priority",
+    "plus_one",
+    "wheelchair",
+    "allergy",
+    "side_code",
+    "relationship_code",
+    "has_avoid",
+]
+
+REL_CODE = {"other": 1, "colleague": 2, "friend": 3, "family": 4, "vip": 5}
+SIDE_CODE = {"bride": 0, "groom": 1, "both": 2}
+
+
+def add_rf_columns(df):
+    out = df.copy()
+    if out.empty:
+        return out
+
+    side_codes = []
+    rel_codes = []
+    avoids = []
+    for _, row in out.iterrows():
+        rel = row.get("relationship_type")
+        if not rel:
+            rel, _ = relationship_and_priority(row.get("group"))
+        side = side_from_group(row.get("group"))
+        side_codes.append(SIDE_CODE.get(side, 2))
+        rel_codes.append(REL_CODE.get(rel, 1))
+        avoids.append(1 if as_text(row.get("avoid")) else 0)
+
+    out["side_code"] = side_codes
+    out["relationship_code"] = rel_codes
+    out["has_avoid"] = avoids
+    return out

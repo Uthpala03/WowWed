@@ -24,7 +24,7 @@ const STATUS_COPY = {
   Cancelled: 'You cancelled this request.',
 };
 
-function CoupleRequestCard({ booking, busyId, onRespond }) {
+function CoupleRequestCard({ booking, busyId, onRespond, compact }) {
   const [replyOpen, setReplyOpen] = useState(false);
   const [form, setForm] = useState({
     amount: String(booking.amount || ''),
@@ -33,7 +33,7 @@ function CoupleRequestCard({ booking, busyId, onRespond }) {
   const busy = busyId === booking.id;
 
   return (
-    <article className={`request-card${coupleCanHire(booking.status) ? ' request-card--action' : ''}`}>
+    <article className={`request-card${coupleCanHire(booking.status) ? ' request-card--action' : ''}${compact ? ' request-card--compact' : ''}`}>
       <div className="request-card__top">
         <div>
           <strong>{booking.vendorName}</strong>

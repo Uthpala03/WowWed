@@ -1,39 +1,70 @@
+"""Run cost tier prediction with the trained Random Forest model."""
+import json
+import sys
+from pathlib import Path
+
 import joblib
-import numpy as np
 import pandas as pd
 
-saved = joblib.load("RandomForestRegression.pkl")
-model = saved["model"]
-le_district = saved["le_district"]
-le_ceremony = saved["le_ceremony"]
-le_scale = saved["le_scale"]
-features = saved["features"]
+from cost_features import FEATURE_COLS, TIER_RANGES, row_from_input
 
-guest_count = 180
-venue_district = "Colombo"
-ceremony_type = "Buddhist"
-wedding_scale = "standard"
-seasonal_indicator = 1
+FOLDER = Path(__file__).resolve().parent
+MODEL_FILE = FOLDER / "wowwed_cost_random_forest.pkl"
 
-row = pd.DataFrame([{
-    "guest_count": guest_count,
-    "district_encoded": le_district.transform([venue_district])[0],
-    "ceremony_encoded": le_ceremony.transform([ceremony_type])[0],
-    "scale_encoded": le_scale.transform([wedding_scale])[0],
-    "seasonal_indicator": seasonal_indicator,
-}])[features]
+# Example: venue quote, 200 guests, Colombo, Rs. 6500 per person
+DEFAULT_INPUT = {
+    "guest_count": 200,
+    "category": "Venue & Res. Halls",
+    "district": "Colombo",
+    "per_person_pricing": 1,
+    "base_unit_price": 6500,
+    "vendor_rating": 4.5,
+    "is_spotlight": 0,
+    "package_complexity": 2,
+}
 
-estimate = model.predict(row)[0]
-tree_preds = np.array([tree.predict(row.values) for tree in model.estimators_])
-margin = 1.96 * tree_preds.std()
 
-print("Wedding Cost Prediction")
-print("Guests     :", guest_count)
-print("District   :", venue_district)
-print("Ceremony   :", ceremony_type)
-print("Scale      :", wedding_scale)
-print("Seasonal   :", seasonal_indicator)
-print()
-print("Estimated cost   :", int(estimate), "LKR")
-print("Margin of error  :", int(margin), "LKR")
-print("95% interval     :", int(estimate - margin), "to", int(estimate + margin), "LKR")
+def predict(data):
+    bundle = joblib.load(MODEL_FILE)
+    model = bundle["model"]
+    cols = bundle.get("feature_cols") or FEATURE_COLS
+
+    features = row_from_input(data)
+    frame = pd.DataFrame([{col: features[col] for col in cols}])
+    tier = model.predict(frame)[0]
+
+    confidence = None
+    if hasattr(model, "predict_proba"):
+        probs = model.predict_proba(frame)[0]
+        confidence = round(float(max(probs)), 4)
+
+    meta = TIER_RANGES.get(tier, TIER_RANGES["mid"])
+    return {
+        "cost_tier": tier,
+        "cost_tier_label": meta["label"],
+        "confidence": confidence,
+        "estimated_total_lkr": features["estimated_total_lkr"],
+        "min_total_lkr": meta["min_total_lkr"],
+        "max_total_lkr": meta["max_total_lkr"],
+        "model": bundle.get("model_name", MODEL_FILE.name),
+        "accuracy": bundle.get("accuracy"),
+        "features": {col: features[col] for col in cols},
+    }
+
+
+def main():
+    if not MODEL_FILE.exists():
+        print(f"Model missing: {MODEL_FILE}")
+        print("Run: python train.py")
+        sys.exit(1)
+
+    data = DEFAULT_INPUT
+    if len(sys.argv) > 1:
+        data = json.loads(sys.argv[1])
+
+    result = predict(data)
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    main()

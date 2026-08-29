@@ -1,10 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { crewRoles, getCategoryMeta, getTaskDateGroups, groupTasksByMonth, groupTasksByPhase, taskCategories } from '../../data/dashboardData';
+import {
+  crewRoles,
+  getCategoryMeta,
+  getPhaseDateHint,
+  getTaskPhaseGroups,
+  groupTasksByWeddingPhase,
+  resolveTaskPhase,
+  taskCategories,
+} from '../../data/dashboardData';
 import { getTasks, saveTasks } from '../../utils/storage';
 import { Link } from 'react-router-dom';
 import PageHeader from '../../components/ui/PageHeader';
 import PrettySelect from '../../components/ui/PrettySelect';
+import ListPagination from '../../components/ui/ListPagination';
+import { COMPACT_PAGE_SIZES, usePagination } from '../../hooks/usePagination';
 
 const TASK_ICONS = {
   guests: 'guests',
@@ -20,8 +30,50 @@ const TASK_ICONS = {
   other: 'vendors',
 };
 
+function TaskRows({ tasks, onToggle, onEdit }) {
+  return (
+    <ul className="task-list">
+      {tasks.map((task) => {
+        const cat = getCategoryMeta(task.category);
+        const dueLabel = new Date(task.dueDate).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        });
+        return (
+          <li key={task.id} className={`task-row task-row--compact${task.done ? ' is-done' : ''}`}>
+            <button
+              type="button"
+              className={`task-check${task.done ? ' is-checked' : ''}`}
+              onClick={() => onToggle(task.id)}
+              aria-label={task.done ? 'Mark as incomplete' : 'Mark as complete'}
+            >
+              {task.done ? '✓' : ''}
+            </button>
+            <button type="button" className="task-row__main" onClick={() => onEdit(task)}>
+              <span className="task-title">{task.title}</span>
+              <span className="task-row__meta">
+                <span className="task-tag" data-category={task.category}>
+                  {cat.icon} {cat.label}
+                </span>
+                <span className="task-date">📅 {dueLabel}</span>
+                {task.assigned && task.assigned !== 'Unassigned' && (
+                  <span className="task-assigned">👤 {task.assigned}</span>
+                )}
+              </span>
+            </button>
+            <button type="button" className="task-edit" onClick={() => onEdit(task)} aria-label="Edit task">
+              ✏️
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 function ChecklistPage() {
   const coupleData = useOutletContext();
+  const weddingDate = coupleData?.profile?.weddingDate || coupleData?.onboarding?.weddingDate || '';
   const [tasks, setTasks] = useState(() => coupleData?.tasks || getTasks() || []);
 
   useEffect(() => {
@@ -29,11 +81,10 @@ function ChecklistPage() {
   }, [coupleData]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [monthFilter, setMonthFilter] = useState('all');
+  const [phaseFilter, setPhaseFilter] = useState('all');
   const [assignedFilter, setAssignedFilter] = useState('all');
   const [search, setSearch] = useState('');
-  const [showAllDates, setShowAllDates] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
   const doneCount = tasks.filter((t) => t.done).length;
@@ -43,7 +94,7 @@ function ChecklistPage() {
 
   const hasActiveFilters = statusFilter !== 'all'
     || categoryFilter !== 'all'
-    || monthFilter !== 'all'
+    || phaseFilter !== 'all'
     || assignedFilter !== 'all'
     || search.trim();
 
@@ -54,20 +105,47 @@ function ChecklistPage() {
       if (statusFilter === 'todo' && task.done) return false;
       if (categoryFilter !== 'all' && task.category !== categoryFilter) return false;
       if (assignedFilter === 'unassigned' && task.assigned !== 'Unassigned') return false;
-      if (monthFilter !== 'all') {
-        const key = new Date(task.dueDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        if (key !== monthFilter) return false;
+      if (phaseFilter !== 'all') {
+        if (resolveTaskPhase(task.dueDate, weddingDate, task.phase) !== phaseFilter) return false;
       }
       if (query && !task.title.toLowerCase().includes(query)) return false;
       return true;
     });
-  }, [tasks, statusFilter, categoryFilter, monthFilter, assignedFilter, search]);
+  }, [tasks, statusFilter, categoryFilter, phaseFilter, assignedFilter, search, weddingDate]);
 
-  const grouped = filtered.some((task) => task.phase)
-    ? groupTasksByPhase(filtered)
-    : groupTasksByMonth(filtered);
-  const dateGroups = getTaskDateGroups(tasks);
-  const visibleDates = showAllDates ? dateGroups : dateGroups.slice(0, 6);
+  const groupedByPhase = useMemo(
+    () => groupTasksByWeddingPhase(filtered, weddingDate),
+    [filtered, weddingDate],
+  );
+  const viewingAllPhases = phaseFilter === 'all';
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    pageItems: pagedTasks,
+    pageStart,
+    pageEnd,
+    resetPage,
+  } = usePagination(viewingAllPhases ? [] : filtered, { initialPageSize: 12, pageSizes: COMPACT_PAGE_SIZES });
+
+  useEffect(() => {
+    resetPage();
+  }, [statusFilter, categoryFilter, phaseFilter, assignedFilter, search, resetPage]);
+
+  const grouped = viewingAllPhases
+    ? groupedByPhase
+    : Object.fromEntries(
+      Object.entries(groupTasksByWeddingPhase(pagedTasks, weddingDate)).map(([label, value]) => [label, value]),
+    );
+
+  const phaseGroups = getTaskPhaseGroups(tasks, weddingDate);
+
+  const selectPhase = (id) => {
+    setPhaseFilter((current) => (current === id ? 'all' : id));
+  };
 
   const persist = (next) => {
     setTasks(next);
@@ -77,7 +155,7 @@ function ChecklistPage() {
   const clearFilters = () => {
     setStatusFilter('all');
     setCategoryFilter('all');
-    setMonthFilter('all');
+    setPhaseFilter('all');
     setAssignedFilter('all');
     setSearch('');
   };
@@ -97,7 +175,7 @@ function ChecklistPage() {
       id: `t${Date.now()}`,
       title: 'New task',
       category: 'other',
-      dueDate: new Date().toISOString().slice(0, 10),
+      dueDate: weddingDate || new Date().toISOString().slice(0, 10),
       done: false,
       assigned: 'Unassigned',
       notes: '',
@@ -106,48 +184,46 @@ function ChecklistPage() {
     setEditing(task);
   };
 
-  const monthProgress = (monthTasks) => {
-    const done = monthTasks.filter((t) => t.done).length;
-    return { done, total: monthTasks.length };
+  const sectionProgress = (sectionTasks) => {
+    const done = sectionTasks.filter((t) => t.done).length;
+    return { done, total: sectionTasks.length };
   };
+
+  const weddingDateLabel = weddingDate
+    ? new Date(weddingDate).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })
+    : '';
 
   return (
     <div className="dash-page dash-page--checklist">
-      <PageHeader
-        moduleId="checklist"
-        tagline={coupleData?.profile?.ceremonyType
-          ? `${coupleData.profile.ceremonyType} tasks, month by month, with filters and progress tracking.`
-          : undefined}
-      >
+      <PageHeader moduleId="checklist">
         <div className="dash-page__actions">
           <button type="button" className="dash-btn dash-btn--primary" onClick={addTask}>+ Add task</button>
         </div>
       </PageHeader>
 
-      <section className="checklist-summary" aria-label="Checklist progress">
-        <article className="checklist-summary__card checklist-summary__card--done">
-          <span className="checklist-summary__icon">✓</span>
-          <div>
-            <strong>{doneCount}</strong>
-            <span>Completed</span>
-          </div>
-        </article>
-        <article className="checklist-summary__card checklist-summary__card--todo">
-          <span className="checklist-summary__icon">○</span>
-          <div>
-            <strong>{todoCount}</strong>
-            <span>Still to do</span>
-          </div>
-        </article>
-        <article className="checklist-summary__card checklist-summary__card--progress">
-          <div className="checklist-summary__progress-wrap">
-            <div className="checklist-summary__progress-bar">
-              <div className="checklist-summary__progress-fill" style={{ width: `${progressPct}%` }} />
-            </div>
-            <strong>{progressPct}%</strong>
-          </div>
-          <span>Overall progress</span>
-        </article>
+      <section className="dash-summary-bar" aria-label="Checklist progress">
+        <div className="dash-summary-bar__row">
+          <span><strong>{doneCount}</strong> done</span>
+          <span className="dash-summary-bar__sep">·</span>
+          <span><strong>{todoCount}</strong> to do</span>
+          <span className="dash-summary-bar__sep">·</span>
+          <span><strong>{progressPct}%</strong> complete</span>
+          {weddingDate && (
+            <>
+              <span className="dash-summary-bar__sep">·</span>
+              <span>Wedding {weddingDateLabel}</span>
+            </>
+          )}
+          {unassignedCount > 0 && (
+            <>
+              <span className="dash-summary-bar__sep">·</span>
+              <span><strong>{unassignedCount}</strong> unassigned</span>
+            </>
+          )}
+        </div>
+        <div className="dash-summary-bar__progress" aria-hidden="true">
+          <span style={{ width: `${progressPct}%`, background: 'linear-gradient(90deg, #6b9e78, #8bc49a)' }} />
+        </div>
       </section>
 
       <div className="checklist-toolbar">
@@ -175,96 +251,108 @@ function ChecklistPage() {
       </div>
 
       <div className="checklist-layout">
-        <aside className={`dash-filters checklist-filters${filtersOpen ? ' is-open' : ''}`}>
-          <div className="checklist-filters__head">
-            <h3>Filter tasks</h3>
-            <p>Show only what you need right now</p>
-          </div>
-
-          <div className="dash-filter-group">
-            <h4>Status</h4>
-            <div className="checklist-status-tabs">
-              <button
-                type="button"
-                className={`checklist-status-tab${statusFilter === 'all' ? ' is-on' : ''}`}
-                onClick={() => setStatusFilter('all')}
-              >
-                All <span>{tasks.length}</span>
-              </button>
-              <button
-                type="button"
-                className={`checklist-status-tab${statusFilter === 'todo' ? ' is-on' : ''}`}
-                onClick={() => setStatusFilter(statusFilter === 'todo' ? 'all' : 'todo')}
-              >
-                To do <span>{todoCount}</span>
-              </button>
-              <button
-                type="button"
-                className={`checklist-status-tab checklist-status-tab--done${statusFilter === 'done' ? ' is-on' : ''}`}
-                onClick={() => setStatusFilter(statusFilter === 'done' ? 'all' : 'done')}
-              >
-                Done <span>{doneCount}</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="dash-filter-group">
-            <h4>Month</h4>
+        <div className="checklist-sidebar">
+          <aside className="checklist-month-sidebar dash-card" aria-label="Wedding timeline">
+            <h4>Your timeline</h4>
+            {!weddingDate ? (
+              <p className="checklist-phase-note">
+                Add your wedding date to personalise each stage.
+                <Link to="/wedding-profile"> Set wedding date</Link>
+              </p>
+            ) : (
+              <p className="checklist-phase-note">Stages are based on your wedding on {weddingDateLabel}.</p>
+            )}
             <div className="dash-date-timeline">
               <button
                 type="button"
-                className={monthFilter === 'all' ? 'is-on' : ''}
-                onClick={() => setMonthFilter('all')}
+                className={phaseFilter === 'all' ? 'is-on' : ''}
+                onClick={() => setPhaseFilter('all')}
               >
-                All months <span>{tasks.length}</span>
+                <span className="dash-date-timeline__label">
+                  <span>All stages</span>
+                </span>
+                <span>{tasks.length}</span>
               </button>
-              {visibleDates.map(({ label, count }) => (
+              {phaseGroups.map(({ id, label, hint, count }) => (
                 <button
-                  key={label}
+                  key={id}
                   type="button"
-                  className={monthFilter === label ? 'is-on' : ''}
-                  onClick={() => setMonthFilter(monthFilter === label ? 'all' : label)}
+                  className={phaseFilter === id ? 'is-on' : ''}
+                  onClick={() => selectPhase(id)}
                 >
-                  {label} <span>{count}</span>
+                  <span className="dash-date-timeline__label">
+                    <span>{label}</span>
+                    {hint && <small>{hint}</small>}
+                  </span>
+                  <span>{count}</span>
                 </button>
               ))}
             </div>
-            {dateGroups.length > 6 && (
-              <button type="button" className="dash-see-more" onClick={() => setShowAllDates(!showAllDates)}>
-                {showAllDates ? 'Show fewer months' : `Show all ${dateGroups.length} months`}
-              </button>
-            )}
-          </div>
+          </aside>
 
-          <div className="dash-filter-group">
-            <h4>Category</h4>
-            <div className="checklist-category-grid">
-              {taskCategories.map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  className={`checklist-category-chip${categoryFilter === cat.id ? ' is-on' : ''}`}
-                  data-category={cat.id}
-                  onClick={() => setCategoryFilter(categoryFilter === cat.id ? 'all' : cat.id)}
-                >
-                  <span>{cat.icon}</span>
-                  {cat.label}
-                </button>
-              ))}
+          <aside className={`dash-filters checklist-filters${filtersOpen ? ' is-open' : ''}`}>
+            <div className="checklist-filters__head">
+              <h3>More filters</h3>
+              <p>Status, category, and assignment</p>
             </div>
-          </div>
 
-          <div className="dash-filter-group">
-            <h4>Assigned to</h4>
-            <button
-              type="button"
-              className={`dash-filter-pill${assignedFilter === 'unassigned' ? ' is-on' : ''}`}
-              onClick={() => setAssignedFilter(assignedFilter === 'unassigned' ? 'all' : 'unassigned')}
-            >
-              Unassigned <span>{unassignedCount}</span>
-            </button>
-          </div>
-        </aside>
+            <div className="dash-filter-group">
+              <h4>Status</h4>
+              <div className="checklist-status-tabs">
+                <button
+                  type="button"
+                  className={`checklist-status-tab${statusFilter === 'all' ? ' is-on' : ''}`}
+                  onClick={() => setStatusFilter('all')}
+                >
+                  All <span>{tasks.length}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`checklist-status-tab${statusFilter === 'todo' ? ' is-on' : ''}`}
+                  onClick={() => setStatusFilter(statusFilter === 'todo' ? 'all' : 'todo')}
+                >
+                  To do <span>{todoCount}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`checklist-status-tab checklist-status-tab--done${statusFilter === 'done' ? ' is-on' : ''}`}
+                  onClick={() => setStatusFilter(statusFilter === 'done' ? 'all' : 'done')}
+                >
+                  Done <span>{doneCount}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="dash-filter-group">
+              <h4>Category</h4>
+              <div className="checklist-category-grid">
+                {taskCategories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    className={`checklist-category-chip${categoryFilter === cat.id ? ' is-on' : ''}`}
+                    data-category={cat.id}
+                    onClick={() => setCategoryFilter(categoryFilter === cat.id ? 'all' : cat.id)}
+                  >
+                    <span>{cat.icon}</span>
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="dash-filter-group">
+              <h4>Assigned to</h4>
+              <button
+                type="button"
+                className={`dash-filter-pill${assignedFilter === 'unassigned' ? ' is-on' : ''}`}
+                onClick={() => setAssignedFilter(assignedFilter === 'unassigned' ? 'all' : 'unassigned')}
+              >
+                Unassigned <span>{unassignedCount}</span>
+              </button>
+            </div>
+          </aside>
+        </div>
 
         <div className="checklist-tasks">
           {Object.keys(grouped).length === 0 ? (
@@ -274,88 +362,74 @@ function ChecklistPage() {
               <p>
                 {hasActiveFilters
                   ? 'Try changing your filters or search term.'
-                  : coupleData?.profile?.weddingDate || coupleData?.onboarding?.weddingDate
+                  : weddingDate
                     ? 'Add your first task to start planning.'
-                    : 'Add your wedding date to get a Sri Lankan timeline for your couple.'}
+                    : 'Add your wedding date to get a personalised timeline.'}
               </p>
               {hasActiveFilters ? (
                 <button type="button" className="dash-btn dash-btn--outline" onClick={clearFilters}>Clear filters</button>
-              ) : coupleData?.profile?.weddingDate || coupleData?.onboarding?.weddingDate ? (
+              ) : weddingDate ? (
                 <button type="button" className="dash-btn dash-btn--primary" onClick={addTask}>+ Add task</button>
               ) : (
                 <Link to="/wedding-profile" className="dash-btn dash-btn--primary">Add wedding date</Link>
               )}
             </div>
           ) : (
-            Object.entries(grouped).map(([month, monthTasks]) => {
-              const { done, total } = monthProgress(monthTasks);
+            Object.entries(grouped).map(([phaseLabel, section]) => {
+              const sectionTasks = section.tasks || section;
+              const phaseId = section.phaseId || resolveTaskPhase(sectionTasks[0]?.dueDate, weddingDate, sectionTasks[0]?.phase);
+              const sectionHint = section.hint || getPhaseDateHint(phaseId, weddingDate);
+              const { done, total } = sectionProgress(sectionTasks);
+              const phasePct = total ? Math.round((done / total) * 100) : 0;
+
+              if (!viewingAllPhases) {
+                return (
+                  <section
+                    key={phaseLabel}
+                    id={`checklist-phase-${phaseId}`}
+                    className="checklist-phase-section dash-card"
+                  >
+                    <header className="checklist-phase-section__head">
+                      <h2>{phaseLabel}</h2>
+                      <p>
+                        {sectionHint && `${sectionHint} · `}
+                        {total} task{total !== 1 ? 's' : ''} · {done} done ({phasePct}%)
+                      </p>
+                    </header>
+                    <TaskRows tasks={sectionTasks} onToggle={toggleTask} onEdit={setEditing} />
+                  </section>
+                );
+              }
+
               return (
-                <section key={month} className="checklist-month dash-card">
-                  <header className="checklist-month__head">
-                    <div>
-                      <h2>{month}</h2>
-                      <p>{total} task{total !== 1 ? 's' : ''} · {done} completed</p>
+                <details key={phaseLabel} id={`checklist-phase-${phaseId}`} className="checklist-month-details dash-card">
+                  <summary>
+                    <div className="checklist-month-details__title">
+                      <h2>{phaseLabel}</h2>
+                      <p>
+                        {sectionHint && `${sectionHint} · `}
+                        {total} task{total !== 1 ? 's' : ''} · {done} done ({phasePct}%)
+                      </p>
                     </div>
-                    <div className="checklist-month__progress">
-                      <div className="checklist-month__progress-bar">
-                        <div style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
-                      </div>
-                      <span>{done}/{total}</span>
-                    </div>
-                  </header>
-
-                  <ul className="task-list">
-                    {monthTasks.map((task) => {
-                      const cat = getCategoryMeta(task.category);
-                      const dueLabel = new Date(task.dueDate).toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                      });
-                      return (
-                        <li key={task.id} className={`task-row${task.done ? ' is-done' : ''}`}>
-                          <button
-                            type="button"
-                            className={`task-check${task.done ? ' is-checked' : ''}`}
-                            onClick={() => toggleTask(task.id)}
-                            aria-label={task.done ? 'Mark as incomplete' : 'Mark as complete'}
-                          >
-                            {task.done ? '✓' : ''}
-                          </button>
-
-                          <button
-                            type="button"
-                            className="task-row__main"
-                            onClick={() => setEditing({ ...task })}
-                          >
-                            <span className="task-title">{task.title}</span>
-                            <span className="task-row__meta">
-                              <span className="task-tag" data-category={task.category}>
-                                {cat.icon} {cat.label}
-                              </span>
-                              {task.phaseLabel && <span className="task-date">{task.phaseLabel}</span>}
-                              <span className="task-date">📅 {dueLabel}</span>
-                              {task.assigned && task.assigned !== 'Unassigned' && (
-                                <span className="task-assigned">👤 {task.assigned}</span>
-                              )}
-                            </span>
-                          </button>
-
-                          <button
-                            type="button"
-                            className="task-edit"
-                            onClick={() => setEditing({ ...task })}
-                            aria-label="Edit task"
-                          >
-                            ✏️
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </section>
+                    <span className="checklist-month-details__chevron" aria-hidden="true">▼</span>
+                  </summary>
+                  <TaskRows tasks={sectionTasks} onToggle={toggleTask} onEdit={setEditing} />
+                </details>
               );
             })
+          )}
+          {!viewingAllPhases && filtered.length > 0 && (
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              pageStart={pageStart}
+              pageEnd={pageEnd}
+              totalItems={filtered.length}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              icon="checklist"
+            />
           )}
         </div>
       </div>

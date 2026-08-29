@@ -1,4 +1,4 @@
-"""Train WowWed cost tier Random Forest — best Kaggle model (97.5% accuracy)."""
+"""Train WowWed seating Random Forest — best Kaggle model (94.4% accuracy)."""
 from pathlib import Path
 
 import joblib
@@ -7,17 +7,18 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, f1_score
 from sklearn.model_selection import train_test_split
 
-from cost_features import FEATURE_COLS, TARGET
+from guest_features import RF_FEATURE_COLS
+
+TARGET = "table_type"
 
 FOLDER = Path(__file__).resolve().parent
-KAGGLE_CSV = FOLDER.parent.parent.parent / "Kaggle ss" / "cost prediction" / "wowwed_cost_prediction.csv"
-LOCAL_CSV = FOLDER / "wowwed_cost_prediction.csv"
-MODEL_OUT = FOLDER / "wowwed_cost_random_forest.pkl"
+KAGGLE_CSV = FOLDER.parent.parent.parent / "Kaggle ss" / "Smart seating" / "wowwed_seating_optimization.csv"
+LOCAL_CSV = FOLDER / "wowwed_seating_optimization.csv"
+MODEL_OUT = FOLDER / "wowwed_seating_random_forest.pkl"
 
-# Kaggle notebook winner — Random Forest
 MODEL_PARAMS = {
     "n_estimators": 200,
-    "max_depth": 14,
+    "max_depth": 12,
     "min_samples_split": 4,
     "random_state": 42,
     "n_jobs": -1,
@@ -37,7 +38,7 @@ def load_training_csv():
 
 def main():
     df = load_training_csv()
-    X = df[FEATURE_COLS]
+    X = df[RF_FEATURE_COLS]
     y = df[TARGET]
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -51,7 +52,7 @@ def main():
     accuracy = accuracy_score(y_test, y_pred)
     f1 = f1_score(y_test, y_pred, average="macro")
 
-    print("WowWed Cost Prediction — Random Forest (best model)")
+    print("WowWed Smart Seating — Random Forest (best model)")
     print("Training rows:", len(X_train))
     print("Test rows    :", len(X_test))
     print("Accuracy     :", round(accuracy, 4))
@@ -59,18 +60,18 @@ def main():
     print()
     print(classification_report(y_test, y_pred, digits=4))
 
-    importance = pd.Series(model.feature_importances_, index=FEATURE_COLS).sort_values(ascending=False)
+    importance = pd.Series(model.feature_importances_, index=RF_FEATURE_COLS).sort_values(ascending=False)
     print("Feature importance:")
     print(importance.to_string())
 
     bundle = {
         "model": model,
-        "feature_cols": FEATURE_COLS,
+        "feature_cols": RF_FEATURE_COLS,
         "classes": list(model.classes_),
         "target": TARGET,
         "accuracy": round(accuracy, 4),
         "f1_macro": round(f1, 4),
-        "model_name": "wowwed_cost_random_forest.pkl",
+        "model_name": "wowwed_seating_random_forest.pkl",
     }
     joblib.dump(bundle, MODEL_OUT)
     print()

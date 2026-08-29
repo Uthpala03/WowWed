@@ -4,6 +4,7 @@ import { mainNav } from '../../models/NavItem';
 import { coupleOnboarding, vendorOnboarding } from '../../models/OnboardingPath';
 import { useAuth } from '../../context/AuthContext';
 import { scrollToSection } from '../../utils/scrollToSection';
+import { getUserHomePath } from '../../utils/userHome';
 import AppIcon from '../ui/AppIcon';
 import Button from '../ui/Button';
 import WowWedLogo from '../ui/WowWedLogo';
@@ -12,7 +13,7 @@ function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const dashTo = user?.role === 'vendor' ? '/vendor' : '/dashboard';
+  const dashTo = getUserHomePath(user);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeId, setActiveId] = useState('');
   const [scrolled, setScrolled] = useState(false);
@@ -68,7 +69,7 @@ function Navbar() {
   return (
     <header className={`navbar${scrolled ? ' navbar--scrolled' : ''}`}>
       <div className="navbar__inner container">
-        <Link className="navbar__brand" to="/" onClick={() => setMenuOpen(false)}>
+        <Link className="navbar__brand" to={dashTo} onClick={() => setMenuOpen(false)}>
           <WowWedLogo height={40} />
         </Link>
 

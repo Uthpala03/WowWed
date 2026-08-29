@@ -684,9 +684,9 @@ export function getWelcomeMessage(coupleOrProfile) {
     ? ` I can see your wedding on ${couple.date}${couple.district ? ` in ${couple.district}` : ''}.`
     : (couple?.district ? ` I can see your wedding in ${couple.district}.` : '');
   if (names) {
-    return `Hello ${names}! I'm the WowWed assistant — keyword answers from a knowledge base, not a chat AI.${extra} How can I help you?`;
+    return `Hello ${names}! I'm WowBot — keyword answers from a knowledge base, not a chat AI.${extra} How can I help you?`;
   }
-  return knowledge.welcome;
+  return "Hello! I'm WowBot. I answer from a planning knowledge base — not a chat AI. How can I help you?";
 }
 
 export function getTopicQuestions(topicId) {
