@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { guestGroups, normalizeGuestGroup, rsvpStatuses } from '../../data/dashboardData';
 import { getGuests, getSeating, saveGuests, saveSeating } from '../../utils/storage';
@@ -144,6 +144,24 @@ function GuestListPage() {
   const [groupRsvpNote, setGroupRsvpNote] = useState('');
   const [form, setForm] = useState(emptyGuest);
   const [bulkForm, setBulkForm] = useState({ names: '', group: 'No Group', rsvp: 'Pending' });
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef(null);
+
+  useEffect(() => {
+    if (!moreOpen) return undefined;
+    const onPointer = (event) => {
+      if (!moreRef.current?.contains(event.target)) setMoreOpen(false);
+    };
+    const onKey = (event) => {
+      if (event.key === 'Escape') setMoreOpen(false);
+    };
+    document.addEventListener('mousedown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [moreOpen]);
 
   const stats = useMemo(() => ({
     total: guests.length,
@@ -440,22 +458,63 @@ function GuestListPage() {
       <PageHeader moduleId="guests">
         <div className="dash-page__actions dash-page__actions--compact">
           <button type="button" className="dash-btn dash-btn--primary" onClick={openAdd}>+ Add guest</button>
-          <details className="dash-collapsible dash-collapsible--inline dash-collapsible--menu">
-            <summary>More</summary>
-            <div className="dash-collapsible__body">
-              <button type="button" className="dash-menu-btn" onClick={exportCsv}>Export CSV</button>
-              <label className="dash-menu-btn csv-upload">
-                Import / update CSV
-                <input type="file" accept=".csv" hidden onChange={importCsv} />
-              </label>
-              <button type="button" className="dash-menu-btn" onClick={() => setBulkAddOpen(true)}>Add many guests</button>
-              {guests.length > 0 && (
-                <button type="button" className="dash-menu-btn dash-menu-btn--danger" onClick={() => setCsvDeleteConfirm(true)}>
-                  Delete imported CSV
+          <div
+            className={`dash-collapsible dash-collapsible--inline dash-collapsible--menu${moreOpen ? ' is-open' : ''}`}
+            ref={moreRef}
+          >
+            <button
+              type="button"
+              className="dash-collapsible__trigger"
+              aria-expanded={moreOpen}
+              aria-haspopup="menu"
+              onClick={() => setMoreOpen((open) => !open)}
+            >
+              More
+            </button>
+            {moreOpen && (
+              <div className="dash-collapsible__body" role="menu">
+                <button type="button" className="dash-menu-btn" role="menuitem" onClick={() => { exportCsv(); setMoreOpen(false); }}>
+                  Export CSV
                 </button>
-              )}
-            </div>
-          </details>
+                <label className="dash-menu-btn csv-upload">
+                  Import / update CSV
+                  <input
+                    type="file"
+                    accept=".csv"
+                    hidden
+                    onChange={(event) => {
+                      importCsv(event);
+                      setMoreOpen(false);
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="dash-menu-btn"
+                  role="menuitem"
+                  onClick={() => {
+                    setBulkAddOpen(true);
+                    setMoreOpen(false);
+                  }}
+                >
+                  Add many guests
+                </button>
+                {guests.length > 0 && (
+                  <button
+                    type="button"
+                    className="dash-menu-btn dash-menu-btn--danger"
+                    role="menuitem"
+                    onClick={() => {
+                      setCsvDeleteConfirm(true);
+                      setMoreOpen(false);
+                    }}
+                  >
+                    Delete imported CSV
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </PageHeader>
 
@@ -659,34 +718,36 @@ function GuestListPage() {
         <div className="dash-overlay" onClick={() => setBulkAddOpen(false)}>
           <form className="dash-panel dash-panel--side" onSubmit={submitBulkAdd} onClick={(e) => e.stopPropagation()}>
             <h2>Add many guests</h2>
-            <p className="guest-panel-hint">Paste one name per line — perfect for 100+ guests at once.</p>
-            <label className="dash-field">
-              <span>Guest names (one per line) *</span>
-              <textarea
-                rows={12}
-                required
-                value={bulkForm.names}
-                onChange={(e) => setBulkForm({ ...bulkForm, names: e.target.value })}
-                placeholder={'Romesh Perera\nUthpala Silva\nBruno Fernando\n...'}
-              />
-            </label>
-            <div className="dash-field">
-              <PrettySelect
-                label="Default group"
-                icon="guests"
-                value={bulkForm.group}
-                options={guestGroups.map((g) => ({ value: g, label: g, icon: 'guests' }))}
-                onChange={(group) => setBulkForm({ ...bulkForm, group })}
-              />
-            </div>
-            <div className="dash-field">
-              <PrettySelect
-                label="Default RSVP"
-                icon="hearts"
-                value={bulkForm.rsvp}
-                options={rsvpStatuses.map((s) => ({ value: s, label: RSVP_LABELS[s]?.label || s, icon: 'hearts' }))}
-                onChange={(rsvp) => setBulkForm({ ...bulkForm, rsvp })}
-              />
+            <div className="dash-panel__scroll">
+              <p className="guest-panel-hint">Paste one name per line — perfect for 100+ guests at once.</p>
+              <label className="dash-field">
+                <span>Guest names (one per line) *</span>
+                <textarea
+                  rows={12}
+                  required
+                  value={bulkForm.names}
+                  onChange={(e) => setBulkForm({ ...bulkForm, names: e.target.value })}
+                  placeholder={'Romesh Perera\nUthpala Silva\nBruno Fernando\n...'}
+                />
+              </label>
+              <div className="dash-field">
+                <PrettySelect
+                  label="Default group"
+                  icon="guests"
+                  value={bulkForm.group}
+                  options={guestGroups.map((g) => ({ value: g, label: g, icon: 'guests' }))}
+                  onChange={(group) => setBulkForm({ ...bulkForm, group })}
+                />
+              </div>
+              <div className="dash-field">
+                <PrettySelect
+                  label="Default RSVP"
+                  icon="hearts"
+                  value={bulkForm.rsvp}
+                  options={rsvpStatuses.map((s) => ({ value: s, label: RSVP_LABELS[s]?.label || s, icon: 'hearts' }))}
+                  onChange={(rsvp) => setBulkForm({ ...bulkForm, rsvp })}
+                />
+              </div>
             </div>
             <div className="dash-panel__actions">
               <button type="button" className="dash-btn dash-btn--ghost" onClick={() => setBulkAddOpen(false)}>Cancel</button>
@@ -700,36 +761,38 @@ function GuestListPage() {
         <div className="dash-overlay" onClick={closePanel}>
           <form className="dash-panel dash-panel--side" onSubmit={submitGuest} onClick={(e) => e.stopPropagation()}>
             <h2>{editingId ? 'Edit guest' : 'Add guest'}</h2>
-            <label className="dash-field"><span>Full name *</span><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
-            <label className="dash-field"><span>Phone</span><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></label>
-            <label className="dash-field"><span>Email</span><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
-            <div className="dash-field">
-              <PrettySelect
-                label="Group"
-                icon="guests"
-                value={form.group}
-                options={guestGroups.map((grp) => ({ value: grp, label: grp, icon: 'guests' }))}
-                onChange={(group) => setForm({ ...form, group })}
-              />
+            <div className="dash-panel__scroll">
+              <label className="dash-field"><span>Full name *</span><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
+              <label className="dash-field"><span>Phone</span><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></label>
+              <label className="dash-field"><span>Email</span><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
+              <div className="dash-field">
+                <PrettySelect
+                  label="Group"
+                  icon="guests"
+                  value={form.group}
+                  options={guestGroups.map((grp) => ({ value: grp, label: grp, icon: 'guests' }))}
+                  onChange={(group) => setForm({ ...form, group })}
+                />
+              </div>
+              <div className="dash-field">
+                <PrettySelect
+                  label="RSVP status"
+                  icon="hearts"
+                  value={form.rsvp}
+                  options={rsvpStatuses.map((s) => ({ value: s, label: RSVP_LABELS[s]?.label || s, icon: 'hearts' }))}
+                  onChange={(rsvp) => setForm({ ...form, rsvp })}
+                />
+              </div>
+              <label className="dash-field">
+                <span>Age</span>
+                <input type="number" min="1" max="120" value={form.age || ''} onChange={(e) => setForm({ ...form, age: e.target.value })} placeholder="e.g. 8 or 72" />
+              </label>
+              <label className="dash-field"><span>Notes</span><textarea rows={3} value={form.notes || ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
+              <label className="dash-field">
+                <span>Do not sit with (names, comma separated)</span>
+                <input value={form.avoid || ''} onChange={(e) => setForm({ ...form, avoid: e.target.value })} placeholder="Full name, other name" />
+              </label>
             </div>
-            <div className="dash-field">
-              <PrettySelect
-                label="RSVP status"
-                icon="hearts"
-                value={form.rsvp}
-                options={rsvpStatuses.map((s) => ({ value: s, label: RSVP_LABELS[s]?.label || s, icon: 'hearts' }))}
-                onChange={(rsvp) => setForm({ ...form, rsvp })}
-              />
-            </div>
-            <label className="dash-field">
-              <span>Age</span>
-              <input type="number" min="1" max="120" value={form.age || ''} onChange={(e) => setForm({ ...form, age: e.target.value })} placeholder="e.g. 8 or 72" />
-            </label>
-            <label className="dash-field"><span>Notes</span><textarea rows={3} value={form.notes || ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
-            <label className="dash-field">
-              <span>Do not sit with (names, comma separated)</span>
-              <input value={form.avoid || ''} onChange={(e) => setForm({ ...form, avoid: e.target.value })} placeholder="Full name, other name" />
-            </label>
             <div className="dash-panel__actions">
               {editingId && <button type="button" className="dash-btn dash-btn--ghost guest-delete-btn" onClick={() => setDeleteConfirm(editingId)}>Delete guest</button>}
               <button type="button" className="dash-btn dash-btn--ghost" onClick={closePanel}>Cancel</button>

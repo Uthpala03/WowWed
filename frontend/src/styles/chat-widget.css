@@ -6,10 +6,42 @@
 .chat-widget-root {
   position: fixed;
   right: 1.25rem;
-  bottom: var(--chat-launcher-clearance-y);
+  bottom: 1.25rem;
   z-index: 10050;
   font-family: var(--font-sans, inherit);
 }
+
+body:has(.dash-overlay) .chat-widget-root {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Compact circle on couple dashboard so lists and amounts stay readable */
+.chat-widget-root--compact {
+  right: 1.25rem;
+  bottom: 1.25rem;
+}
+
+.chat-widget-root--compact .chat-widget__launcher {
+  width: 3.6rem;
+  height: 3.6rem;
+  padding: 0;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.chat-widget-root--compact .chat-widget__launcher-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 
 .chat-widget__launcher {
   display: inline-flex;
@@ -262,6 +294,7 @@
   .chat-widget-root {
     right: 0.75rem;
   }
+
 
   .chat-widget__launcher-label {
     display: none;

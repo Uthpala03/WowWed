@@ -38,17 +38,17 @@ function ChatWidget() {
   if (location.pathname === '/dashboard/assistant') return null;
 
   const closeWidget = () => setOpen(false);
-
   const onNavigate = () => setOpen(false);
 
   return (
-    <div className="chat-widget-root" aria-live="polite">
+    <div className="chat-widget-root chat-widget-root--compact" aria-live="polite">
       {!open && (
         <button
           type="button"
           className="chat-widget__launcher"
           onClick={() => setOpen(true)}
-          aria-label="Open WowBot"
+          aria-label="Chat with WowBot"
+          title="Chat with WowBot"
         >
           <span className="chat-widget__launcher-icon" aria-hidden="true">
             <WowBotIcon size={36} className="wowbot-icon--launcher" />

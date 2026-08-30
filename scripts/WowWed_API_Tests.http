@@ -1,0 +1,347 @@
+### WowWed REST Client file
+### Open this file in VS Code with the REST Client extension.
+### Click "Send Request" above each block.
+### Backend URL: http://localhost:5002
+###
+### Change the couple email if you re-run INT06 after the account already exists.
+
+@base = http://localhost:5002
+@coupleEmail = api.plan.couple@wowwed.test
+@couplePassword = Test1234
+@coupleName = Amal Perera
+
+### INT01 API root is running
+GET {{base}}/
+
+### INT02 API health check
+GET {{base}}/api/health
+
+### INT03 Public vendor listings
+GET {{base}}/api/profiles/vendors
+
+### INT04 Register with missing fields
+POST {{base}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "",
+  "email": "",
+  "password": ""
+}
+
+### INT05 Register with short password
+POST {{base}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Amal Perera",
+  "email": "short.pass@wowwed.test",
+  "password": "123",
+  "role": "couple"
+}
+
+### INT06 Successful couple registration
+# @name registerCouple
+POST {{base}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "{{coupleName}}",
+  "email": "{{coupleEmail}}",
+  "phone": "+94 77 123 4567",
+  "password": "{{couplePassword}}",
+  "role": "couple",
+  "onboarding": {
+    "role": "couple",
+    "planningStage": "Just started",
+    "venueType": "indoor",
+    "ceremonyType": "poruwa",
+    "location": "Colombo",
+    "completedAt": "2026-08-30"
+  }
+}
+
+### INT07 Register with an existing email
+POST {{base}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Amal Perera",
+  "email": "{{coupleEmail}}",
+  "password": "{{couplePassword}}",
+  "role": "couple"
+}
+
+### INT08 Login with missing fields
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "",
+  "password": ""
+}
+
+### INT09 Login with unknown email
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "nobody@wowwed.test",
+  "password": "Test1234"
+}
+
+### INT10 Login with wrong password
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{coupleEmail}}",
+  "password": "WrongPass1"
+}
+
+### INT11 Successful login
+# @name loginCouple
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{coupleEmail}}",
+  "password": "{{couplePassword}}"
+}
+
+### INT12 Current user without a token
+GET {{base}}/api/auth/me
+
+### INT13 Current user with a token
+GET {{base}}/api/auth/me
+Authorization: Bearer {{loginCouple.response.body.token}}
+
+### INT14 Password reset for unknown email
+PUT {{base}}/api/auth/password
+Content-Type: application/json
+
+{
+  "email": "missing@wowwed.test",
+  "password": "NewPass1"
+}
+
+### INT15 Password reset with a short password
+PUT {{base}}/api/auth/password
+Content-Type: application/json
+
+{
+  "email": "{{coupleEmail}}",
+  "password": "123"
+}
+
+### INT16 Couple data without a token
+GET {{base}}/api/data
+
+### INT17 Couple data with a token
+GET {{base}}/api/data
+Authorization: Bearer {{loginCouple.response.body.token}}
+
+### INT18 Invalid user_data key
+GET {{base}}/api/data/notakey
+Authorization: Bearer {{loginCouple.response.body.token}}
+
+### INT19 Save guest list
+PUT {{base}}/api/data/guests
+Authorization: Bearer {{loginCouple.response.body.token}}
+Content-Type: application/json
+
+[
+  {
+    "id": "g-api-01",
+    "name": "Nimali Silva",
+    "email": "nimali@example.com",
+    "group": "Bride's Family",
+    "rsvp": "Accepted"
+  }
+]
+
+### INT20 Save wedding profile
+PUT {{base}}/api/profiles/wedding
+Authorization: Bearer {{loginCouple.response.body.token}}
+Content-Type: application/json
+
+{
+  "partnerOne": "Amal",
+  "partnerTwo": "Nimali",
+  "weddingDate": "2026-12-12",
+  "district": "Colombo",
+  "ceremonyType": "Poruwa Ceremony",
+  "guestCount": 150,
+  "budget": 3500000,
+  "scale": "standard",
+  "venueType": "indoor",
+  "planningStage": "Just started"
+}
+
+### INT21 List couple bookings
+GET {{base}}/api/bookings
+Authorization: Bearer {{loginCouple.response.body.token}}
+
+### INT22 Availability missing listingId and date
+GET {{base}}/api/bookings/availability
+Authorization: Bearer {{loginCouple.response.body.token}}
+
+### INT23 Create a booking for Kandyan Reach Hotel
+# @name createBooking
+POST {{base}}/api/bookings
+Authorization: Bearer {{loginCouple.response.body.token}}
+Content-Type: application/json
+
+{
+  "vendorListingId": "vw-01",
+  "vendorName": "Kandyan Reach Hotel",
+  "category": "Venue & Res. Halls",
+  "coupleName": "Amal & Nimali",
+  "coupleEmail": "{{coupleEmail}}",
+  "date": "2026-12-12",
+  "amount": 735000,
+  "message": "We would like the Unity KRH package."
+}
+
+### INT24 Booking without a vendor listing
+POST {{base}}/api/bookings
+Authorization: Bearer {{loginCouple.response.body.token}}
+Content-Type: application/json
+
+{
+  "vendorName": "Not A Real Vendor",
+  "coupleName": "Amal & Nimali",
+  "coupleEmail": "{{coupleEmail}}",
+  "date": "2026-12-20",
+  "amount": 100000,
+  "message": "Missing listing id"
+}
+
+### INT25 List notifications
+GET {{base}}/api/notifications
+Authorization: Bearer {{loginCouple.response.body.token}}
+
+### INT26 Review before the booking is paid
+POST {{base}}/api/reviews
+Authorization: Bearer {{loginCouple.response.body.token}}
+Content-Type: application/json
+
+{
+  "bookingId": "{{createBooking.response.body.booking.id}}",
+  "rating": 5,
+  "comment": "Great venue"
+}
+
+### ========== ML / Smart features ==========
+
+### M-01 Cost model health
+GET http://127.0.0.1:8001/health
+
+### M-02 Seating model health
+GET http://127.0.0.1:8000/health
+
+### M-03 Cost prediction through the backend
+POST {{base}}/api/ml/cost
+Content-Type: application/json
+
+{
+  "guestCount": 150,
+  "district": "Colombo",
+  "ceremonyType": "Poruwa",
+  "scale": "standard",
+  "weddingDate": "2026-12-12"
+}
+
+### M-04 Cost model clamps guests to 50
+POST {{base}}/api/ml/cost
+Content-Type: application/json
+
+{
+  "guestCount": 10,
+  "district": "Kandy",
+  "ceremonyType": "Poruwa",
+  "scale": "budget"
+}
+
+### M-05 December date is peak season
+POST {{base}}/api/ml/cost
+Content-Type: application/json
+
+{
+  "guestCount": 150,
+  "district": "Colombo",
+  "ceremonyType": "Poruwa",
+  "scale": "standard",
+  "weddingDate": "2026-12-12"
+}
+
+### M-06 March date is regular season
+POST {{base}}/api/ml/cost
+Content-Type: application/json
+
+{
+  "guestCount": 150,
+  "district": "Colombo",
+  "ceremonyType": "Poruwa",
+  "scale": "standard",
+  "weddingDate": "2026-03-15"
+}
+
+### M-07 Auto-seat accepted guests
+POST {{base}}/api/ml/seating
+Content-Type: application/json
+
+{
+  "guests": [
+    { "id": "g1", "name": "Amal Perera", "group": "Bride's Family", "rsvp": "Accepted" },
+    { "id": "g2", "name": "Nimali Silva", "group": "Bride's Family", "rsvp": "Accepted" },
+    { "id": "g3", "name": "Kasun Perera", "group": "Groom's Family", "rsvp": "Accepted" }
+  ],
+  "tables": [
+    { "id": "t1", "name": "Table 1", "seats": 8, "shape": "round", "suite": "general" }
+  ]
+}
+
+### M-08 Seating skips guests who are not coming
+POST {{base}}/api/ml/seating
+Content-Type: application/json
+
+{
+  "guests": [
+    { "id": "g1", "name": "Amal Perera", "group": "Bride's Family", "rsvp": "Accepted" },
+    { "id": "g2", "name": "Nimali Silva", "group": "Bride's Family", "rsvp": "Accepted" },
+    { "id": "g3", "name": "Sahan Fernando", "group": "Friends", "rsvp": "Pending" }
+  ],
+  "tables": [
+    { "id": "t1", "name": "Table 1", "seats": 8, "shape": "round", "suite": "general" }
+  ]
+}
+
+### M-09 Unseated flag when chairs run out
+POST {{base}}/api/ml/seating
+Content-Type: application/json
+
+{
+  "guests": [
+    { "id": "g1", "name": "Amal Perera", "group": "VIP", "rsvp": "Accepted" },
+    { "id": "g2", "name": "Nimali Silva", "group": "VIP", "rsvp": "Accepted" },
+    { "id": "g3", "name": "Kasun Perera", "group": "VIP", "rsvp": "Accepted" }
+  ],
+  "tables": [
+    { "id": "t1", "name": "Table 1", "seats": 1, "shape": "round", "suite": "general" }
+  ]
+}
+
+### M-10 Avoid-guest conflict is flagged
+POST {{base}}/api/ml/seating
+Content-Type: application/json
+
+{
+  "guests": [
+    { "id": "g1", "name": "Amal Perera", "group": "Friends", "rsvp": "Accepted", "avoid": "Kasun Perera" },
+    { "id": "g2", "name": "Kasun Perera", "group": "Friends", "rsvp": "Accepted" }
+  ],
+  "tables": [
+    { "id": "t1", "name": "Table 1", "seats": 8, "shape": "round", "suite": "general" }
+  ]
+}

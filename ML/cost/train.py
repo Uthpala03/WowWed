@@ -14,7 +14,6 @@ KAGGLE_CSV = FOLDER.parent.parent.parent / "Kaggle ss" / "cost prediction" / "wo
 LOCAL_CSV = FOLDER / "wowwed_cost_prediction.csv"
 MODEL_OUT = FOLDER / "wowwed_cost_random_forest.pkl"
 
-# Kaggle notebook winner — Random Forest
 MODEL_PARAMS = {
     "n_estimators": 200,
     "max_depth": 14,

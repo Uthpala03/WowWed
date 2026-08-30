@@ -644,7 +644,7 @@ body,
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1.5rem;
+  padding: 2rem 1.5rem 5.5rem;
   background: linear-gradient(160deg, #faf8f5 0%, #f0ebe4 45%, #ebe4dc 100%);
 }
 
@@ -1928,7 +1928,7 @@ body,
 @media (max-width: 900px) {
   .landing-hero__grid { grid-template-columns: 1fr; }
   .landing-hero__visual {
-    min-height: auto;
+    min-height: 0;
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
     gap: 0.75rem;
